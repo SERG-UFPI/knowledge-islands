@@ -18,13 +18,6 @@ public class Project {
 	@Column(unique=true)
 	private String name;
 	private String currentPath;
-	private boolean commitsExtracted;
-
-	public Project(String name, String currentPath) {
-		super();
-		this.name = name;
-		this.currentPath = currentPath;
-	}
 
 	public Project(String name) {
 		this.name = name;

@@ -25,11 +25,10 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 	String projectName;
 
 	private static String projectTest = "/home/otavio/projetosHistorico/WordPress/";
-	private static String shellFilePath = "/home/otavio/projetosHistorico/main.sh";
+	private static String projectsFolder = "/home/otavio/projetosHistorico/";
 
 	public static void main(String[] args)  {
 
-		String pathToDir = args[0];
 		TruckFactorHistoryAnalyzer analyzer = new TruckFactorHistoryAnalyzer();
 		Git git;
 		Repository repository;
@@ -39,24 +38,40 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 			String[] hashes = analyzer.extractListOfHashes(git);
 			for (String hash : hashes) {
 				git.checkout().setName(hash).call();
-				StringBuilder output = new StringBuilder();
-				ProcessBuilder pb = new ProcessBuilder(shellFilePath);
-				Process p = pb.start();
-				BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				String line;
-				while((line = br.readLine()) != null) {
-					output.append(line + "\n");
-				}
-				int exitVal = p.waitFor();
-				if (exitVal == 0) {
-					System.out.println(output);
-				}
+				analyzer.executeLinguisticScript(projectTest);
+				analyzer.executeClocScript(projectTest);
 				//analyzer.executeTruckFactorAnalyzes(pathToDir);
-				System.out.println();
 			}
 			git.checkout().setName("master").call();
-		} catch (GitAPIException | InterruptedException | IOException e) {
+		} catch (GitAPIException | IOException | InterruptedException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void executeClocScript(String path) throws IOException, InterruptedException{
+		ProcessBuilder pb = new ProcessBuilder();
+		pb.command("bash", "-c", "sh "+projectsFolder+"cloc_script.sh "+path);
+		Process p = pb.start();
+		p.waitFor();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				p.getInputStream())); 
+		String line; 
+		while((line = reader.readLine()) != null) { 
+			System.out.println(line);
+		}
+	}
+
+	private void executeLinguisticScript(String path) throws IOException, InterruptedException {
+		ProcessBuilder pb = new ProcessBuilder();
+		pb.command("bash", "-c", "ruby "+projectsFolder+"linguist.rb "+path);
+		pb.redirectOutput(new File(path+"linguistfiles.log"));
+		Process p = pb.start();
+		p.waitFor();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				p.getInputStream())); 
+		String line; 
+		while((line = reader.readLine()) != null) { 
+			System.out.println(line);
 		}
 	}
 
@@ -82,7 +97,7 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 		index++;
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
-		calendar.add(Calendar.MONTH, -3);
+		calendar.add(Calendar.YEAR, -1);
 		date = calendar.getTime();
 		for (RevCommit commit: commitsList) {
 			if (commit.getAuthorIdent().getWhen().before(date)) {
@@ -90,7 +105,7 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 				hashes[index] = commit.getName();
 				calendar = Calendar.getInstance();
 				calendar.setTime(date);
-				calendar.add(Calendar.MONTH, -3);
+				calendar.add(Calendar.YEAR, -1);
 				date = calendar.getTime();
 				index++;
 				if (index > hashes.length - 1) {

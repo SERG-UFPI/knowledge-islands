@@ -1,24 +1,11 @@
 package br.com.gitanalyzer.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import lombok.Data;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Entity
-@Getter
-@Setter
+@Data
 public class File {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 	private String path;
-	@ManyToOne
 	private Project project;
 	private String extension;
 	private int fileSize;

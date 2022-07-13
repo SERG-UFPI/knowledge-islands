@@ -1,25 +1,11 @@
 package br.com.gitanalyzer.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import lombok.Data;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Entity
-@Getter
-@Setter
+@Data
 public class AuthorFile {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	@OneToOne
 	private Contributor author;
-	@OneToOne
 	private File file;
 	private boolean firstAuthor;
 	private double doe;	

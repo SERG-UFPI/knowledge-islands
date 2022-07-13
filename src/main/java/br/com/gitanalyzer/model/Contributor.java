@@ -3,44 +3,27 @@ package br.com.gitanalyzer.model;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
+import lombok.Data;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Entity
-@Getter
-@Setter
+@Data
 public class Contributor {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 	private String name;
 	private String email;
-	@ManyToOne
 	private Project project;
 	private boolean isNotDev;
-	
-	@Transient
+
 	private int numberFilesAuthor;
-	@Transient
 	private double sumFileImportance;
-	@Transient
 	private Set<Contributor> alias;
-	
+
 	public Contributor(String name, String email, Project project) {
 		super();
 		this.name = name;
 		this.email = email;
 		this.project = project;
 	}
-	
+
 	public Contributor(String name, String email) {
 		super();
 		this.name = name;
@@ -49,7 +32,7 @@ public class Contributor {
 
 	public Contributor() {
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(email, name);
