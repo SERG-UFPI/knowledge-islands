@@ -1,11 +1,6 @@
 package br.com.gitanalyzer.main;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +19,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
@@ -36,16 +33,29 @@ import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
+import br.com.gitanalyzer.model.TruckFactor;
+import br.com.gitanalyzer.model.TruckFactorDevelopers;
+import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
+import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
 import br.com.gitanalyzer.utils.FileUtils;
 
+@Service
 public class TruckFactorAnalyzer {
 
 	private FileUtils fileUtils = new FileUtils();
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
+
+	@Autowired
+	private ProjectRepository projectRepository;
+	@Autowired
+	private TruckFactorRepository truckFactorRepository;
+	@Autowired
+	private TruckFactorDevelopersRepository truckFactorDevelopersRepository;
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
@@ -80,9 +90,6 @@ public class TruckFactorAnalyzer {
 
 	protected void projectTruckFactorAnalyzes(String projectPath, String resultFilesDirectory, KnowledgeMetric knowledgeMetric) throws IOException, NoHeadException, GitAPIException {
 
-		FileInputStream fstream = new FileInputStream(resultFilesDirectory+Constants.truckFactorResultFile);
-		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-
 		CommitExtractor commitExtractor = new CommitExtractor();
 
 		int numberAllDevs, numberAnalysedDevs, numberAnalysedDevsAlias, 
@@ -93,19 +100,7 @@ public class TruckFactorAnalyzer {
 		projectName = projectExtractor.extractProjectName(projectPath);
 		if (invalidsProjects.contains(projectName) == false) {
 
-			boolean present = false;
-			String strLine;
-
-			while ((strLine = br.readLine()) != null) {
-				String[] line = strLine.split(";");
-				String name = line[8];
-				if (name.equals(projectName)) {
-					present = true;
-					break;
-				}
-			}
-
-			if (present == false) {
+			if (projectRepository.existsByName(projectName) == false) {
 				Project project = new Project(projectName);
 				Git git = null;
 				Repository repository;
@@ -173,31 +168,25 @@ public class TruckFactorAnalyzer {
 					tf = tf+1;
 				}
 
-				String dateLastCommit = simpleDateFormat.format(commits.get(0).getDate());
-
-				FileWriter fileWriterDevs = new FileWriter(resultFilesDirectory+Constants.developersProjectFileName, true);
-				BufferedWriter bwDevs = new BufferedWriter(fileWriterDevs);
-				for (Contributor contributor : topContributors) {
-					TruckFactorDevelopersVO developersVO = new TruckFactorDevelopersVO(contributor.getName(), contributor.getEmail(), projectName, dateLastCommit, knowledgeMetric.getName());
-					bwDevs.write(developersVO.toString());
-					bwDevs.newLine();
-				}
-				bwDevs.close();
-
 				truckfactor = tf;
-				TruckFactorVO truckFactorVO = new TruckFactorVO(numberAllDevs, numberAnalysedDevs, 
-						numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
-						numberAllCommits, numberAnalysedCommits, truckfactor, projectName, 
-						dateLastCommit, knowledgeMetric.getName()); 
+				Date dateLastCommit = commits.get(0).getDate();
 
-				FileWriter fileWriter = new FileWriter(resultFilesDirectory+Constants.truckFactorResultFile, true);
-				BufferedWriter bw = new BufferedWriter(fileWriter);
-				bw.write(truckFactorVO.toString());
-				bw.newLine();
-				bw.close();
+				projectRepository.save(project);
+
+				TruckFactor truckFactor = new TruckFactor(numberAllDevs, numberAnalysedDevs, 
+						numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
+						numberAllCommits, numberAnalysedCommits, truckfactor, project, 
+						dateLastCommit, knowledgeMetric);
+
+				truckFactorRepository.save(truckFactor);
+
+				for (Contributor contributor : topContributors) {
+					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(), dateLastCommit, truckFactor);
+					truckFactorDevelopersRepository.save(truckFactorDevelopers);
+				}
+
 			}
 		}
-		br.close();
 	}
 
 	protected int numberOfCommitsOtherDevsContributorFile(Contributor contributor, 
@@ -253,7 +242,7 @@ public class TruckFactorAnalyzer {
 	}
 
 
-	protected void directoriesTruckFactorAnalyzes(String pathToDirectories) throws IOException, NoHeadException, GitAPIException{
+	public void directoriesTruckFactorAnalyzes(String pathToDirectories) throws IOException, NoHeadException, GitAPIException{
 
 		java.io.File dir = new java.io.File(pathToDirectories);
 		for (java.io.File fileDir: dir.listFiles()) {

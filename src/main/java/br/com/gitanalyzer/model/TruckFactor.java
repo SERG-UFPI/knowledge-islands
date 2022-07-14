@@ -31,4 +31,19 @@ public class TruckFactor {
 	@ManyToOne
 	private Project project;
 
+	public TruckFactor(int numberAllDevs, int numberAnalysedDevs, int numberAnalysedDevsAlias, int numberAllFiles,
+			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, int truckfactor,
+			Project project, Date dateVersion, KnowledgeMetric knowledgeMetric) {
+		this.numberAllDevs = numberAllDevs;
+		this.numberAnalysedDevs = numberAnalysedDevs;
+		this.numberAnalysedDevsAlias = numberAnalysedDevsAlias;
+		this.numberAllFiles = numberAllFiles;
+		this.numberAnalysedFiles = numberAnalysedFiles;
+		this.numberAllCommits = numberAllCommits;
+		this.numberAnalysedCommits = numberAnalysedCommits;
+		this.truckfactor = truckfactor;
+		this.project = project;
+		this.dateVersion = dateVersion;
+		this.knowledgeMetric = knowledgeMetric;
+	}
 }
