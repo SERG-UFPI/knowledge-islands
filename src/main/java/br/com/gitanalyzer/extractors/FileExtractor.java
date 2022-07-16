@@ -28,6 +28,24 @@ public class FileExtractor {
 		this.project = project;
 	}
 
+	public int extractSizeAllFiles(String path, String fileList) {
+		int lines = 0;
+		try {
+			FileInputStream fstream = new FileInputStream(path+fileList);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine;
+			while ((strLine = br.readLine()) != null) {
+				if(!"".equals(strLine.trim())){
+					lines++;
+				}
+			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return lines;
+	}
+
 	public List<File> extractFromFileList(String path, String fileListName, String clocFileName, Repository repository){
 		List<File> files = new ArrayList<File>();
 		String fileListfullPath = path+fileListName;

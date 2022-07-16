@@ -65,6 +65,7 @@ public class Constants {
 
 	public static final String linguistFileName = new String("linguistfiles.log");
 	public static final String clocFileName = new String("cloc_info.log");
+	public static final String allFilesFileName = new String("filelist.log");
 
 	public static final String truckFactorResultFile = new String("truck_factor.log");
 	public static final String truckFactorHistoryFile = new String("truckFactorHistoryFile.log");

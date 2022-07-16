@@ -113,8 +113,7 @@ public class TruckFactorAnalyzer {
 
 				FileExtractor fileExtractor = new FileExtractor(project);
 				System.out.println("EXTRACTING DATA FROM "+projectPath);
-				List<String> allFiles = fileUtils.currentFiles(repository);
-				numberAllFiles = allFiles.size();
+				numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 				List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
 						Constants.clocFileName, repository);
 				numberAnalysedFiles = files.size();
