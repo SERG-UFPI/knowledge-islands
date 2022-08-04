@@ -1,11 +1,7 @@
 package br.com.gitanalyzer.utils;
 
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Constants {
 
@@ -35,37 +31,12 @@ public class Constants {
 	public static final String DELETE = new String("DELETE");
 	public static final String RENAME = new String ("RENAME");
 
-	public static final String DOT = new String(".");
-	public static final String LESS_THEN = new String("<");
-	public static final String BIGGER_THEN = new String(">");
-	public static final String OPEN_BRACKET = new String("[");
-	public static final String FILE_SEPARATOR = new String("/");
-	public static final String NUMBER_SIGN = new String("#");
-	public static final String COMMA = new String(",");
-	public static final String WHITESPACE = new String(" ");
-	public static final String CLOSE_BRACKET = new String("]");
-	public static final String NEW = new String("new");
-	public static final String OPEN_PARENTHESE = new String("(");
-	public static final String EMPTY = new String("");
-	public static final String COLON = new String(":");
-
-	public static final String JAVA_EXTENSION = new String(".java");
-	public static final String TAG_EXTENSION = new String(".tag");
-
-	public static final String TAB = new String("\t");
-	public static final String BREAK_LINE = new String("\n");
-
-	public static final String OPEN_TAG_LIB = new String("<%@");
-	public static final String INCLUDE = new String("include");
-	public static final String TAGLIB = new String("taglib");
-	public static final String TAGDIR = new String("tagdir");
-	public static final String PREFIX = new String("prefix");
-	public static final String ATTRIBUTE = new String("attribute");
-	public static final String TYPE = new String("type");
-
 	public static final String linguistFileName = new String("linguistfiles.log");
 	public static final String clocFileName = new String("cloc_info.log");
 	public static final String allFilesFileName = new String("filelist.log");
+	public static final String commitFileName = new String("commitinfo.log");
+	public static final String commitFileFileName = new String("commitfileinfo.log");
+	public static final String diffFileName = new String("diff.log");
 
 	public static final String truckFactorResultFile = new String("truck_factor.log");
 	public static final String truckFactorHistoryFile = new String("truckFactorHistoryFile.log");
@@ -77,21 +48,4 @@ public class Constants {
 
 	public static final int quantKnowledgedDevsByFile = 3;
 
-	public static final Map<String, String> tagsPathIHealth = new HashMap<String, String>(){{
-		put("infoway:", "template/WEB-INF/tags/");
-	}};
-
-	public static Date thresholdDateDisable(Date currentCommitDate) {
-		Calendar c = Calendar.getInstance(); 
-		c.setTime(currentCommitDate); 
-		c.add(Calendar.MONTH, -3);
-		return c.getTime();
-	}
-
-	public static Date thresholdDateSquadTouchedFiles(Date currentCommitDate) {
-		Calendar c = Calendar.getInstance(); 
-		c.setTime(currentCommitDate); 
-		c.add(Calendar.MONTH, -3);
-		return c.getTime();
-	}
 }

@@ -6,8 +6,17 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum OperationType {
-	ADD('A'), MOD('M'), DEL('D'), REN('R');
+	ADD("ADDED"), MOD("MODIFIED"), REN("RENAMED");
 
-	private char operationType;
+	private String operationType;
+
+	public static OperationType getEnumByType(String operationType) {
+		for (OperationType operation : OperationType.values()) {
+			if (operation.getOperationType().equals(operationType)) {
+				return operation;
+			}
+		}
+		return null;
+	}
 
 }

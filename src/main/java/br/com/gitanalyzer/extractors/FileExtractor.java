@@ -14,19 +14,13 @@ import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.Repository;
 
+import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.utils.Constants;
-import br.com.gitanalyzer.utils.FileUtils;
-
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 public class FileExtractor {
-
-	private Project project;
-
-	public FileExtractor(Project project) {
-		super();
-		this.project = project;
-	}
 
 	public int extractSizeAllFiles(String path, String fileList) {
 		int lines = 0;
@@ -46,7 +40,8 @@ public class FileExtractor {
 		return lines;
 	}
 
-	public List<File> extractFromFileList(String path, String fileListName, String clocFileName, Repository repository){
+	public List<File> extractFromFileList(String path, String fileListName, 
+			String clocFileName, Repository repository, Project project){
 		List<File> files = new ArrayList<File>();
 		String fileListfullPath = path+fileListName;
 		String clocListfullPath = path+clocFileName;
@@ -57,40 +52,68 @@ public class FileExtractor {
 				String strLine, strLineCloc;
 				while ((strLine = br.readLine()) != null) {
 					String filePath = strLine.split(";")[1];
-					int fileSize = 0;
-					if (clocFileName.equals(Constants.clocFileName)) {
-						FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
-						BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
-						while ((strLineCloc = brCloc.readLine()) != null) {
-							if (strLineCloc.split(";")[0].equals(filePath)) {
+					File file = new File(filePath);
+					files.add(file);
+				}
+				br.close();
+				if (clocFileName.equals(Constants.clocFileName)) {
+					FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
+					BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
+					while ((strLineCloc = brCloc.readLine()) != null) {
+						String filePathCloc = strLineCloc.split(";")[0];
+						for (File file : files) {
+							if (filePathCloc.equals(file.getPath())) {
 								if (strLineCloc.split(";").length > 1) {
-									String fileSizeString = strLineCloc.split(";")[1];
+									String fileSizeString = strLineCloc.split(";")[2];
 									if (fileSizeString != null && fileSizeString.equals("") == false) {
-										fileSize = Integer.parseInt(strLineCloc.split(";")[1]);
+										file.setFileSize(Integer.parseInt(fileSizeString));
+										break;
 									}
 								}
 							}
 						}
-						brCloc.close();
-						if (fileSize == 0) {
+					}
+					brCloc.close();
+					for (File file : files) {
+						if (file.getFileSize() == 0) {
 							BlameCommand blameCommand = new BlameCommand(repository);
 							blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
-							blameCommand.setFilePath(filePath);
+							blameCommand.setFilePath(file.getPath());
 							BlameResult blameResult = blameCommand.call();
 							RawText rawText = blameResult.getResultContents();
-							fileSize = rawText.size();
+							file.setFileSize(rawText.size());
 						}
 					}
-					File file = new File(filePath, project, 
-							FileUtils.returnFileExtension(filePath), fileSize);
-					files.add(file);
 				}
-				br.close();
 			} catch (IOException | GitAPIException e) {
 				e.printStackTrace();
 			}
 		}
 		return files;
+	}
+
+	public void getRenamesFiles(String projectPath, List<File> files) {
+		try {
+			for (File file : files) {
+				FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
+				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+				String strLine;
+				while ((strLine = br.readLine()) != null) {
+					String[] splited = strLine.split(";");
+					String operation = splited[1];
+					if (operation.equals(OperationType.REN.getOperationType())) {
+						String fileName = splited[3];
+						String oldPath = splited[2];
+						if (file.isFile(fileName)) {
+							file.getRenamePaths().add(oldPath);
+						}
+					}
+				}
+				br.close();
+			}
+		}catch (Exception e) {
+			log.error(e.getMessage());
+		}
 	}
 
 }

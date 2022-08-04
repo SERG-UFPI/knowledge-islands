@@ -10,8 +10,6 @@ public class Contributor {
 
 	private String name;
 	private String email;
-	private Project project;
-	private boolean isNotDev;
 
 	private int numberFilesAuthor;
 	private double sumFileImportance;
@@ -21,7 +19,6 @@ public class Contributor {
 		super();
 		this.name = name;
 		this.email = email;
-		this.project = project;
 	}
 
 	public Contributor(String name, String email) {

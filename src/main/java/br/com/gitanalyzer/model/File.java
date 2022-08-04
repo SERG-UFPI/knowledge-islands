@@ -1,5 +1,8 @@
 package br.com.gitanalyzer.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -9,6 +12,14 @@ public class File {
 	private Project project;
 	private String extension;
 	private int fileSize;
+	private List<String> renamePaths = new ArrayList<String>();
+
+	public boolean isFile(String path) {
+		List<String> paths = new ArrayList<String>();
+		paths.add(this.path);
+		paths.addAll(renamePaths);
+		return paths.contains(path);
+	}
 
 	public File(String path, Project project, String extension) {
 		super();

@@ -33,8 +33,6 @@ import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
-import br.com.gitanalyzer.model.TruckFactor;
-import br.com.gitanalyzer.model.TruckFactorDevelopers;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
@@ -111,17 +109,17 @@ public class TruckFactorAnalyzer {
 				}
 				repository = git.getRepository();
 
-				FileExtractor fileExtractor = new FileExtractor(project);
+				FileExtractor fileExtractor = new FileExtractor();
 				System.out.println("EXTRACTING DATA FROM "+projectPath);
 				numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 				List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-						Constants.clocFileName, repository);
+						Constants.clocFileName, repository, project);
 				numberAnalysedFiles = files.size();
-				List<RevCommit> allCommits = extractAllCommits(git);
-				numberAllCommits = allCommits.size();
-				List<Contributor> allContributors = extractAuthor(allCommits);
-				numberAllDevs = allContributors.size();
-				List<Commit> commits = commitExtractor.extractCommitsWithoutPersistence(files, git, repository);
+				fileExtractor.getRenamesFiles(projectPath, files);
+				List<Commit> commits = commitExtractor.getCommits(projectPath, project);
+				numberAllCommits = commits.size();
+				commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
+				commits = filterCommits(commits);
 				numberAnalysedCommits = commits.size();
 				List<Contributor> contributors = extractContributorFromCommits(commits);
 				numberAnalysedDevs = contributors.size();
@@ -172,20 +170,24 @@ public class TruckFactorAnalyzer {
 
 				projectRepository.save(project);
 
-				TruckFactor truckFactor = new TruckFactor(numberAllDevs, numberAnalysedDevs, 
-						numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
-						numberAllCommits, numberAnalysedCommits, truckfactor, project, 
-						dateLastCommit, knowledgeMetric);
-
-				truckFactorRepository.save(truckFactor);
-
-				for (Contributor contributor : topContributors) {
-					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(), dateLastCommit, truckFactor);
-					truckFactorDevelopersRepository.save(truckFactorDevelopers);
-				}
+				//				TruckFactor truckFactor = new TruckFactor(numberAllDevs, numberAnalysedDevs, 
+				//						numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
+				//						numberAllCommits, numberAnalysedCommits, truckfactor, project, 
+				//						dateLastCommit, knowledgeMetric);
+				//
+				//				truckFactorRepository.save(truckFactor);
+				//
+				//				for (Contributor contributor : topContributors) {
+				//					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(), dateLastCommit, truckFactor);
+				//					truckFactorDevelopersRepository.save(truckFactorDevelopers);
+				//				}
 
 			}
 		}
+	}
+
+	private List<Commit> filterCommits(List<Commit> commits) {
+		return commits.stream().filter(commit -> commit.getCommitFiles().size() > 0).collect(Collectors.toList());
 	}
 
 	protected int numberOfCommitsOtherDevsContributorFile(Contributor contributor, 
