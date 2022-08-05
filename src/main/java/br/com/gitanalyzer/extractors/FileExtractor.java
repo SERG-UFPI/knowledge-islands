@@ -5,7 +5,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jgit.api.BlameCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -93,23 +95,28 @@ public class FileExtractor {
 	}
 
 	public void getRenamesFiles(String projectPath, List<File> files) {
+		HashMap<String, String> newOldName = new HashMap<String, String>();
 		try {
+			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine;
+			while ((strLine = br.readLine()) != null) {
+				String[] splited = strLine.split(";");
+				String operation = splited[1];
+				if (operation.equals(OperationType.REN.getOperationType())) {
+					String oldPath = splited[2];
+					String fileName = splited[3];
+					newOldName.put(oldPath, fileName);
+				}
+			}
+			br.close();
 			for (File file : files) {
-				FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
-				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-				String strLine;
-				while ((strLine = br.readLine()) != null) {
-					String[] splited = strLine.split(";");
-					String operation = splited[1];
-					if (operation.equals(OperationType.REN.getOperationType())) {
-						String fileName = splited[3];
-						String oldPath = splited[2];
-						if (file.isFile(fileName)) {
-							file.getRenamePaths().add(oldPath);
-						}
+				for (Map.Entry<String, String> entry : newOldName.entrySet()) {
+					String fileName = entry.getValue();
+					if (file.isFile(fileName)) {
+						file.getRenamePaths().add(entry.getKey());
 					}
 				}
-				br.close();
 			}
 		}catch (Exception e) {
 			log.error(e.getMessage());

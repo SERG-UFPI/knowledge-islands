@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.Commit;
@@ -49,15 +50,14 @@ public class CommitExtractor {
 
 
 	public void extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
-		for (Commit commit : commits) {
-			List<CommitFile> commitsFiles = new ArrayList<CommitFile>();
-			try {
-				FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
-				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-				String strLine;
-				while ((strLine = br.readLine()) != null) {
-					String[] splited = strLine.split(";");
-					String id = splited[0];
+		try {
+			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine;
+			while ((strLine = br.readLine()) != null) {
+				String[] splited = strLine.split(";");
+				String id = splited[0];
+				commitFor:for (Commit commit : commits) {
 					if (id.equals(commit.getExternalId())) {
 						String operation = splited[1];
 						String filePath = splited[3];
@@ -68,61 +68,45 @@ public class CommitExtractor {
 								break;
 							}
 						}
-						if(file == null) {
-							continue;
+						if(file != null) {
+							CommitFile commitFile = new CommitFile(file, commit, 
+									OperationType.getEnumByType(operation));
+							commit.getCommitFiles().add(commitFile);
 						}
-						CommitFile commitFile = new CommitFile(file, commit, 
-								OperationType.getEnumByType(operation));
-						commitsFiles.add(commitFile);
+						break commitFor;
 					}
 				}
-				List<FileLinesAdded> flas = numberOfAddedLines(projectPath, commit.getExternalId(), files);
-				for (CommitFile cf : commitsFiles) {
-					forFla:for (FileLinesAdded fla : flas) {
-						if (cf.getFile().isFile(fla.path)) {
-							cf.setAdds(fla.linesAdded);
-							break forFla;
-						}
-					}
-				}
-				commit.setCommitFiles(commitsFiles);
-				br.close();
-			}catch (Exception e) {
-				log.error(e.getMessage());
 			}
+			br.close();
+		}catch (Exception e) {
+			log.error(e.getMessage());
 		}
-	}
-
-	private List<FileLinesAdded> numberOfAddedLines(String projectPath, String idCommit, List<File> files) {
-		List<FileLinesAdded> fla = new ArrayList<FileLinesAdded>();
+		commits = commits.stream().filter(c -> c.getCommitFiles().size() != 0).collect(Collectors.toList());
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.diffFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
-			boolean finded = false;
-			while ((strLine = br.readLine()) != null) {
-				if (finded == false) {
-					String[] splited = strLine.split(" ");
-					String string1 = splited[0];
-					if (string1.equals("commit")) {
-						String idCommitString = splited[1];
-						if (idCommitString.equals(idCommit)) {
-							finded = true;
-							continue;
+			Commit commitAnalyzed = null;
+			whileFile:while ((strLine = br.readLine()) != null) {
+				if (strLine.trim().isEmpty()) {
+					continue whileFile;
+				}
+				String[] splited1 = strLine.split(" ");
+				String string1 = splited1[0];
+				if (string1.equals("commit")) {
+					String idCommitString = splited1[1];
+					for (Commit commit : commits) {
+						if (idCommitString.equals(commit.getExternalId())) {
+							commitAnalyzed = commit;
+							continue whileFile;
 						}
 					}
-				}else {
-					if (strLine.trim().isEmpty()) {
-						break;
-					}else {
-						String[] splited = strLine.split(" ");
-						String string1 = splited[0];
-						if (string1.equals("commit")) {
-							break;
-						}
-					}
-					String[] splited = strLine.split("\t");
-					String path = splited[2];
+					commitAnalyzed = null;
+					continue whileFile;
+				}
+				if (commitAnalyzed != null) {
+					String[] splited2 = strLine.split("\t");
+					String path = splited2[2];
 					if (path.contains("=>")) {
 						String commonString1 = "";
 						String commonString2 = "";
@@ -133,49 +117,41 @@ public class CommitExtractor {
 							if (commonString.length > 1) {
 								commonString2 = commonString[1];
 							}
-							String string1 = path.substring(path.indexOf("{") + 1);
-							path = string1.substring(0, string1.indexOf("}"));
+							String stringAux = path.substring(path.indexOf("{") + 1);
+							path = stringAux.substring(0, stringAux.indexOf("}"));
 						}
 
-						String[] splited1 = path.split("=>");
-						String path1 = splited1[0];
+						String[] splited3 = path.split("=>");
+						String path1 = splited3[0];
 						path1 = path1.trim();
-						String path2 = splited1[1];
+						String path2 = splited3[1];
 						path2 = path2.trim();
 
 						String file1 = commonString1+path1+commonString2;
 						String file2 = commonString1+path2+commonString2;
-						for (File file : files) {
-							if(file.isFile(file1) || file.isFile(file2)) {
-								FileLinesAdded fileLinesAdded = new FileLinesAdded();
-								fileLinesAdded.path = file.getPath();
-								fileLinesAdded.linesAdded = Integer.parseInt(splited[0]);
-								fla.add(fileLinesAdded);
+						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+							if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
+								int linesAdded = Integer.parseInt(splited2[0]);
+								commitFile.setAdds(linesAdded);
+								continue whileFile;
 							}
 						}
 					}else {
-						for (File file : files) {
-							if(file.isFile(path)) {
-								FileLinesAdded fileLinesAdded = new FileLinesAdded();
-								fileLinesAdded.path = file.getPath();
-								fileLinesAdded.linesAdded = Integer.parseInt(splited[0]);
-								fla.add(fileLinesAdded);
+						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+							if(commitFile.getFile().isFile(path)) {
+								int linesAdded = Integer.parseInt(splited2[0]);
+								commitFile.setAdds(linesAdded);
+								continue whileFile;
 							}
 						}
-					}
+					}	
 				}
 			}
 			br.close();
-			return fla;
 		}catch (Exception e) {
 			log.error(e.getMessage());
-			return null;
 		}
-	}
-
-	class FileLinesAdded{
-		int linesAdded;
-		String path;
+		System.out.println();
 	}
 
 }
