@@ -37,7 +37,7 @@ public class FileExtractor {
 			}
 			br.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(e.getMessage());
 		}
 		return lines;
 	}
@@ -88,7 +88,7 @@ public class FileExtractor {
 					}
 				}
 			} catch (IOException | GitAPIException e) {
-				e.printStackTrace();
+				log.error(e.getMessage());
 			}
 		}
 		return files;

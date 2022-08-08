@@ -28,17 +28,21 @@ public class CommitExtractor {
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
-				String[] commitSplited = strLine.split(";");
-				String idCommit = commitSplited[0];
-				String authorName = commitSplited[1];
-				String authorEmail = commitSplited[2];
-				String time = commitSplited[3];
-				Contributor contributor = new Contributor(authorName, authorEmail);
-				Integer timeInt = Integer.parseInt(time);
-				Instant instant = Instant.ofEpochSecond(timeInt);
-				Date commitDate = Date.from(instant);
-				Commit commit = new Commit(contributor, project, commitDate, idCommit);
-				commits.add(commit);
+				try {
+					String[] commitSplited = strLine.split(";");
+					String idCommit = commitSplited[0];
+					String authorName = commitSplited[1];
+					String authorEmail = commitSplited[2];
+					String time = commitSplited[3];
+					Contributor contributor = new Contributor(authorName, authorEmail);
+					Integer timeInt = Integer.parseInt(time);
+					Instant instant = Instant.ofEpochSecond(timeInt);
+					Date commitDate = Date.from(instant);
+					Commit commit = new Commit(contributor, project, commitDate, idCommit);
+					commits.add(commit);
+				} catch (Exception e) {
+					log.error(e.getMessage());
+				}
 			}
 			br.close();
 			return commits;
@@ -131,16 +135,24 @@ public class CommitExtractor {
 						String file2 = commonString1+path2+commonString2;
 						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
 							if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
-								int linesAdded = Integer.parseInt(splited2[0]);
-								commitFile.setAdds(linesAdded);
+								try {
+									int linesAdded = Integer.parseInt(splited2[0]);
+									commitFile.setAdds(linesAdded);
+								} catch (Exception e) {
+									log.error("Error reading lines added on file "+commitFile.getFile()+" on commit "+commitAnalyzed.getExternalId());
+								}
 								continue whileFile;
 							}
 						}
 					}else {
 						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
 							if(commitFile.getFile().isFile(path)) {
-								int linesAdded = Integer.parseInt(splited2[0]);
-								commitFile.setAdds(linesAdded);
+								try {
+									int linesAdded = Integer.parseInt(splited2[0]);
+									commitFile.setAdds(linesAdded);
+								} catch (Exception e) {
+									log.error("Error reading lines added on file "+commitFile.getFile()+" on commit "+commitAnalyzed.getExternalId());
+								}
 								continue whileFile;
 							}
 						}
@@ -151,7 +163,6 @@ public class CommitExtractor {
 		}catch (Exception e) {
 			log.error(e.getMessage());
 		}
-		System.out.println();
 	}
 
 }

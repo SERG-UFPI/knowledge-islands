@@ -13,28 +13,32 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import br.com.gitanalyzer.enums.KnowledgeMetric;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class TruckFactor {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private int numberAllDevs, numberAnalysedDevs, numberAnalysedDevsAlias, 
+	private int numberAnalysedDevs, numberAnalysedDevsAlias, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
+	private String versionId;
 	@Enumerated(EnumType.STRING)
 	private KnowledgeMetric knowledgeMetric;
 	@ManyToOne
 	private Project project;
 
-	public TruckFactor(int numberAllDevs, int numberAnalysedDevs, int numberAnalysedDevsAlias, int numberAllFiles,
+	public TruckFactor(int numberAnalysedDevs, int numberAnalysedDevsAlias, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, int truckfactor,
-			Project project, Date dateVersion, KnowledgeMetric knowledgeMetric) {
-		this.numberAllDevs = numberAllDevs;
+			Project project, Date dateVersion, String versionId, KnowledgeMetric knowledgeMetric) {
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAnalysedDevsAlias = numberAnalysedDevsAlias;
 		this.numberAllFiles = numberAllFiles;
@@ -44,6 +48,7 @@ public class TruckFactor {
 		this.truckfactor = truckfactor;
 		this.project = project;
 		this.dateVersion = dateVersion;
+		this.versionId = versionId;
 		this.knowledgeMetric = knowledgeMetric;
 	}
 }

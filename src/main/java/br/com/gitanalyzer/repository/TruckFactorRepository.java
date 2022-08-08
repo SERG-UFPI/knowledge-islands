@@ -9,5 +9,5 @@ import br.com.gitanalyzer.model.TruckFactor;
 @Repository
 public interface TruckFactorRepository extends JpaRepository<TruckFactor, Long> {
 
-	boolean existsByKnowledgeMetricAndProjectId(KnowledgeMetric knowledgeMetric, Long id);
+	boolean existsByKnowledgeMetricAndProjectIdAndVersionId(KnowledgeMetric knowledgeMetric, Long id, String versionId);
 }
