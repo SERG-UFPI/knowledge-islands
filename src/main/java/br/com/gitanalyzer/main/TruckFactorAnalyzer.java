@@ -1,7 +1,6 @@
 package br.com.gitanalyzer.main;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,14 +40,12 @@ import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
-import br.com.gitanalyzer.utils.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class TruckFactorAnalyzer {
 
-	private FileUtils fileUtils = new FileUtils();
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
 
@@ -61,8 +58,6 @@ public class TruckFactorAnalyzer {
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
-
-	private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
 	public static void main(String[] args) {
 
@@ -84,7 +79,7 @@ public class TruckFactorAnalyzer {
 		TruckFactorAnalyzer truckFactorAnalyzer = new TruckFactorAnalyzer();
 		try {
 			truckFactorAnalyzer.projectTruckFactorAnalyzes("/home/otavio/Desktop/GitAnalyzer/projetos/ihealth/", 
-					"/home/otavio/Desktop/GitAnalyzer/projetos/", KnowledgeMetric.DOE);
+					"/home/otavio/Desktop/GitAnalyzer/projetos/", KnowledgeMetric.DOA);
 		} catch (IOException | GitAPIException e) {
 			e.printStackTrace();
 		}
@@ -114,7 +109,7 @@ public class TruckFactorAnalyzer {
 				repository = git.getRepository();
 
 				FileExtractor fileExtractor = new FileExtractor();
-				log.info("Extracting data from "+projectPath);
+				log.info("EXTRACTING DATA FROM "+projectPath);
 				numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 				List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
 						Constants.clocFileName, repository, project);
@@ -128,19 +123,25 @@ public class TruckFactorAnalyzer {
 				numberAnalysedDevs = contributors.size();
 				contributors = setAlias(contributors);
 				numberAnalysedDevsAlias = contributors.size();
+				log.info("CALCULATING DOE..");
 				List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 				for(Contributor contributor: contributors) {
+					List<File> filesContributor = filesTouchedByContributor(contributor, commits);
 					for (File file : files) {
-						boolean existsContributorFile = existsContributorFile(contributor, file, commits);
-						if (existsContributorFile) {
-							int firstAuthor = firstAuthorContributorFile(contributor, file, commits);
+						boolean flag = false;
+						for (File fileContributor : filesContributor) {
+							if(fileContributor.getPath().equals(file.getPath())) {
+								flag = true;
+								break;
+							}
+						}
+						if (flag) {
 							if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
-								int adds = linesAddedContributorFile(contributor, file, commits);
-								int numDays = numDaysContributorFile(contributor, file, commits);
-								int fileSize = file.getFileSize();
-								double doe = doeUtils.getDOE(adds, firstAuthor, numDays, fileSize);
+								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
+								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa, doeContributorFile.numDays, file.getFileSize());
 								authorFiles.add(new AuthorFile(contributor, file, doe));
 							}else {
+								int firstAuthor = firstAuthorContributorFile(contributor, file, commits);
 								int dl = numberOfCommitsContributorFile(contributor, file, commits);
 								int ac = numberOfCommitsOtherDevsContributorFile(contributor, file, commits);
 								double doa = doaUtils.getDOA(firstAuthor, dl, ac);
@@ -149,6 +150,7 @@ public class TruckFactorAnalyzer {
 						}
 					}
 				}
+				log.info("CALCULATING TF..");
 				setNumberAuthor(contributors, authorFiles, files, knowledgeMetric);
 				Collections.sort(contributors, new Comparator<Contributor>() {
 					@Override
@@ -172,7 +174,7 @@ public class TruckFactorAnalyzer {
 				Date dateLastCommit = commits.get(0).getDate();
 				String versionId = commits.get(0).getExternalId();
 
-				log.info("Saving project...");
+				log.info("SAVING TF DATA...");
 				projectRepository.save(project);
 
 				TruckFactor truckFactor = new TruckFactor(numberAnalysedDevs, 
@@ -198,6 +200,78 @@ public class TruckFactorAnalyzer {
 
 			}
 		}
+	}
+
+	protected DoeContributorFile getDoeContributorFile(Contributor contributor, 
+			File file, List<Commit> commits) {
+		Date currentDate = commits.get(0).getDate();
+		int adds = 0;
+		int fa = 0;
+		int numDays = 0;
+		Date dateLastCommit = null;
+		List<Contributor> contributors = new ArrayList<Contributor>();
+		contributors.add(contributor);
+		contributors.addAll(contributor.getAlias());
+		for (Commit commit : commits) {
+			boolean present = false;
+			for (Contributor contributorAux : contributors) {
+				if (contributorAux.equals(commit.getAuthor())) {
+					present = true;
+					break;
+				}
+			}
+			if (present == true) {
+				for (CommitFile commitFile: commit.getCommitFiles()) {
+					if (commitFile.getFile().getPath().equals(file.getPath())) {
+						adds = commitFile.getAdds() + adds;
+						if (dateLastCommit == null) {
+							dateLastCommit = commit.getDate();
+						}
+						if(commitFile.getOperation().equals(OperationType.ADD)) {
+							fa = 1;
+						}
+						break;
+					}
+				}
+			}
+		}
+		if (dateLastCommit != null) {
+			long diff = currentDate.getTime() - dateLastCommit.getTime();
+			numDays = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+		}
+		DoeContributorFile doeContributorFile = new DoeContributorFile(adds, fa, numDays);
+		return doeContributorFile;
+	}
+
+	private List<File> filesTouchedByContributor(Contributor contributor, List<Commit> commits){
+		List<File> files = new ArrayList<File>();
+		List<Contributor> contributors = new ArrayList<Contributor>();
+		contributors.add(contributor);
+		contributors.addAll(contributor.getAlias());
+		for (Commit commit : commits) {
+			boolean present = false;
+			for (Contributor contributorAux : contributors) {
+				if (contributorAux.equals(commit.getAuthor())) {
+					present = true;
+					break;
+				}
+			}
+			if (present == true) {
+				for (CommitFile commitFile: commit.getCommitFiles()) {
+					boolean filePresent = false;
+					for (File file : files) {
+						if (file.getPath().equals(commitFile.getFile().getPath())) {
+							filePresent = true;
+							break;
+						}
+					}
+					if (filePresent == false) {
+						files.add(commitFile.getFile());
+					}
+				}
+			}
+		}
+		return files;
 	}
 
 	protected int numberOfCommitsOtherDevsContributorFile(Contributor contributor, 
@@ -386,29 +460,6 @@ public class TruckFactorAnalyzer {
 		}
 	}
 
-	protected boolean existsContributorFile(Contributor contributor, File file, List<Commit> commits) {
-		for (Commit commit : commits) {
-			boolean present = false;
-			List<Contributor> contributors = new ArrayList<Contributor>();
-			contributors.add(contributor);
-			contributors.addAll(contributor.getAlias());
-			for (Contributor contributorAux : contributors) {
-				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					if (commitFile.getFile().getPath().equals(file.getPath())) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
 	protected int numDaysContributorFile(Contributor contributor, File file, List<Commit> commits) {
 		Date currentDate = commits.get(0).getDate();
 		List<Contributor> contributors = new ArrayList<Contributor>();
@@ -525,11 +576,13 @@ public class TruckFactorAnalyzer {
 				for(Contributor contributorAux: contributors) {
 					if(contributorAux.equals(contributor) == false) {
 						if(contributorAux.getEmail().equals(contributor.getEmail())) {
-							alias.add(contributorAux);
-						}else if(contributorAux.getName().toUpperCase().contains("JARDIEL")
-								&& contributor.getName().toUpperCase().contains("JARDIEL")) {
-							alias.add(contributorAux);
-						}
+							alias.add(contributorAux);}
+						//						}else if((contributorAux.getName().toUpperCase().contains("CLEITON")
+						//								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
+						//										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
+						//												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
+						//							alias.add(contributorAux);
+						//						}
 						else{
 							String nome = contributorAux.getName().toUpperCase();
 							if(nome != null) {
@@ -547,5 +600,16 @@ public class TruckFactorAnalyzer {
 			}
 		}
 		return contributorsAliases;
+	}
+
+	class DoeContributorFile{
+		int numberAdds, fa, numDays;
+
+		public DoeContributorFile(int numberAdds, int fa, int numDays) {
+			super();
+			this.numberAdds = numberAdds;
+			this.fa = fa;
+			this.numDays = numDays;
+		}
 	}
 }
