@@ -1,7 +1,9 @@
 package br.com.gitanalyzer.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.Data;
 
@@ -12,6 +14,7 @@ public class File {
 	private Project project;
 	private String extension;
 	private int fileSize;
+	private Set<Contributor> mantainers = new HashSet<Contributor>();
 	private List<String> renamePaths = new ArrayList<String>();
 
 	public boolean isFile(String path) {

@@ -60,7 +60,6 @@ public class TruckFactorAnalyzer {
 			"ionic", "cucumber"));
 
 	public static void main(String[] args) {
-
 		TruckFactorAnalyzer truckFactorAnalyzer = new TruckFactorAnalyzer();
 		String pathToDir = args[0];
 		try {
@@ -70,17 +69,6 @@ public class TruckFactorAnalyzer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (GitAPIException e) {
-			e.printStackTrace();
-		}
-		//truckFactorAnalyzer.analysesIhealth();
-	}
-
-	private void analysesIhealth() {
-		TruckFactorAnalyzer truckFactorAnalyzer = new TruckFactorAnalyzer();
-		try {
-			truckFactorAnalyzer.projectTruckFactorAnalyzes("/home/otavio/Desktop/GitAnalyzer/projetos/ihealth/", 
-					"/home/otavio/Desktop/GitAnalyzer/projetos/", KnowledgeMetric.DOA);
-		} catch (IOException | GitAPIException e) {
 			e.printStackTrace();
 		}
 	}
@@ -150,8 +138,7 @@ public class TruckFactorAnalyzer {
 						}
 					}
 				}
-				log.info("CALCULATING TF..");
-				setNumberAuthor(contributors, authorFiles, files, knowledgeMetric);
+				setContributorNumberAuthorAndFileMaintainers(contributors, authorFiles, files, knowledgeMetric);
 				Collections.sort(contributors, new Comparator<Contributor>() {
 					@Override
 					public int compare(Contributor c1, Contributor c2) {
@@ -160,9 +147,10 @@ public class TruckFactorAnalyzer {
 				});
 				contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
 				List<Contributor> topContributors = new ArrayList<Contributor>();
+				log.info("CALCULATING TF..");
 				int tf = 0;
 				while(contributors.isEmpty() == false) {
-					double covarage = getCoverage(authorFiles, contributors, files, knowledgeMetric);
+					double covarage = getCoverage(contributors, files, knowledgeMetric);
 					if(covarage < 0.5) 
 						break;
 					topContributors.add(contributors.get(0));
@@ -328,7 +316,6 @@ public class TruckFactorAnalyzer {
 
 
 	public void directoriesTruckFactorAnalyzes(String pathToDirectories) throws IOException, NoHeadException, GitAPIException{
-
 		java.io.File dir = new java.io.File(pathToDirectories);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
@@ -383,39 +370,16 @@ public class TruckFactorAnalyzer {
 		return null;
 	}
 
-	protected double getCoverage(List<AuthorFile> authorsFiles, List<Contributor> contributors, 
-			List<File> files, KnowledgeMetric knowledgeMetric) {
+	protected double getCoverage(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {
 		int fileSize = files.size();
 		int numberFilesCovarage = 0;
 		forFiles:for(File file: files) {
-			List<AuthorFile> authorsFilesAux = authorsFiles.stream().
-					filter(authorFile -> authorFile.getFile().getPath().equals(file.getPath())).collect(Collectors.toList());
-			if (authorsFilesAux != null && authorsFilesAux.size() > 0) {
-				List<Contributor> maintainers = new ArrayList<Contributor>();
-				AuthorFile max = authorsFilesAux.stream().max(
-						Comparator.comparing(knowledgeMetric.equals(KnowledgeMetric.DOE)?AuthorFile::getDoe:AuthorFile::getDoa)).get();
-				for (AuthorFile authorFile : authorsFilesAux) {
-					double normalized = 0;
-					if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
-						normalized = authorFile.getDoe()/max.getDoe();
-						if (normalized > Constants.normalizedThresholdMantainerDOE) {
-							maintainers.add(authorFile.getAuthor());
-						}
-					}else if(knowledgeMetric.equals(KnowledgeMetric.DOA)){
-						normalized = authorFile.getDoa()/max.getDoa();
-						if (normalized > Constants.normalizedThresholdMantainerDOA && 
-								authorFile.getDoa() > Constants.thresholdMantainerDOA) {
-							maintainers.add(authorFile.getAuthor());
-						}
-					}
-				}
-				if (maintainers.size() > 0) {
+			if (file.getMantainers().size() > 0) {
+				for (Contributor maintainer : file.getMantainers()) {
 					for (Contributor contributor : contributors) {
-						for (Contributor maintainer : maintainers) {
-							if (maintainer.equals(contributor)) {
-								numberFilesCovarage++;
-								continue forFiles;
-							}
+						if (maintainer.equals(contributor)) {
+							numberFilesCovarage++;
+							continue forFiles;
 						}
 					}
 				}
@@ -425,7 +389,7 @@ public class TruckFactorAnalyzer {
 		return coverage; 
 	}
 
-	protected void setNumberAuthor(List<Contributor> contributors, 
+	protected void setContributorNumberAuthorAndFileMaintainers(List<Contributor> contributors, 
 			List<AuthorFile> authorsFiles, List<File> files, KnowledgeMetric knowledgeMetric) {
 		for (File file: files) {
 			List<AuthorFile> authorsFilesAux = authorsFiles.stream().
@@ -450,6 +414,7 @@ public class TruckFactorAnalyzer {
 					}
 				}
 				for (Contributor maintainer : maintainers) {
+					file.getMantainers().add(maintainer);
 					for (Contributor contributor: contributors) {
 						if (maintainer.equals(contributor)) {
 							contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
