@@ -355,7 +355,7 @@ public class TruckFactorAnalyzer {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				projectTruckFactorAnalyzes(projectPath, pathToDirectories, KnowledgeMetric.DOA);
+				projectTruckFactorAnalyzes(projectPath, pathToDirectories, KnowledgeMetric.DOE);
 			}
 		}
 	}

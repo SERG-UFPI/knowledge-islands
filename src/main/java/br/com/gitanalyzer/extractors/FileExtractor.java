@@ -49,13 +49,24 @@ public class FileExtractor {
 		String clocListfullPath = path+clocFileName;
 		if (fileListName.equals(Constants.linguistFileName)) {
 			try {
+				String startPattern = null;
+				if (Constants.projectPatterns.containsKey(project.getName())) {
+					startPattern = Constants.projectPatterns.get(project.getName());
+				}
 				FileInputStream fstream = new FileInputStream(fileListfullPath);
 				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 				String strLine, strLineCloc;
 				while ((strLine = br.readLine()) != null) {
 					String filePath = strLine.split(";")[1];
-					File file = new File(filePath);
-					files.add(file);
+					if (startPattern == null) {
+						File file = new File(filePath);
+						files.add(file);
+					}else {
+						if (filePath.startsWith(startPattern) == false) {
+							File file = new File(filePath);
+							files.add(file);
+						}
+					}
 				}
 				br.close();
 				if (clocFileName.equals(Constants.clocFileName)) {

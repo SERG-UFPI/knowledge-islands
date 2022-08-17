@@ -1,7 +1,9 @@
 package br.com.gitanalyzer.utils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Constants {
 
@@ -47,5 +49,11 @@ public class Constants {
 	public static final double thresholdMantainerDOA = 3.293;
 
 	public static final int quantKnowledgedDevsByFile = 3;
+
+	public static Map<String, String> projectPatterns  = new HashMap<String, String>() {{
+		put("linux", "drivers/");
+		put("homebrew", "Library/Formula/");
+		put("homebrew-cask", "Casks/");
+	}};
 
 }
