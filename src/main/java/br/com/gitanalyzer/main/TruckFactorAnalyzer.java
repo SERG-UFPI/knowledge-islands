@@ -129,10 +129,8 @@ public class TruckFactorAnalyzer {
 								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa, doeContributorFile.numDays, file.getFileSize());
 								authorFiles.add(new AuthorFile(contributor, file, doe));
 							}else {
-								int firstAuthor = firstAuthorContributorFile(contributor, file, commits);
-								int dl = numberOfCommitsContributorFile(contributor, file, commits);
-								int ac = numberOfCommitsOtherDevsContributorFile(contributor, file, commits);
-								double doa = doaUtils.getDOA(firstAuthor, dl, ac);
+								DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
+								double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
 								authorFiles.add(new AuthorFile(contributor, doa, file));
 							}
 						}
@@ -173,7 +171,6 @@ public class TruckFactorAnalyzer {
 				if (truckFactorRepository.
 						existsByKnowledgeMetricAndProjectIdAndVersionId(truckFactor.getKnowledgeMetric(), 
 								truckFactor.getProject().getId(), truckFactor.getVersionId()) == false) {
-					log.info("Saving truck factor...");
 					truckFactorRepository.save(truckFactor);
 				}
 
@@ -229,6 +226,44 @@ public class TruckFactorAnalyzer {
 		}
 		DoeContributorFile doeContributorFile = new DoeContributorFile(adds, fa, numDays);
 		return doeContributorFile;
+	}
+
+	protected DoaContributorFile getDoaContributorFile(Contributor contributor, 
+			File file, List<Commit> commits) {
+		int numberCommits = 0, ac = 0;
+		int fa = 0;
+		List<Contributor> contributors = new ArrayList<Contributor>();
+		contributors.add(contributor);
+		contributors.addAll(contributor.getAlias());
+		for (Commit commit : commits) {
+			boolean present = false;
+			for (Contributor contributorAux : contributors) {
+				if (contributorAux.equals(commit.getAuthor())) {
+					present = true;
+					break;
+				}
+			}
+			if (present == true) {
+				for (CommitFile commitFile: commit.getCommitFiles()) {
+					if (commitFile.getFile().getPath().equals(file.getPath())) {
+						numberCommits = numberCommits + 1;
+						if(commitFile.getOperation().equals(OperationType.ADD)) {
+							fa = 1;
+						}
+						break;
+					}
+				}
+			}else {
+				for (CommitFile commitFile: commit.getCommitFiles()) {
+					if (commitFile.getFile().getPath().equals(file.getPath())) {
+						ac = ac + 1;
+						break;
+					}
+				}
+			}
+		}
+		DoaContributorFile doaContributorFile = new DoaContributorFile(numberCommits, fa, ac);
+		return doaContributorFile;
 	}
 
 	private List<File> filesTouchedByContributor(Contributor contributor, List<Commit> commits){
@@ -320,7 +355,7 @@ public class TruckFactorAnalyzer {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				projectTruckFactorAnalyzes(projectPath, pathToDirectories, KnowledgeMetric.DOE);
+				projectTruckFactorAnalyzes(projectPath, pathToDirectories, KnowledgeMetric.DOA);
 			}
 		}
 	}
@@ -425,86 +460,6 @@ public class TruckFactorAnalyzer {
 		}
 	}
 
-	protected int numDaysContributorFile(Contributor contributor, File file, List<Commit> commits) {
-		Date currentDate = commits.get(0).getDate();
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
-		for (Commit commit : commits) {
-			boolean present = false;
-			for (Contributor contributorAux : contributors) {
-				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				Date dateLastCommit = null;
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					if (commitFile.getFile().getPath().equals(file.getPath())) {
-						dateLastCommit = commit.getDate();
-						break;
-					}
-				}
-				if (dateLastCommit != null) {
-					long diff = currentDate.getTime() - dateLastCommit.getTime();
-					int diffDays = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-					return diffDays;
-				}
-			}
-		}
-		return 0;
-	}
-
-	protected int firstAuthorContributorFile(Contributor contributor, File file, List<Commit> commits) {
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
-		for (Commit commit : commits) {
-			boolean present = false;
-			for (Contributor contributorAux : contributors) {
-				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					if (commitFile.getFile().getPath().equals(file.getPath()) && commitFile.getOperation().equals(OperationType.ADD)) {
-						return 1;
-					}
-				}
-			}
-		}
-		return 0;
-	}
-
-	protected int linesAddedContributorFile(Contributor contributor, 
-			File file, List<Commit> commits) {
-		int adds = 0;
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
-		for (Commit commit : commits) {
-			boolean present = false;
-			for (Contributor contributorAux : contributors) {
-				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					if (commitFile.getFile().getPath().equals(file.getPath())) {
-						adds = commitFile.getAdds() + adds;
-						break;
-					}
-				}
-			}
-		}
-		return adds;
-	}
-
 	protected List<Contributor> extractContributorFromCommits(List<Commit> commits){
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		for (Commit commit : commits) {
@@ -541,13 +496,14 @@ public class TruckFactorAnalyzer {
 				for(Contributor contributorAux: contributors) {
 					if(contributorAux.equals(contributor) == false) {
 						if(contributorAux.getEmail().equals(contributor.getEmail())) {
-							alias.add(contributorAux);}
-						//						}else if((contributorAux.getName().toUpperCase().contains("CLEITON")
-						//								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
-						//										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
-						//												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
-						//							alias.add(contributorAux);
-						//						}
+							alias.add(contributorAux);
+						}
+						else if((contributorAux.getName().toUpperCase().contains("CLEITON")
+								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
+										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
+												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
+							alias.add(contributorAux);
+						}
 						else{
 							String nome = contributorAux.getName().toUpperCase();
 							if(nome != null) {
@@ -575,6 +531,17 @@ public class TruckFactorAnalyzer {
 			this.numberAdds = numberAdds;
 			this.fa = fa;
 			this.numDays = numDays;
+		}
+	}
+
+	class DoaContributorFile{
+		int numberCommits, fa, ac;
+
+		public DoaContributorFile(int numberCommits, int fa, int ac) {
+			super();
+			this.numberCommits = numberCommits;
+			this.fa = fa;
+			this.ac = ac;
 		}
 	}
 }
