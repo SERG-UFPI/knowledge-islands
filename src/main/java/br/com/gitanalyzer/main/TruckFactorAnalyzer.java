@@ -508,9 +508,12 @@ public class TruckFactorAnalyzer {
 						else{
 							String nome = contributorAux.getName().toUpperCase();
 							if(nome != null) {
-								int distancia = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
-								if (nome.equals(contributor.getName().toUpperCase()) || 
-										(distancia/(double)contributor.getName().length() < 0.1)) {
+								int distance = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
+								//								if (nome.equals(contributor.getName().toUpperCase()) || 
+								//										(distance/(double)contributor.getName().length() < 0.1)) {
+								//									alias.add(contributorAux);
+								//								}
+								if (distance == 1) {
 									alias.add(contributorAux);
 								}
 							}
