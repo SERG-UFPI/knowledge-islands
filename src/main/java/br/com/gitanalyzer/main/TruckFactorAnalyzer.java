@@ -111,7 +111,7 @@ public class TruckFactorAnalyzer {
 				numberAnalysedDevs = contributors.size();
 				contributors = setAlias(contributors);
 				numberAnalysedDevsAlias = contributors.size();
-				log.info("CALCULATING DOE..");
+				log.info("CALCULATING "+knowledgeMetric.getName()+"..");
 				List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 				for(Contributor contributor: contributors) {
 					List<File> filesContributor = filesTouchedByContributor(contributor, commits);
@@ -144,6 +144,7 @@ public class TruckFactorAnalyzer {
 					}
 				});
 				contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
+				int numberAuthors = contributors.size();
 				List<Contributor> topContributors = new ArrayList<Contributor>();
 				log.info("CALCULATING TF..");
 				int tf = 0;
@@ -163,7 +164,7 @@ public class TruckFactorAnalyzer {
 				log.info("SAVING TF DATA...");
 				projectRepository.save(project);
 
-				TruckFactor truckFactor = new TruckFactor(numberAnalysedDevs, 
+				TruckFactor truckFactor = new TruckFactor(numberAnalysedDevs, numberAuthors,
 						numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
 						numberAllCommits, numberAnalysedCommits, truckfactor, project, 
 						dateLastCommit, versionId, knowledgeMetric);
@@ -498,12 +499,12 @@ public class TruckFactorAnalyzer {
 						if(contributorAux.getEmail().equals(contributor.getEmail())) {
 							alias.add(contributorAux);
 						}
-						else if((contributorAux.getName().toUpperCase().contains("CLEITON")
-								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
-										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
-												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
-							alias.add(contributorAux);
-						}
+						//						else if((contributorAux.getName().toUpperCase().contains("CLEITON")
+						//								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
+						//										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
+						//												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
+						//							alias.add(contributorAux);
+						//						}
 						else{
 							String nome = contributorAux.getName().toUpperCase();
 							if(nome != null) {

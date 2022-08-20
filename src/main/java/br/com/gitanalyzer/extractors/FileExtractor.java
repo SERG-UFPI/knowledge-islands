@@ -57,7 +57,13 @@ public class FileExtractor {
 				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 				String strLine, strLineCloc;
 				while ((strLine = br.readLine()) != null) {
-					String filePath = strLine.split(";")[1];
+					String[] splited = strLine.split(";");
+					String filePath = null;
+					if(splited.length == 1) {
+						filePath = splited[0];
+					}else {
+						filePath = splited[1];
+					}
 					if (startPattern == null) {
 						File file = new File(filePath);
 						files.add(file);

@@ -26,7 +26,7 @@ public class TruckFactor {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private int numberAnalysedDevs, numberAnalysedDevsAlias, 
+	private int numberAnalysedDevs, numberAuthors, numberAnalysedDevsAlias, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
@@ -36,9 +36,10 @@ public class TruckFactor {
 	@ManyToOne
 	private Project project;
 
-	public TruckFactor(int numberAnalysedDevs, int numberAnalysedDevsAlias, int numberAllFiles,
+	public TruckFactor(int numberAnalysedDevs, int numberAuthors, int numberAnalysedDevsAlias, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, int truckfactor,
 			Project project, Date dateVersion, String versionId, KnowledgeMetric knowledgeMetric) {
+		this.numberAuthors = numberAuthors;
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAnalysedDevsAlias = numberAnalysedDevsAlias;
 		this.numberAllFiles = numberAllFiles;
