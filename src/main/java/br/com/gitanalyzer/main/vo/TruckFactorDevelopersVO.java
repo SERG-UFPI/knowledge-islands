@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.main;
+package br.com.gitanalyzer.main.vo;
 
 import lombok.Getter;
 import lombok.Setter;

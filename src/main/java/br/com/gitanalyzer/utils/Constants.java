@@ -1,3 +1,4 @@
+
 package br.com.gitanalyzer.utils;
 
 import java.util.Arrays;
