@@ -22,12 +22,14 @@ public class TruckFactorDevelopers {
 	private String name, email;
 	@ManyToOne
 	private TruckFactor truckFactor;
+	private double percentOfFilesAuthored;
 
-	public TruckFactorDevelopers(String name, String email, TruckFactor truckFactor) {
+	public TruckFactorDevelopers(String name, String email, TruckFactor truckFactor, double percentOfFilesAuthored) {
 		super();
 		this.name = name;
 		this.email = email;
 		this.truckFactor = truckFactor;
+		this.percentOfFilesAuthored = percentOfFilesAuthored;
 	}
 
 }

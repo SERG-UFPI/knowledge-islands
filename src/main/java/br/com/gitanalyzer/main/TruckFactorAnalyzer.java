@@ -176,7 +176,7 @@ public class TruckFactorAnalyzer {
 				}
 
 				for (Contributor contributor : topContributors) {
-					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(), truckFactor);
+					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(), truckFactor, (double)contributor.getNumberFilesAuthor()/(double)numberAnalysedFiles);
 					if (truckFactorDevelopersRepository.
 							existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), 
 									contributor.getName(), contributor.getEmail()) == false) {
