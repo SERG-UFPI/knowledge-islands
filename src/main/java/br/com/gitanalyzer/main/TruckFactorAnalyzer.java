@@ -513,7 +513,7 @@ public class TruckFactorAnalyzer {
 								//										(distance/(double)contributor.getName().length() < 0.1)) {
 								//									alias.add(contributorAux);
 								//								}
-								if (distance == 1) {
+								if (distance <= 1) {
 									alias.add(contributorAux);
 								}
 							}
