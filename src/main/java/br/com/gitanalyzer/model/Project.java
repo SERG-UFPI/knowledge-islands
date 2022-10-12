@@ -17,6 +17,7 @@ public class Project {
 	private Long id;
 	@Column(unique=true)
 	private String name;
+	private String version;
 	private String currentPath;
 
 	public Project(String name) {

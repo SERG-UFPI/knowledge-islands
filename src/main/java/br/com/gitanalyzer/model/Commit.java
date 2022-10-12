@@ -13,6 +13,7 @@ public class Commit {
 	private Project project;
 	private Date date;
 	private String externalId;
+	private int numberOfFilesTouched;
 
 	private List<CommitFile> commitFiles = new ArrayList<CommitFile>();
 
@@ -20,6 +21,12 @@ public class Commit {
 		super();
 		this.author = author;
 		this.project = project;
+		this.date = date;
+		this.externalId = externalId;
+	}
+
+	public Commit(Date date, String externalId) {
+		super();
 		this.date = date;
 		this.externalId = externalId;
 	}

@@ -9,5 +9,6 @@ import br.com.gitanalyzer.model.Project;
 public interface ProjectRepository extends JpaRepository<Project, Long>{
 
 	boolean existsByName(String name);
+	boolean existsByNameAndVersion(String name, String version);
 
 }

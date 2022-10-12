@@ -6,51 +6,61 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.springframework.stereotype.Service;
 
-public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
+import br.com.gitanalyzer.enums.KnowledgeMetric;
+import br.com.gitanalyzer.extractors.CommitExtractor;
+import br.com.gitanalyzer.model.Commit;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class TruckFactorHistoryAnalyzer{
 
 	int numberAllDevs, numberAnalysedDevs, numberAnalysedDevsAlias, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
 	String projectName;
 
-	private static String projectTest = "/home/otavio/projetosHistorico/WordPress/";
-	private static String projectsFolder = "/home/otavio/projetosHistorico/";
-
-	public static void main(String[] args)  {
-
-		TruckFactorHistoryAnalyzer analyzer = new TruckFactorHistoryAnalyzer();
-		Git git;
-		Repository repository;
-		try {
-			git = Git.open(new File(projectTest));
-			repository = git.getRepository();
-			String[] hashes = analyzer.extractListOfHashes(git);
-			for (String hash : hashes) {
-				git.checkout().setName(hash).call();
-				analyzer.executeLinguisticScript(projectTest);
-				analyzer.executeClocScript(projectTest);
-				//analyzer.executeTruckFactorAnalyzes(pathToDir);
+	public void directoriesTruckFactorHistoryAnalyzes(String pathToDirectories) throws IOException, 
+	NoHeadException, GitAPIException{
+		java.io.File dir = new java.io.File(pathToDirectories);
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				analyzer(pathToDirectories, projectPath, KnowledgeMetric.DOE);
 			}
-			git.checkout().setName("master").call();
-		} catch (GitAPIException | IOException | InterruptedException e) {
-			e.printStackTrace();
 		}
 	}
 
-	private void executeClocScript(String path) throws IOException, InterruptedException{
+	private void analyzer(String pathToDirectories, String projectPath, KnowledgeMetric knowledgeMetric)  {
+		TruckFactorAnalyzer factorAnalyzer = new TruckFactorAnalyzer(); 
+		TruckFactorHistoryAnalyzer analyzer = new TruckFactorHistoryAnalyzer();
+		try {
+			Git git = Git.open(new File(projectPath));
+			String[] hashes = analyzer.extractListOfHashes(projectPath);
+			for (String hash : hashes) {
+				git.checkout().setName(hash).call();
+				analyzer.executeLinguisticScript(pathToDirectories, projectPath);
+				analyzer.executeClocScript(pathToDirectories, projectPath);
+				//				analyzer.executeMainScript(pathToDirectories);
+				factorAnalyzer.projectTruckFactorAnalyzes(projectPath, knowledgeMetric);
+			}
+			git.checkout().setName("master").call();
+		} catch (GitAPIException | IOException | InterruptedException e) {
+			log.error(e.getMessage());
+		}
+	}
+
+	private void executeClocScript(String pathToDirectories, String path) throws IOException, InterruptedException{
 		ProcessBuilder pb = new ProcessBuilder();
-		pb.command("bash", "-c", "sh "+projectsFolder+"cloc_script.sh "+path);
+		pb.command("bash", "-c", "sh "+pathToDirectories+"cloc_script.sh "+path);
 		Process p = pb.start();
 		p.waitFor();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -61,9 +71,9 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 		}
 	}
 
-	private void executeLinguisticScript(String path) throws IOException, InterruptedException {
+	private void executeLinguisticScript(String pathToDirectories, String path) throws IOException, InterruptedException {
 		ProcessBuilder pb = new ProcessBuilder();
-		pb.command("bash", "-c", "ruby "+projectsFolder+"linguist.rb "+path);
+		pb.command("bash", "-c", "ruby "+pathToDirectories+"linguist.rb "+path);
 		pb.redirectOutput(new File(path+"linguistfiles.log"));
 		Process p = pb.start();
 		p.waitFor();
@@ -75,34 +85,22 @@ public class TruckFactorHistoryAnalyzer extends TruckFactorAnalyzer{
 		}
 	}
 
-	private String[] extractListOfHashes(Git git) throws NoHeadException, GitAPIException {
+	private String[] extractListOfHashes(String projectPath) throws NoHeadException, GitAPIException {
+		CommitExtractor commitExtractor = new CommitExtractor();
+		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(projectPath);
 		String[] hashes = new String[5];
-		Iterable<RevCommit> commitsIterable = git.log().setRevFilter(RevFilter.NO_MERGES).call();
-		List<RevCommit> commitsList = new ArrayList<RevCommit>();
-		commitsIterable.forEach(commitsList::add);
-		Collections.sort(commitsList, new Comparator<RevCommit>() {
-			public int compare(RevCommit commit1, RevCommit commit2) {
-				if (commit1.getAuthorIdent().getWhen().after(commit2.getAuthorIdent().getWhen())) {
-					return -1;
-				}else if(commit1.getAuthorIdent().getWhen().before(commit2.getAuthorIdent().getWhen())) {
-					return 1;
-				}else {
-					return 0;
-				}
-			}
-		});
 		int index = 0;
-		Date date = commitsList.get(0).getAuthorIdent().getWhen();
-		hashes[index] = commitsList.get(0).getName();
+		Date date = commits.get(0).getDate();
+		hashes[index] = commits.get(0).getExternalId();
 		index++;
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 		calendar.add(Calendar.YEAR, -1);
 		date = calendar.getTime();
-		for (RevCommit commit: commitsList) {
-			if (commit.getAuthorIdent().getWhen().before(date)) {
-				date = commit.getAuthorIdent().getWhen();
-				hashes[index] = commit.getName();
+		for (Commit commit: commits) {
+			if (commit.getDate().before(date)) {
+				date = commit.getDate();
+				hashes[index] = commit.getExternalId();
 				calendar = Calendar.getInstance();
 				calendar.setTime(date);
 				calendar.add(Calendar.YEAR, -1);

@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Constants {
-
-	public static String absPath = "/home/otavio/Desktop/GitAnalyzer/projetos/ihealth/";
+	
+	public static final String pathCommitFilesLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesLog.csv");
+	public static final String pathCommitFilesFrequencyLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesFrequencyLog.csv");
 
 	public static List<String> invalidPaths = Arrays.asList(new String[]{"/dev/null"});
 
@@ -51,7 +52,12 @@ public class Constants {
 
 	public static final int quantKnowledgedDevsByFile = 3;
 
-	public static Map<String, String> projectPatterns  = new HashMap<String, String>() {{
+	public static Map<String, String> projectPatterns  = new HashMap<String, String>() {/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+	{
 		put("linux", "drivers/");
 		put("homebrew", "Library/Formula/");
 		put("homebrew-cask", "Casks/");

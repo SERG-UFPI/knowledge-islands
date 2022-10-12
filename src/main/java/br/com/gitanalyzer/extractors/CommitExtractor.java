@@ -21,6 +21,34 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CommitExtractor {
 
+	public List<Commit> getCommitsDatesAndHashes(String projectPath){
+		List<Commit> commits = new ArrayList<Commit>();
+		try {
+			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine;
+			while ((strLine = br.readLine()) != null) {
+				try {
+					String[] commitSplited = strLine.split(";");
+					String idCommit = commitSplited[0];
+					String time = commitSplited[3];
+					Integer timeInt = Integer.parseInt(time);
+					Instant instant = Instant.ofEpochSecond(timeInt);
+					Date commitDate = Date.from(instant);
+					Commit commit = new Commit(commitDate, idCommit);
+					commits.add(commit);
+				} catch (Exception e) {
+					log.error(e.getMessage());
+				}
+			}
+			br.close();
+			return commits;
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			return null;
+		}
+	}
+
 	public List<Commit> getCommits(String projectPath, Project project) {
 		List<Commit> commits = new ArrayList<Commit>();
 		try {
@@ -63,6 +91,7 @@ public class CommitExtractor {
 				String id = splited[0];
 				commitFor:for (Commit commit : commits) {
 					if (id.equals(commit.getExternalId())) {
+						commit.setNumberOfFilesTouched(commit.getNumberOfFilesTouched()+1);
 						String operation = splited[1];
 						String filePath = splited[3];
 						File file = null;

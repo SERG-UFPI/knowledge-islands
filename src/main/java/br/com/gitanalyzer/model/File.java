@@ -8,7 +8,7 @@ import java.util.Set;
 import lombok.Data;
 
 @Data
-public class File {
+public class File implements Comparable<File>{
 
 	private String path;
 	private Project project;
@@ -16,6 +16,7 @@ public class File {
 	private int fileSize;
 	private Set<Contributor> mantainers = new HashSet<Contributor>();
 	private List<String> renamePaths = new ArrayList<String>();
+	private int numberCommits = 0;
 
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<String>();
@@ -45,6 +46,16 @@ public class File {
 	}
 
 	public File() {
+	}
+
+	@Override
+	public int compareTo(File o) {
+		return this.numberCommits - o.getNumberCommits();
+	}
+
+	public String[] toStringArray() {
+		String[] toS = {path, String.valueOf(numberCommits)};
+		return toS;
 	}
 
 }
