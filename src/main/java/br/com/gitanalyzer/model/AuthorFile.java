@@ -10,6 +10,8 @@ public class AuthorFile {
 	private boolean firstAuthor;
 	private double doe;	
 	private double doa;	
+	private MetricsDoe metricsDoe;
+	private MetricsDoa metricsDoa;
 
 	public AuthorFile(Contributor author, File file, boolean firstAuthor) {
 		super();
@@ -21,18 +23,20 @@ public class AuthorFile {
 	public AuthorFile() {
 	}
 
-	public AuthorFile(Contributor author, File file, double doe) {
+	public AuthorFile(Contributor author, File file, double doe, MetricsDoe metricsDoe) {
 		super();
 		this.author = author;
 		this.file = file;
 		this.doe = doe;
+		this.metricsDoe = metricsDoe;
 	}
 
-	public AuthorFile(Contributor author, double doa, File file) {
+	public AuthorFile(Contributor author, double doa, File file, MetricsDoa metricsDoa) {
 		super();
 		this.author = author;
 		this.file = file;
 		this.doa = doa;
+		this.metricsDoa = metricsDoa;
 	}
 
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jgit.api.BlameCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.blame.BlameResult;
 import org.eclipse.jgit.diff.RawText;
@@ -43,70 +44,78 @@ public class FileExtractor {
 	}
 
 	public List<File> extractFromFileList(String path, String fileListName, 
-			String clocFileName, Repository repository, Project project){
+			String clocFileName, Project project){
+
+		Git git = null;
+		Repository repository;
+		try {
+			git = Git.open(new java.io.File(path));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		repository = git.getRepository();
+
 		List<File> files = new ArrayList<File>();
 		String fileListfullPath = path+fileListName;
 		String clocListfullPath = path+clocFileName;
-		if (fileListName.equals(Constants.linguistFileName)) {
-			try {
-				String startPattern = null;
-				if (Constants.projectPatterns.containsKey(project.getName())) {
-					startPattern = Constants.projectPatterns.get(project.getName());
+		try {
+			String startPattern = null;
+			if (Constants.projectPatterns.containsKey(project.getName())) {
+				startPattern = Constants.projectPatterns.get(project.getName());
+			}
+			FileInputStream fstream = new FileInputStream(fileListfullPath);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine, strLineCloc;
+			while ((strLine = br.readLine()) != null) {
+				String[] splited = strLine.split(";");
+				String filePath = null;
+				if(splited.length == 1) {
+					filePath = splited[0];
+				}else {
+					filePath = splited[1];
 				}
-				FileInputStream fstream = new FileInputStream(fileListfullPath);
-				BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-				String strLine, strLineCloc;
-				while ((strLine = br.readLine()) != null) {
-					String[] splited = strLine.split(";");
-					String filePath = null;
-					if(splited.length == 1) {
-						filePath = splited[0];
-					}else {
-						filePath = splited[1];
-					}
-					if (startPattern == null) {
+				if (startPattern == null) {
+					File file = new File(filePath);
+					files.add(file);
+				}else {
+					if (filePath.startsWith(startPattern) == false) {
 						File file = new File(filePath);
 						files.add(file);
-					}else {
-						if (filePath.startsWith(startPattern) == false) {
-							File file = new File(filePath);
-							files.add(file);
-						}
 					}
 				}
-				br.close();
-				if (clocFileName.equals(Constants.clocFileName)) {
-					FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
-					BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
-					while ((strLineCloc = brCloc.readLine()) != null) {
-						String filePathCloc = strLineCloc.split(";")[0];
-						for (File file : files) {
-							if (filePathCloc.equals(file.getPath())) {
-								if (strLineCloc.split(";").length > 1) {
-									String fileSizeString = strLineCloc.split(";")[2];
-									if (fileSizeString != null && fileSizeString.equals("") == false) {
-										file.setFileSize(Integer.parseInt(fileSizeString));
-										break;
-									}
+			}
+			br.close();
+			if (clocFileName.equals(Constants.clocFileName)) {
+				FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
+				BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
+				while ((strLineCloc = brCloc.readLine()) != null) {
+					String filePathCloc = strLineCloc.split(";")[0];
+					for (File file : files) {
+						if (filePathCloc.equals(file.getPath())) {
+							if (strLineCloc.split(";").length > 1) {
+								String fileSizeString = strLineCloc.split(";")[2];
+								if (fileSizeString != null && fileSizeString.equals("") == false) {
+									file.setFileSize(Integer.parseInt(fileSizeString));
+									break;
 								}
 							}
 						}
 					}
-					brCloc.close();
-					for (File file : files) {
-						if (file.getFileSize() == 0) {
-							BlameCommand blameCommand = new BlameCommand(repository);
-							blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
-							blameCommand.setFilePath(file.getPath());
-							BlameResult blameResult = blameCommand.call();
-							RawText rawText = blameResult.getResultContents();
-							file.setFileSize(rawText.size());
-						}
+				}
+				brCloc.close();
+				for (File file : files) {
+					if (file.getFileSize() == 0) {
+						BlameCommand blameCommand = new BlameCommand(repository);
+						blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
+						blameCommand.setFilePath(file.getPath());
+						BlameResult blameResult = blameCommand.call();
+						RawText rawText = blameResult.getResultContents();
+						file.setFileSize(rawText.size());
 					}
 				}
-			} catch (IOException | GitAPIException e) {
-				log.error(e.getMessage());
 			}
+		} catch (IOException | GitAPIException e) {
+			log.error(e.getMessage());
 		}
 		return files;
 	}

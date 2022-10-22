@@ -1,7 +1,9 @@
 package br.com.gitanalyzer.main;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,12 +19,13 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
@@ -31,11 +34,14 @@ import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.ProjectExtractor;
 import br.com.gitanalyzer.main.dto.PathKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
+import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
+import br.com.gitanalyzer.model.MetricsDoa;
+import br.com.gitanalyzer.model.MetricsDoe;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.TruckFactor;
 import br.com.gitanalyzer.model.TruckFactorDevelopers;
@@ -60,121 +66,10 @@ public class TruckFactorAnalyzer {
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
 	private TruckFactorDevelopersRepository truckFactorDevelopersRepository;
+	private static String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
-
-	protected void projectTruckFactorAnalyzes(String projectPath, KnowledgeMetric knowledgeMetric)
-			throws IOException, NoHeadException, GitAPIException {
-		CommitExtractor commitExtractor = new CommitExtractor();
-		int numberAnalysedDevs, numberAnalysedDevsAlias, 
-		numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
-		String projectName;
-		ProjectExtractor projectExtractor = new ProjectExtractor();
-		projectName = projectExtractor.extractProjectName(projectPath);
-		if (invalidsProjects.contains(projectName) == false) {
-			Project project = new Project(projectName);
-			Git git = null;
-			Repository repository;
-			try {
-				git = Git.open(new java.io.File(projectPath));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			repository = git.getRepository();
-			FileExtractor fileExtractor = new FileExtractor();
-			log.info("EXTRACTING DATA FROM "+projectPath);
-			numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-			List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-					Constants.clocFileName, repository, project);
-			numberAnalysedFiles = files.size();
-			fileExtractor.getRenamesFiles(projectPath, files);
-			List<Commit> commits = commitExtractor.getCommits(projectPath, project);
-			numberAllCommits = commits.size();
-			commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
-			numberAnalysedCommits = commits.size();
-			List<Contributor> contributors = extractContributorFromCommits(commits);
-			numberAnalysedDevs = contributors.size();
-			contributors = setAlias(contributors);
-			numberAnalysedDevsAlias = contributors.size();
-			log.info("CALCULATING "+knowledgeMetric.getName()+"..");
-			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
-			//saveNumberFilesOfCommits(commits);
-			//commitsFilesFrequency(commits, files);
-			//commits = filterCommitsByFilesTouched(commits);
-			commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
-			for(Contributor contributor: contributors) {
-				List<File> filesContributor = filesTouchedByContributor(contributor, commits);
-				for (File file : files) {
-					boolean flag = false;
-					for (File fileContributor : filesContributor) {
-						if(fileContributor.getPath().equals(file.getPath())) {
-							flag = true;
-							break;
-						}
-					}
-					if (flag) {
-						if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
-							DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
-							double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa, doeContributorFile.numDays, file.getFileSize());
-							authorFiles.add(new AuthorFile(contributor, file, doe));
-						}else {
-							DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
-							double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
-							authorFiles.add(new AuthorFile(contributor, doa, file));
-						}
-					}
-				}
-			}
-			setContributorNumberAuthorAndFileMaintainers(contributors, authorFiles, files, knowledgeMetric);
-			Collections.sort(contributors, new Comparator<Contributor>() {
-				@Override
-				public int compare(Contributor c1, Contributor c2) {
-					return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
-				}
-			});
-			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
-			int numberAuthors = contributors.size();
-			List<Contributor> topContributors = new ArrayList<Contributor>();
-			log.info("CALCULATING TF..");
-			int tf = 0;
-			while(contributors.isEmpty() == false) {
-				double covarage = getCoverage(contributors, files, knowledgeMetric);
-				if(covarage < 0.5) 
-					break;
-				topContributors.add(contributors.get(0));
-				contributors.remove(0);
-				tf = tf+1;
-			}
-			truckfactor = tf;
-			Date dateLastCommit = commits.get(0).getDate();
-			String versionId = commits.get(0).getExternalId();
-			log.info("SAVING TF DATA...");
-			if(projectRepository.existsByNameAndVersion(projectName, versionId) == false) {
-				project.setVersion(versionId);
-				projectRepository.save(project);
-			}
-			TruckFactor truckFactor = new TruckFactor(numberAnalysedDevs, numberAuthors,
-					numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
-					numberAllCommits, numberAnalysedCommits, truckfactor, project, 
-					dateLastCommit, versionId, knowledgeMetric);
-			if (truckFactorRepository.
-					existsByKnowledgeMetricAndProjectIdAndVersionId(truckFactor.getKnowledgeMetric(), 
-							truckFactor.getProject().getId(), truckFactor.getVersionId()) == false) {
-				truckFactorRepository.save(truckFactor);
-			}
-			for (Contributor contributor : topContributors) {
-				TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(),
-						truckFactor, (double)contributor.getNumberFilesAuthor()/(double)numberAnalysedFiles);
-				if (truckFactorDevelopersRepository.
-						existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), contributor.getName(),
-								contributor.getEmail()) == false) {
-					truckFactorDevelopersRepository.save(truckFactorDevelopers);
-				}
-
-			}
-		}
-	}
 
 	private List<Commit> getCommitsFromAHash(List<Commit> commits, String hash){
 		boolean flag = false;
@@ -190,7 +85,7 @@ public class TruckFactorAnalyzer {
 		return commitsReturn;
 	}
 
-	protected void projectTruckFactorAnalyzes(List<Commit> commits, String hash, String projectPath, KnowledgeMetric knowledgeMetric)
+	protected void projectTruckFactorAnalyzes(String projectPath, KnowledgeMetric knowledgeMetric)
 			throws IOException, NoHeadException, GitAPIException {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		int numberAnalysedDevs, numberAnalysedDevsAlias, 
@@ -200,34 +95,26 @@ public class TruckFactorAnalyzer {
 		projectName = projectExtractor.extractProjectName(projectPath);
 		if (invalidsProjects.contains(projectName) == false) {
 			Project project = new Project(projectName);
-			Git git = null;
-			Repository repository;
-			try {
-				git = Git.open(new java.io.File(projectPath));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			repository = git.getRepository();
 			FileExtractor fileExtractor = new FileExtractor();
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 			List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-					Constants.clocFileName, repository, project);
+					Constants.clocFileName, project);
 			numberAnalysedFiles = files.size();
 			fileExtractor.getRenamesFiles(projectPath, files);
-			commits = getCommitsFromAHash(commits, hash);
+			List<Commit> commits = commitExtractor.getCommits(projectPath, project);
 			numberAllCommits = commits.size();
 			commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 			numberAnalysedCommits = commits.size();
 			List<Contributor> contributors = extractContributorFromCommits(commits);
 			numberAnalysedDevs = contributors.size();
-			contributors = setAlias(contributors);
+			contributors = setAlias(contributors, project);
 			numberAnalysedDevsAlias = contributors.size();
 			log.info("CALCULATING "+knowledgeMetric.getName()+"..");
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			//saveNumberFilesOfCommits(commits);
 			//commitsFilesFrequency(commits, files);
-			//commits = filterCommitsByFilesTouched(commits);
+			commits = filterCommitsByFilesTouched(project, commits);
 			commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
 			for(Contributor contributor: contributors) {
 				List<File> filesContributor = filesTouchedByContributor(contributor, commits);
@@ -240,14 +127,19 @@ public class TruckFactorAnalyzer {
 						}
 					}
 					if (flag) {
-						if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
+						if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 							DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
-							double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa, doeContributorFile.numDays, file.getFileSize());
-							authorFiles.add(new AuthorFile(contributor, file, doe));
+							double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
+									doeContributorFile.numDays, file.getFileSize());
+							MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
+									doeContributorFile.numDays, file.getFileSize());
+							authorFiles.add(new AuthorFile(contributor, file, doe, metricsDoe));
 						}else {
 							DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
-							double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
-							authorFiles.add(new AuthorFile(contributor, doa, file));
+							double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
+									doaContributorFile.ac);
+							MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
+							authorFiles.add(new AuthorFile(contributor, doa, file, metricsDoa));
 						}
 					}
 				}
@@ -301,8 +193,11 @@ public class TruckFactorAnalyzer {
 		}
 	}
 
-	private List<Commit> filterCommitsByFilesTouched(List<Commit> commits) {
-		return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());
+	private List<Commit> filterCommitsByFilesTouched(Project project, List<Commit> commits) {
+		if(project.getName().toUpperCase().equals("IHEALTH")) {
+			return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());
+		}
+		return commits;
 	}
 
 	private void commitsFilesFrequency(List<Commit> commits, List<File> files) {
@@ -589,33 +484,89 @@ public class TruckFactorAnalyzer {
 
 	protected void setContributorNumberAuthorAndFileMaintainers(List<Contributor> contributors, 
 			List<AuthorFile> authorsFiles, List<File> files, KnowledgeMetric knowledgeMetric) {
-		for (File file: files) {
-			List<AuthorFile> authorsFilesAux = authorsFiles.stream().
-					filter(authorFile -> authorFile.getFile().getPath().equals(file.getPath())).collect(Collectors.toList());
-			if (authorsFilesAux != null && authorsFilesAux.size() > 0) {
-				List<Contributor> maintainers = new ArrayList<Contributor>();
-				AuthorFile max = authorsFilesAux.stream().max(
-						Comparator.comparing(knowledgeMetric.equals(KnowledgeMetric.DOE)?AuthorFile::getDoe:AuthorFile::getDoa)).get();
-				for (AuthorFile authorFile : authorsFilesAux) {
-					double normalized = 0;
-					if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
-						normalized = authorFile.getDoe()/max.getDoe();
-						if (normalized > Constants.normalizedThresholdMantainerDOE) {
-							maintainers.add(authorFile.getAuthor());
+		if (knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING) == false) {
+			for (File file: files) {
+				List<AuthorFile> authorsFilesAux = authorsFiles.stream().
+						filter(authorFile -> authorFile.getFile().getPath().equals(file.getPath())).collect(Collectors.toList());
+				if(authorsFilesAux != null && authorsFilesAux.size() > 0) {
+					List<Contributor> maintainers = new ArrayList<Contributor>();
+					AuthorFile max = authorsFilesAux.stream().max(
+							Comparator.comparing(knowledgeMetric.equals(KnowledgeMetric.DOE)?AuthorFile::getDoe:AuthorFile::getDoa)).get();
+					for (AuthorFile authorFile : authorsFilesAux) {
+						double normalized = 0;
+						boolean maintainer = false;
+						if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
+							normalized = authorFile.getDoe()/max.getDoe();
+							if (normalized > Constants.normalizedThresholdMantainerDOE) {
+								maintainer = true;
+							}
+						}else if(knowledgeMetric.equals(KnowledgeMetric.DOA)){
+							normalized = authorFile.getDoa()/max.getDoa();
+							if (normalized > Constants.normalizedThresholdMantainerDOA && 
+									authorFile.getDoa() > Constants.thresholdMantainerDOA) {
+								maintainer = true;
+							}
 						}
-					}else if(knowledgeMetric.equals(KnowledgeMetric.DOA)){
-						normalized = authorFile.getDoa()/max.getDoa();
-						if (normalized > Constants.normalizedThresholdMantainerDOA && 
-								authorFile.getDoa() > Constants.thresholdMantainerDOA) {
+						if(maintainer == true) {
 							maintainers.add(authorFile.getAuthor());
+							file.getMantainers().add(authorFile.getAuthor());
+							for (Contributor contributor: contributors) {
+								if (authorFile.getAuthor().equals(contributor)) {
+									contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
+								}
+							}
 						}
 					}
 				}
-				for (Contributor maintainer : maintainers) {
-					file.getMantainers().add(maintainer);
-					for (Contributor contributor: contributors) {
-						if (maintainer.equals(contributor)) {
-							contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
+			}
+		}else {
+			java.io.File fileInput = new java.io.File(Constants.pathInputMlFile);
+			FileWriter outputfile;
+			try {
+				outputfile = new FileWriter(fileInput);
+				CSVWriter writer = new CSVWriter(outputfile);
+				writer.writeNext(header);
+				for (AuthorFile authorFile : authorsFiles) {
+					writer.writeNext(new String[] {
+							String.valueOf(authorFile.getMetricsDoe().getAdds()),
+							String.valueOf(authorFile.getMetricsDoe().getNumDays()),
+							String.valueOf(authorFile.getMetricsDoe().getSize()),
+							String.valueOf(authorFile.getMetricsDoe().getFa()),
+							authorFile.getAuthor().getEmail(),
+							authorFile.getFile().getPath()
+					});
+				}
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			List<MlOutput> output = new ArrayList<MlOutput>();
+			try {
+				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", Constants.pathScriptMlFile);
+				pb.redirectOutput(Redirect.INHERIT);
+				pb.redirectError(Redirect.INHERIT);
+				Process process = pb.start();
+				process.waitFor();
+				CSVReader reader = new CSVReader(new FileReader(Constants.pathOutputMlFile));
+				String[] lineInArray;
+				while ((lineInArray = reader.readNext()) != null) {
+					output.add(new MlOutput(lineInArray[5], lineInArray[6], lineInArray[7]));
+				}
+				output.remove(0);
+			} catch (IOException | InterruptedException | CsvValidationException e) {
+				e.printStackTrace();
+			}
+			for (File file: files) {
+				List<Contributor> maintainers = new ArrayList<Contributor>();
+				for (MlOutput mlOutput : output) {
+					if(file.isFile(mlOutput.getFile()) && mlOutput.getDecision().equals("MANTENEDOR")) {
+						for (Contributor contributor : contributors) {
+							if (contributor.getEmail().equals(mlOutput.getAuthor())) {
+								maintainers.add(contributor);
+								file.getMantainers().add(contributor);
+								contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
+								break;
+							}
 						}
 					}
 				}
@@ -640,7 +591,7 @@ public class TruckFactorAnalyzer {
 		return contributors;
 	}
 
-	protected List<Contributor> setAlias(List<Contributor> contributors){
+	protected List<Contributor> setAlias(List<Contributor> contributors, Project project){
 		List<Contributor> contributorsAliases = new ArrayList<Contributor>();
 		for (Contributor contributor : contributors) {
 			boolean present = false;
@@ -661,12 +612,12 @@ public class TruckFactorAnalyzer {
 						if(contributorAux.getEmail().equals(contributor.getEmail())) {
 							alias.add(contributorAux);
 						}
-						//						else if((contributorAux.getName().toUpperCase().contains("CLEITON")
-						//								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
-						//										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
-						//												&& contributor.getName().toUpperCase().contains("THASCIANO"))) {
-						//							alias.add(contributorAux);
-						//						}
+						else if(project.getName().toUpperCase().equals("IHEALTH") && ((contributorAux.getName().toUpperCase().contains("CLEITON")
+								&& contributor.getName().toUpperCase().contains("CLEITON")) || (contributorAux.getName().toUpperCase().contains("JARDIEL")
+										&& contributor.getName().toUpperCase().contains("JARDIEL"))||(contributorAux.getName().toUpperCase().contains("THASCIANO")
+												&& contributor.getName().toUpperCase().contains("THASCIANO")))) {
+							alias.add(contributorAux);
+						}
 						else{
 							String nome = contributorAux.getName().toUpperCase();
 							if(nome != null) {

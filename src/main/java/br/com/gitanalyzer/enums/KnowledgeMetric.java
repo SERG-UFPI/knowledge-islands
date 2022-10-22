@@ -6,7 +6,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum KnowledgeMetric {
-	DOA("DOA"), DOE("DOE");
+	DOA("DOA"), DOE("DOE"), MACHINE_LEARNING("Machine Learning");
 
 	private String name;
 
