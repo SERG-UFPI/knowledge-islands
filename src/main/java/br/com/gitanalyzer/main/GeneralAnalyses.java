@@ -38,21 +38,21 @@ public class GeneralAnalyses {
 			does.add(new DoeResultVO(string[0], Integer.parseInt(string[1]), Integer.parseInt(string[2])));
 		}
 		List<ProjectDoaDoe> projects = new ArrayList<ProjectDoaDoe>();
-		for (DoeResultVO doeResult : does) {
-			String projectNameDoe = doeResult.name;
-			int tfDoe = doeResult.tf;
-			int numAuthorsDoe = doeResult.numAuthors;
-			int tfDoa = 0, numDevs = 0, numAuthors = 0;
-			for (DoaResultVO doaResult : doas) {
-				String projectNameDoa = doaResult.name;
+		for (DoaResultVO doaResult : doas) {
+			String projectNameDoa = doaResult.name;
+			int tfDoa = doaResult.tf;
+			int numDevs = doaResult.numDevs;
+			int numAuthors = doaResult.numAuthors;
+			int tfDoe = 0, numAuthorsDoe = 0;
+			for (DoeResultVO doeResult : does) {
+				String projectNameDoe = doeResult.name;
 				if (projectNameDoa.equals(projectNameDoe)) {
-					tfDoa = doaResult.tf;
-					numDevs = doaResult.numDevs;
-					numAuthors = doaResult.numAuthors;
+					tfDoe = doeResult.tf;
+					numAuthorsDoe = doeResult.numAuthors;
 					break;
 				}
 			}
-			ProjectDoaDoe projectDoaDoe = new ProjectDoaDoe(projectNameDoe, tfDoa, tfDoe, numDevs, numAuthors, numAuthorsDoe);
+			ProjectDoaDoe projectDoaDoe = new ProjectDoaDoe(projectNameDoa, tfDoa, tfDoe, numDevs, numAuthors, numAuthorsDoe);
 			projects.add(projectDoaDoe);
 		}
 		File file = new File(args[0]+"result_tf.csv");

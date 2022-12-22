@@ -45,7 +45,12 @@ public class FileExtractor {
 
 	public List<File> extractFromFileList(String path, String fileListName, 
 			String clocFileName, Project project){
-
+		
+		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
+		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
+		String arrayHomebrewCask[]  = new String[] {"Casks/"};
+		String arrayIara[] = new String[] {"cufflinks/"};
+		
 		Git git = null;
 		Repository repository;
 		try {
@@ -58,10 +63,14 @@ public class FileExtractor {
 		List<File> files = new ArrayList<File>();
 		String fileListfullPath = path+fileListName;
 		String clocListfullPath = path+clocFileName;
+		Constants.projectPatterns.put("linux", arrayLinux);
+		Constants.projectPatterns.put("homebrew", arrayHomebrew);
+		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
+		Constants.projectPatterns.put("iara", arrayIara);
 		try {
-			String startPattern = null;
+			String patterns[] = null;
 			if (Constants.projectPatterns.containsKey(project.getName())) {
-				startPattern = Constants.projectPatterns.get(project.getName());
+				patterns = Constants.projectPatterns.get(project.getName());
 			}
 			FileInputStream fstream = new FileInputStream(fileListfullPath);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -74,11 +83,18 @@ public class FileExtractor {
 				}else {
 					filePath = splited[1];
 				}
-				if (startPattern == null) {
+				if (patterns == null) {
 					File file = new File(filePath);
 					files.add(file);
 				}else {
-					if (filePath.startsWith(startPattern) == false) {
+					boolean start = false;
+					for (String startPattern : patterns) {
+						if (filePath.startsWith(startPattern) == true) {
+							start = true;
+							break;
+						}
+					}
+					if(start == false) {
 						File file = new File(filePath);
 						files.add(file);
 					}

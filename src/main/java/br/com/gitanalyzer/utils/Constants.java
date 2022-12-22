@@ -55,16 +55,9 @@ public class Constants {
 	public static final double thresholdMantainerDOA = 3.293;
 
 	public static final int quantKnowledgedDevsByFile = 3;
+	
+	public static final double thresholdPercentExpert = 0.01;
 
-	public static Map<String, String> projectPatterns  = new HashMap<String, String>() {/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-	{
-		put("linux", "drivers/");
-		put("homebrew", "Library/Formula/");
-		put("homebrew-cask", "Casks/");
-	}};
+	public static Map<String, String[]> projectPatterns  = new HashMap<String, String[]>();
 
 }

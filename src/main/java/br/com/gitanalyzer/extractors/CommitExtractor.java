@@ -49,8 +49,9 @@ public class CommitExtractor {
 		}
 	}
 
-	public List<Commit> getCommits(String projectPath, Project project) {
+	public List<Commit> extractCommits(String projectPath, Project project) {
 		List<Commit> commits = new ArrayList<Commit>();
+		List<Contributor> contributors = new ArrayList<Contributor>();
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -59,14 +60,28 @@ public class CommitExtractor {
 				try {
 					String[] commitSplited = strLine.split(";");
 					String idCommit = commitSplited[0];
+//					if(project.getName().equals("iara") && idCommit.equals("edddea9fa6c1b6f225f57ef8657c0cb16bb6cea0")) {
+//						continue;
+//					}
 					String authorName = commitSplited[1];
 					String authorEmail = commitSplited[2];
 					String time = commitSplited[3];
-					Contributor contributor = new Contributor(authorName, authorEmail);
+					Contributor contributorCommit = null;
+					for (Contributor contributor : contributors) {
+						if(contributor.getName().equals(authorName)
+								&& contributor.getEmail().equals(authorEmail)) {
+							contributorCommit = contributor;
+							break;
+						}
+					}
+					if(contributorCommit == null) {
+						contributorCommit = new Contributor(authorName, authorEmail);
+						contributors.add(contributorCommit);
+					}
 					Integer timeInt = Integer.parseInt(time);
 					Instant instant = Instant.ofEpochSecond(timeInt);
 					Date commitDate = Date.from(instant);
-					Commit commit = new Commit(contributor, project, commitDate, idCommit);
+					Commit commit = new Commit(contributorCommit, project, commitDate, idCommit);
 					commits.add(commit);
 				} catch (Exception e) {
 					log.error(e.getMessage());
