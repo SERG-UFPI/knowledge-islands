@@ -31,7 +31,6 @@ import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.ProjectExtractor;
 import br.com.gitanalyzer.main.dto.PathKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
 import br.com.gitanalyzer.main.vo.MlOutput;
@@ -51,6 +50,7 @@ import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
+import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,7 +59,7 @@ public class TruckFactorAnalyzer {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
-	private ProjectExtractor projectExtractor = new ProjectExtractor();
+	private ProjectUtils projectExtractor = new ProjectUtils();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
@@ -93,8 +93,8 @@ public class TruckFactorAnalyzer {
 		numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
 		String projectName;
 		projectName = projectExtractor.extractProjectName(projectPath);
-		if (projectName.equals("linux") == true) {
-		//if(invalidsProjects.contains(projectName) == false) {
+		//if (projectName.equals("homebrew") == true) {
+		if(invalidsProjects.contains(projectName) == false) {
 			Project project = new Project(projectName);
 			FileExtractor fileExtractor = new FileExtractor();
 			log.info("EXTRACTING DATA FROM "+projectPath);
@@ -498,13 +498,13 @@ public class TruckFactorAnalyzer {
 						boolean maintainer = false;
 						if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
 							normalized = authorFile.getDoe()/max.getDoe();
-							if (normalized > Constants.normalizedThresholdMantainerDOE) {
+							if (normalized >= Constants.normalizedThresholdMantainerDOE) {
 								maintainer = true;
 							}
 						}else if(knowledgeMetric.equals(KnowledgeMetric.DOA)){
 							normalized = authorFile.getDoa()/max.getDoa();
 							if (normalized > Constants.normalizedThresholdMantainerDOA && 
-									authorFile.getDoa() > Constants.thresholdMantainerDOA) {
+									authorFile.getDoa() >= Constants.thresholdMantainerDOA) {
 								maintainer = true;
 							}
 						}
@@ -581,6 +581,7 @@ public class TruckFactorAnalyzer {
 			for (Contributor contributor2 : contributors) {
 				if (contributor2.equals(contributor)) {
 					present = true;
+					break;
 				}
 			}
 			if (present == false) {
@@ -594,13 +595,14 @@ public class TruckFactorAnalyzer {
 		List<Contributor> contributorsAliases = new ArrayList<Contributor>();
 		for (Contributor contributor : contributors) {
 			boolean present = false;
-			for (Contributor contributorAlias : contributorsAliases) {
+			forAlias:for (Contributor contributorAlias : contributorsAliases) {
 				List<Contributor> contributorsAliasesAux = new ArrayList<Contributor>();
 				contributorsAliasesAux.add(contributorAlias);
 				contributorsAliasesAux.addAll(contributorAlias.getAlias());
 				for (Contributor contributorAliasAux : contributorsAliasesAux) {
 					if (contributor.equals(contributorAliasAux)) {
 						present = true;
+						break forAlias;
 					}
 				}
 			}
@@ -617,6 +619,10 @@ public class TruckFactorAnalyzer {
 										|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
 										|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
 												(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
+							alias.add(contributorAux);
+						}
+						else if(project.getName().toUpperCase().equals("CONSULTA-CADASTRO-API")
+								&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
 							alias.add(contributorAux);
 						}
 						else{

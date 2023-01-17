@@ -1,8 +1,8 @@
-package br.com.gitanalyzer.extractors;
+package br.com.gitanalyzer.utils;
 
 import java.io.File;
 
-public class ProjectExtractor {
+public class ProjectUtils {
 
 	public String extractProjectName(String path) {
 		String fileSeparator = File.separator;
