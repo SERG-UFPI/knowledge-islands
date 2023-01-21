@@ -50,6 +50,7 @@ public class CommitExtractor {
 	}
 
 	public List<Commit> extractCommits(String projectPath, Project project) {
+		int id = 0;
 		List<Commit> commits = new ArrayList<Commit>();
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		try {
@@ -60,9 +61,6 @@ public class CommitExtractor {
 				try {
 					String[] commitSplited = strLine.split(";");
 					String idCommit = commitSplited[0];
-//					if(project.getName().equals("iara") && idCommit.equals("edddea9fa6c1b6f225f57ef8657c0cb16bb6cea0")) {
-//						continue;
-//					}
 					String authorName = commitSplited[1];
 					String authorEmail = commitSplited[2];
 					String time = commitSplited[3];
@@ -75,7 +73,7 @@ public class CommitExtractor {
 						}
 					}
 					if(contributorCommit == null) {
-						contributorCommit = new Contributor(authorName, authorEmail);
+						contributorCommit = new Contributor(authorName, authorEmail, id++);
 						contributors.add(contributorCommit);
 					}
 					Integer timeInt = Integer.parseInt(time);
@@ -109,19 +107,14 @@ public class CommitExtractor {
 						commit.setNumberOfFilesTouched(commit.getNumberOfFilesTouched()+1);
 						String operation = splited[1];
 						String filePath = splited[3];
-						File file = null;
 						for (File fileCommitFile : files) {
 							if (fileCommitFile.isFile(filePath)) {
-								file = fileCommitFile;
-								break;
+								CommitFile commitFile = new CommitFile(fileCommitFile, commit, 
+										OperationType.getEnumByType(operation));
+								commit.getCommitFiles().add(commitFile);
+								break commitFor;
 							}
 						}
-						if(file != null) {
-							CommitFile commitFile = new CommitFile(file, commit, 
-									OperationType.getEnumByType(operation));
-							commit.getCommitFiles().add(commitFile);
-						}
-						break commitFor;
 					}
 				}
 			}

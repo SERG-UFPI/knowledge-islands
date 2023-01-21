@@ -22,6 +22,7 @@ import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class FileExtractor {
 
@@ -45,20 +46,10 @@ public class FileExtractor {
 
 	public List<File> extractFromFileList(String path, String fileListName, 
 			String clocFileName, Project project){
-		
+
 		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
 		String arrayHomebrewCask[]  = new String[] {"Casks/"};
-		String arrayIara[] = new String[] {"cufflinks/"};
-		
-		Git git = null;
-		Repository repository;
-		try {
-			git = Git.open(new java.io.File(path));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		repository = git.getRepository();
 
 		List<File> files = new ArrayList<File>();
 		String fileListfullPath = path+fileListName;
@@ -66,7 +57,6 @@ public class FileExtractor {
 		Constants.projectPatterns.put("linux", arrayLinux);
 		Constants.projectPatterns.put("homebrew", arrayHomebrew);
 		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
-		Constants.projectPatterns.put("iara", arrayIara);
 		try {
 			String patterns[] = null;
 			if (Constants.projectPatterns.containsKey(project.getName())) {
@@ -75,7 +65,7 @@ public class FileExtractor {
 			FileInputStream fstream = new FileInputStream(fileListfullPath);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine, strLineCloc;
-			while ((strLine = br.readLine()) != null) {
+			whileFile:while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				String filePath = null;
 				if(splited.length == 1) {
@@ -84,20 +74,14 @@ public class FileExtractor {
 					filePath = splited[1];
 				}
 				if (patterns == null) {
-					File file = new File(filePath);
-					files.add(file);
+					files.add(new File(filePath));
 				}else {
-					boolean start = false;
 					for (String startPattern : patterns) {
 						if (filePath.startsWith(startPattern) == true) {
-							start = true;
-							break;
+							continue whileFile;
 						}
 					}
-					if(start == false) {
-						File file = new File(filePath);
-						files.add(file);
-					}
+					files.add(new File(filePath));
 				}
 			}
 			br.close();
@@ -119,6 +103,15 @@ public class FileExtractor {
 					}
 				}
 				brCloc.close();
+
+				Git git = null;
+				Repository repository;
+				try {
+					git = Git.open(new java.io.File(path));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				repository = git.getRepository();
 				for (File file : files) {
 					if (file.getFileSize() == 0) {
 						BlameCommand blameCommand = new BlameCommand(repository);
@@ -130,6 +123,7 @@ public class FileExtractor {
 					}
 				}
 			}
+
 		} catch (IOException | GitAPIException e) {
 			log.error(e.getMessage());
 		}

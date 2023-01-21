@@ -27,6 +27,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
+import br.com.gitanalyzer.combinatory.HillClimbing;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
@@ -59,6 +60,7 @@ public class TruckFactorAnalyzer {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
+	private FileExtractor fileExtractor = new FileExtractor();
 	private ProjectUtils projectExtractor = new ProjectUtils();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
@@ -96,7 +98,6 @@ public class TruckFactorAnalyzer {
 		//if (projectName.equals("homebrew") == true) {
 		if(invalidsProjects.contains(projectName) == false) {
 			Project project = new Project(projectName);
-			FileExtractor fileExtractor = new FileExtractor();
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 			List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
@@ -120,42 +121,40 @@ public class TruckFactorAnalyzer {
 			for(Contributor contributor: contributors) {
 				List<File> filesContributor = filesTouchedByContributor(contributor, commits);
 				for (File file : files) {
-					boolean flag = false;
 					for (File fileContributor : filesContributor) {
 						if(fileContributor.getPath().equals(file.getPath())) {
-							flag = true;
+							if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
+								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
+								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
+										doeContributorFile.numDays, file.getFileSize());
+								MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
+										doeContributorFile.numDays, file.getFileSize());
+								authorFiles.add(new AuthorFile(contributor, file, doe, metricsDoe));
+							}else {
+								DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
+								double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
+										doaContributorFile.ac);
+								MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
+								authorFiles.add(new AuthorFile(contributor, doa, file, metricsDoa));
+							}
 							break;
-						}
-					}
-					if (flag) {
-						if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
-							DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
-							double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
-									doeContributorFile.numDays, file.getFileSize());
-							MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
-									doeContributorFile.numDays, file.getFileSize());
-							authorFiles.add(new AuthorFile(contributor, file, doe, metricsDoe));
-						}else {
-							DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
-							double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
-									doaContributorFile.ac);
-							MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
-							authorFiles.add(new AuthorFile(contributor, doa, file, metricsDoa));
 						}
 					}
 				}
 			}
 			setContributorNumberAuthorAndFileMaintainers(contributors, authorFiles, files, knowledgeMetric);
+			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
 			Collections.sort(contributors, new Comparator<Contributor>() {
 				@Override
 				public int compare(Contributor c1, Contributor c2) {
 					return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
 				}
 			});
-			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
 			int numberAuthors = contributors.size();
 			List<Contributor> topContributors = new ArrayList<Contributor>();
 			log.info("CALCULATING TF..");
+			HillClimbing hillClimbing = new HillClimbing(files, contributors.size());
+			hillClimbing.executeHillClimbing();
 			int tf = 0;
 			while(contributors.isEmpty() == false) {
 				double covarage = getCoverage(contributors, files, knowledgeMetric);
@@ -257,25 +256,21 @@ public class TruckFactorAnalyzer {
 		contributors.add(contributor);
 		contributors.addAll(contributor.getAlias());
 		for (Commit commit : commits) {
-			boolean present = false;
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					if (commitFile.getFile().getPath().equals(file.getPath())) {
-						adds = commitFile.getAdds() + adds;
-						if (dateLastCommit == null) {
-							dateLastCommit = commit.getDate();
+					for (CommitFile commitFile: commit.getCommitFiles()) {
+						if (commitFile.getFile().getPath().equals(file.getPath())) {
+							adds = commitFile.getAdds() + adds;
+							if (dateLastCommit == null) {
+								dateLastCommit = commit.getDate();
+							}
+							if(commitFile.getOperation().equals(OperationType.ADD)) {
+								fa = 1;
+							}
+							break;
 						}
-						if(commitFile.getOperation().equals(OperationType.ADD)) {
-							fa = 1;
-						}
-						break;
 					}
+					break;
 				}
 			}
 		}
@@ -331,25 +326,21 @@ public class TruckFactorAnalyzer {
 		contributors.add(contributor);
 		contributors.addAll(contributor.getAlias());
 		for (Commit commit : commits) {
-			boolean present = false;
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
-					present = true;
-					break;
-				}
-			}
-			if (present == true) {
-				for (CommitFile commitFile: commit.getCommitFiles()) {
-					boolean filePresent = false;
-					for (File file : files) {
-						if (file.getPath().equals(commitFile.getFile().getPath())) {
-							filePresent = true;
-							break;
+					for (CommitFile commitFile: commit.getCommitFiles()) {
+						boolean filePresent = false;
+						for (File file : files) {
+							if (file.getPath().equals(commitFile.getFile().getPath())) {
+								filePresent = true;
+								break;
+							}
+						}
+						if (filePresent == false) {
+							files.add(commitFile.getFile());
 						}
 					}
-					if (filePresent == false) {
-						files.add(commitFile.getFile());
-					}
+					break;
 				}
 			}
 		}
@@ -593,56 +584,52 @@ public class TruckFactorAnalyzer {
 
 	protected List<Contributor> setAlias(List<Contributor> contributors, Project project){
 		List<Contributor> contributorsAliases = new ArrayList<Contributor>();
-		for (Contributor contributor : contributors) {
-			boolean present = false;
-			forAlias:for (Contributor contributorAlias : contributorsAliases) {
+		forContributors:for (Contributor contributor : contributors) {
+			for (Contributor contributorAlias : contributorsAliases) {
 				List<Contributor> contributorsAliasesAux = new ArrayList<Contributor>();
 				contributorsAliasesAux.add(contributorAlias);
 				contributorsAliasesAux.addAll(contributorAlias.getAlias());
 				for (Contributor contributorAliasAux : contributorsAliasesAux) {
 					if (contributor.equals(contributorAliasAux)) {
-						present = true;
-						break forAlias;
+						continue forContributors;
 					}
 				}
 			}
-			if (present == false) {
-				Set<Contributor> alias = new HashSet<Contributor>();
-				for(Contributor contributorAux: contributors) {
-					if(contributorAux.equals(contributor) == false) {
-						if(contributorAux.getEmail().equals(contributor.getEmail())) {
-							alias.add(contributorAux);
-						}
-						else if(project.getName().toUpperCase().equals("IHEALTH") && 
-								((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
-										|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
-										|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
-										|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
-												(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
-							alias.add(contributorAux);
-						}
-						else if(project.getName().toUpperCase().equals("CONSULTA-CADASTRO-API")
-								&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
-							alias.add(contributorAux);
-						}
-						else{
-							String nome = contributorAux.getName().toUpperCase();
-							if(nome != null) {
-								int distance = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
-								//								if (nome.equals(contributor.getName().toUpperCase()) || 
-								//										(distance/(double)contributor.getName().length() < 0.1)) {
-								//									alias.add(contributorAux);
-								//								}
-								if (distance <= 1) {
-									alias.add(contributorAux);
-								}
+			Set<Contributor> alias = new HashSet<Contributor>();
+			for(Contributor contributorAux: contributors) {
+				if(contributorAux.equals(contributor) == false) {
+					if(contributorAux.getEmail().equals(contributor.getEmail())) {
+						alias.add(contributorAux);
+					}
+					else if(project.getName().toUpperCase().equals("IHEALTH") && 
+							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
+									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
+									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
+									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
+											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
+						alias.add(contributorAux);
+					}
+					else if(project.getName().toUpperCase().equals("CONSULTA-CADASTRO-API")
+							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
+						alias.add(contributorAux);
+					}
+					else{
+						String nome = contributorAux.getName().toUpperCase();
+						if(nome != null) {
+							int distance = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
+							//								if (nome.equals(contributor.getName().toUpperCase()) || 
+							//										(distance/(double)contributor.getName().length() < 0.1)) {
+							//									alias.add(contributorAux);
+							//								}
+							if (distance <= 1) {
+								alias.add(contributorAux);
 							}
 						}
 					}
 				}
-				contributor.setAlias(alias);
-				contributorsAliases.add(contributor);
 			}
+			contributor.setAlias(alias);
+			contributorsAliases.add(contributor);
 		}
 		return contributorsAliases;
 	}

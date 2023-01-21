@@ -14,6 +14,7 @@ public class Contributor {
 	private int numberFilesAuthor;
 	private double sumFileImportance;
 	private Set<Contributor> alias;
+	private int id;
 
 	public Contributor(String name, String email, Project project) {
 		super();
@@ -25,6 +26,13 @@ public class Contributor {
 		super();
 		this.name = name;
 		this.email = email;
+	}
+	
+	public Contributor(String name, String email, int id) {
+		super();
+		this.name = name;
+		this.email = email;
+		this.id = id;
 	}
 
 	public Contributor() {

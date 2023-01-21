@@ -24,7 +24,7 @@ public class GeneralAnalyses {
 			e.printStackTrace();
 		}
 		List<String[]> doeFile = null;
-		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"reps_doe.csv"))) {
+		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"result_tf_ml_all.csv"))) {
 			doeFile = reader.readAll();
 		} catch (IOException | CsvException e) {
 			e.printStackTrace();

@@ -17,6 +17,7 @@ public class File implements Comparable<File>{
 	private Set<Contributor> mantainers = new HashSet<Contributor>();
 	private List<String> renamePaths = new ArrayList<String>();
 	private int numberCommits = 0;
+	private int id;
 
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<String>();
