@@ -27,12 +27,11 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
-import br.com.gitanalyzer.combinatory.HillClimbing;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.main.dto.PathKnowledgeMetricDTO;
+import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
 import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
@@ -89,13 +88,15 @@ public class TruckFactorAnalyzer {
 		return commitsReturn;
 	}
 
-	protected void projectTruckFactorAnalyzes(String projectPath, KnowledgeMetric knowledgeMetric)
+	public void projectTruckFactorAnalyzes(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
+		String projectPath = repo.getPath();
+		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		int numberAnalysedDevs, numberAnalysedDevsAlias, 
 		numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
 		String projectName;
 		projectName = projectExtractor.extractProjectName(projectPath);
-		//if (projectName.equals("homebrew") == true) {
+		//if (projectName.equals("rails") == true) {
 		if(invalidsProjects.contains(projectName) == false) {
 			Project project = new Project(projectName);
 			log.info("EXTRACTING DATA FROM "+projectPath);
@@ -153,8 +154,6 @@ public class TruckFactorAnalyzer {
 			int numberAuthors = contributors.size();
 			List<Contributor> topContributors = new ArrayList<Contributor>();
 			log.info("CALCULATING TF..");
-			HillClimbing hillClimbing = new HillClimbing(files, contributors.size());
-			hillClimbing.executeHillClimbing();
 			int tf = 0;
 			while(contributors.isEmpty() == false) {
 				double covarage = getCoverage(contributors, files, knowledgeMetric);
@@ -400,13 +399,14 @@ public class TruckFactorAnalyzer {
 	}
 
 
-	public void directoriesTruckFactorAnalyzes(PathKnowledgeMetricDTO request) throws IOException, 
+	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricDTO request) throws IOException, 
 	NoHeadException, GitAPIException{
 		java.io.File dir = new java.io.File(request.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				projectTruckFactorAnalyzes(projectPath, request.getKnowledgeMetric());
+				RepositoryKnowledgeMetricDTO repo = new RepositoryKnowledgeMetricDTO(projectPath, request.getKnowledgeMetric());
+				projectTruckFactorAnalyzes(repo);
 			}
 		}
 	}
