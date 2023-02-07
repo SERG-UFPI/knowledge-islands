@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.main.downloader;
+package br.com.gitanalyzer.service;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,69 +10,72 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 
 import org.eclipse.jgit.api.Git;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.jcabi.github.Github;
 import com.jcabi.github.RtGithub;
 import com.jcabi.http.Request;
 import com.jcabi.http.response.JsonResponse;
 
+import br.com.gitanalyzer.main.dto.DownloaderForm;
+import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectInfo;
-import lombok.Data;
+import br.com.gitanalyzer.repository.ProjectRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Data
-public class GitDownloader {
+@Service
+public class DownloaderService {
 
-	private String caminho, token;
-	private int numRepository;
+	@Autowired
+	private ProjectRepository projectRepository;
 	
-	public GitDownloader(String caminho, String token, int numRepository) {
-		super();
-		this.caminho = caminho;
-		this.token = token;
-		this.numRepository = numRepository;
-	}
-	
-	public static void main(String[] args) {
-		GitDownloader downloader = new GitDownloader(args[0], args[1], Integer.parseInt(args[2]));
-		
+	public void download(DownloaderForm form) {
 		try {
 			log.info("=========== DOWNLOAD PROJETOS JAVA ==================");
-			downloader.downloader("language:java stars:>500");
+			downloader("language:java stars:>500", form);
 			log.info("=========== DOWNLOAD PROJETOS JAVASCRIPT ==================");
-			downloader.downloader("language:javascript stars:>500");
+			downloader("language:javascript stars:>500", form);
 			log.info("=========== DOWNLOAD PROJETOS C++ ==================");
-			downloader.downloader("language:c++ stars:>500");
+			downloader("language:c++ stars:>500", form);
 			log.info("=========== DOWNLOAD PROJETOS PYTHON ==================");
-			downloader.downloader("language:python stars:>500");
+			downloader("language:python stars:>500", form);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void downloader(String query) throws IOException {
-		Github github = new RtGithub(token);
+	public void downloader(String query, DownloaderForm form) throws IOException {
+		Github github = new RtGithub(form.getToken());
 		List<ProjectInfo> projectsInfo = null;
-		projectsInfo = searchRepositories(github, numRepository, query);
+		projectsInfo = searchRepositories(github, form.getNumRepository(), query);
 		for (ProjectInfo projectInfo : projectsInfo) {
 			try {
 				System.out.println("Cloning " + projectInfo.getFullName());
-				cloneIfNotExists(projectInfo, caminho);
+				boolean flag = cloneIfNotExists(projectInfo, form.getPath());
+				if(flag) {
+					Project project = new Project(projectInfo.getName(), projectInfo.getLanguage());
+					projectRepository.save(project);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	public void cloneIfNotExists(ProjectInfo projectInfo, String caminho) throws Exception {
+	public boolean cloneIfNotExists(ProjectInfo projectInfo, String path) throws Exception {
 		String cloneUrl = projectInfo.getCloneUrl();
 		String branch = projectInfo.getDefault_branch();
-		
-		Git.cloneRepository()
-				.setURI(cloneUrl)
-				.setDirectory(new File(caminho+projectInfo.getName()+"/"))
-				.setBranch(branch).call();
+		File folder = new File(path+projectInfo.getName()+"/");
+		if(folder.exists() == false) {
+			Git.cloneRepository()
+			.setURI(cloneUrl)
+			.setDirectory(new File(path+projectInfo.getName()+"/"))
+			.setBranch(branch).call();
+			return true;
+		}
+		return false;
 	}
 
 	public List<ProjectInfo> searchRepositories(Github github, int numRepository, String query) throws IOException {

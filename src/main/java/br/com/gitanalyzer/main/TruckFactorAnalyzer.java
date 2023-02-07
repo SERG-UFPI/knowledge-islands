@@ -9,13 +9,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -29,8 +26,7 @@ import com.opencsv.exceptions.CsvValidationException;
 
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
-import br.com.gitanalyzer.extractors.CommitExtractor;
-import br.com.gitanalyzer.extractors.FileExtractor;
+import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
 import br.com.gitanalyzer.main.vo.MlOutput;
@@ -42,9 +38,11 @@ import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.MetricsDoa;
 import br.com.gitanalyzer.model.MetricsDoe;
 import br.com.gitanalyzer.model.Project;
+import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.model.TruckFactor;
 import br.com.gitanalyzer.model.TruckFactorDevelopers;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
@@ -59,9 +57,8 @@ public class TruckFactorAnalyzer {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
-	private FileExtractor fileExtractor = new FileExtractor();
-	private ProjectUtils projectExtractor = new ProjectUtils();
-	private CommitExtractor commitExtractor = new CommitExtractor();
+	private ProjectUtils projectUtils = new ProjectUtils();
+	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	@Autowired
@@ -70,6 +67,8 @@ public class TruckFactorAnalyzer {
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
 	private TruckFactorDevelopersRepository truckFactorDevelopersRepository;
+	@Autowired
+	private ProjectVersionRepository projectVersionRepository;
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
@@ -92,47 +91,34 @@ public class TruckFactorAnalyzer {
 			throws IOException, NoHeadException, GitAPIException {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
-		int numberAnalysedDevs, numberAnalysedDevsAlias, 
-		numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
-		String projectName;
-		projectName = projectExtractor.extractProjectName(projectPath);
+		String projectName = projectUtils.extractProjectName(projectPath);
 		//if (projectName.equals("rails") == true) {
 		if(invalidsProjects.contains(projectName) == false) {
-			Project project = new Project(projectName);
+			Project project = null;
+			if(projectRepository.existsByName(projectName)) {
+				project = projectRepository.findByName(projectName);
+			}else {
+				project = new Project(projectName);
+			}
 			log.info("EXTRACTING DATA FROM "+projectPath);
-			numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-			List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-					Constants.clocFileName, project);
-			numberAnalysedFiles = files.size();
-			fileExtractor.getRenamesFiles(projectPath, files);
-			List<Commit> commits = commitExtractor.extractCommits(projectPath, project);
-			numberAllCommits = commits.size();
-			commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
-			numberAnalysedCommits = commits.size();
-			List<Contributor> contributors = extractContributorFromCommits(commits);
-			numberAnalysedDevs = contributors.size();
-			contributors = setAlias(contributors, project);
-			numberAnalysedDevsAlias = contributors.size();
-			log.info("CALCULATING "+knowledgeMetric.getName()+"..");
+			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
+			
+			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
-			//saveNumberFilesOfCommits(commits);
-			//commitsFilesFrequency(commits, files);
-			commits = filterCommitsByFilesTouched(project, commits);
-			commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
-			for(Contributor contributor: contributors) {
-				List<File> filesContributor = filesTouchedByContributor(contributor, commits);
-				for (File file : files) {
+			for(Contributor contributor: projectVersion.getContributors()) {
+				List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
+				for (File file : projectVersion.getFiles()) {
 					for (File fileContributor : filesContributor) {
 						if(fileContributor.getPath().equals(file.getPath())) {
 							if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
-								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
+								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, projectVersion.getCommits());
 								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
 										doeContributorFile.numDays, file.getFileSize());
 								MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
 										doeContributorFile.numDays, file.getFileSize());
 								authorFiles.add(new AuthorFile(contributor, file, doe, metricsDoe));
 							}else {
-								DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
+								DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, projectVersion.getCommits());
 								double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
 										doaContributorFile.ac);
 								MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
@@ -143,61 +129,46 @@ public class TruckFactorAnalyzer {
 					}
 				}
 			}
-			setContributorNumberAuthorAndFileMaintainers(contributors, authorFiles, files, knowledgeMetric);
-			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
-			Collections.sort(contributors, new Comparator<Contributor>() {
+			setContributorNumberAuthorAndFileMaintainers(projectVersion.getContributors(), authorFiles, projectVersion.getFiles(), knowledgeMetric);
+			projectVersion.getContributors().removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
+			projectVersion.setNumberAuthors(projectVersion.getContributors().size());
+			Collections.sort(projectVersion.getContributors(), new Comparator<Contributor>() {
 				@Override
 				public int compare(Contributor c1, Contributor c2) {
 					return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
 				}
 			});
-			int numberAuthors = contributors.size();
 			List<Contributor> topContributors = new ArrayList<Contributor>();
-			log.info("CALCULATING TF..");
+			log.info("CALCULATING TF OF "+projectName);
 			int tf = 0;
-			while(contributors.isEmpty() == false) {
-				double covarage = getCoverage(contributors, files, knowledgeMetric);
+			while(projectVersion.getContributors().isEmpty() == false) {
+				double covarage = getCoverage(projectVersion.getContributors(), projectVersion.getFiles(), knowledgeMetric);
 				if(covarage < 0.5) 
 					break;
-				topContributors.add(contributors.get(0));
-				contributors.remove(0);
+				topContributors.add(projectVersion.getContributors().get(0));
+				projectVersion.getContributors().remove(0);
 				tf = tf+1;
 			}
-			truckfactor = tf;
-			Date dateLastCommit = commits.get(0).getDate();
-			String versionId = commits.get(0).getExternalId();
-			log.info("SAVING TF DATA...");
-			if(projectRepository.existsByName(projectName) == false) {
+			log.info("SAVING TF DATA OF"+projectName);
+			if(project.getId() == null) {
 				projectRepository.save(project);
-			}else {
-				project = projectRepository.findByName(projectName);
 			}
-			TruckFactor truckFactor = new TruckFactor(numberAnalysedDevs, numberAuthors,
-					numberAnalysedDevsAlias, numberAllFiles, numberAnalysedFiles, 
-					numberAllCommits, numberAnalysedCommits, truckfactor, project, 
-					dateLastCommit, versionId, knowledgeMetric);
-			if (truckFactorRepository.
-					existsByKnowledgeMetricAndProjectIdAndVersionId(truckFactor.getKnowledgeMetric(), 
-							truckFactor.getProject().getId(), truckFactor.getVersionId()) == false) {
+			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
+				projectVersion.setProject(project);
+				projectVersionRepository.save(projectVersion);
+				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric);
 				truckFactorRepository.save(truckFactor);
-			}
-			for (Contributor contributor : topContributors) {
-				TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(),
-						truckFactor, (double)contributor.getNumberFilesAuthor()/(double)numberAnalysedFiles);
-				if (truckFactorDevelopersRepository.
-						existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), contributor.getName(),
-								contributor.getEmail()) == false) {
-					truckFactorDevelopersRepository.save(truckFactorDevelopers);
+				for (Contributor contributor : topContributors) {
+					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(),
+							truckFactor, (double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles());
+					if (truckFactorDevelopersRepository.
+							existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), contributor.getName(),
+									contributor.getEmail()) == false) {
+						truckFactorDevelopersRepository.save(truckFactorDevelopers);
+					}
 				}
 			}
 		}
-	}
-
-	private List<Commit> filterCommitsByFilesTouched(Project project, List<Commit> commits) {
-		if(project.getName().toUpperCase().equals("IHEALTH")) {
-			return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());
-		}
-		return commits;
 	}
 
 	private void commitsFilesFrequency(List<Commit> commits, List<File> files) {
@@ -562,76 +533,6 @@ public class TruckFactorAnalyzer {
 				}
 			}
 		}
-	}
-
-	protected List<Contributor> extractContributorFromCommits(List<Commit> commits){
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		for (Commit commit : commits) {
-			Contributor contributor = commit.getAuthor();
-			boolean present = false;
-			for (Contributor contributor2 : contributors) {
-				if (contributor2.equals(contributor)) {
-					present = true;
-					break;
-				}
-			}
-			if (present == false) {
-				contributors.add(contributor);
-			}
-		}
-		return contributors;
-	}
-
-	protected List<Contributor> setAlias(List<Contributor> contributors, Project project){
-		List<Contributor> contributorsAliases = new ArrayList<Contributor>();
-		forContributors:for (Contributor contributor : contributors) {
-			for (Contributor contributorAlias : contributorsAliases) {
-				List<Contributor> contributorsAliasesAux = new ArrayList<Contributor>();
-				contributorsAliasesAux.add(contributorAlias);
-				contributorsAliasesAux.addAll(contributorAlias.getAlias());
-				for (Contributor contributorAliasAux : contributorsAliasesAux) {
-					if (contributor.equals(contributorAliasAux)) {
-						continue forContributors;
-					}
-				}
-			}
-			Set<Contributor> alias = new HashSet<Contributor>();
-			for(Contributor contributorAux: contributors) {
-				if(contributorAux.equals(contributor) == false) {
-					if(contributorAux.getEmail().equals(contributor.getEmail())) {
-						alias.add(contributorAux);
-					}
-					else if(project.getName().toUpperCase().equals("IHEALTH") && 
-							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
-									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
-									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
-									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
-											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
-						alias.add(contributorAux);
-					}
-					else if(project.getName().toUpperCase().equals("CONSULTA-CADASTRO-API")
-							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
-						alias.add(contributorAux);
-					}
-					else{
-						String nome = contributorAux.getName().toUpperCase();
-						if(nome != null) {
-							int distance = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
-							//								if (nome.equals(contributor.getName().toUpperCase()) || 
-							//										(distance/(double)contributor.getName().length() < 0.1)) {
-							//									alias.add(contributorAux);
-							//								}
-							if (distance <= 1) {
-								alias.add(contributorAux);
-							}
-						}
-					}
-				}
-			}
-			contributor.setAlias(alias);
-			contributorsAliases.add(contributor);
-		}
-		return contributorsAliases;
 	}
 
 	class DoeContributorFile{

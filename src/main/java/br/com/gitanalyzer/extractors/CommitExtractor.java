@@ -14,7 +14,6 @@ import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
-import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +48,7 @@ public class CommitExtractor {
 		}
 	}
 
-	public List<Commit> extractCommits(String projectPath, Project project) {
+	public List<Commit> extractCommits(String projectPath) {
 		int id = 0;
 		List<Commit> commits = new ArrayList<Commit>();
 		List<Contributor> contributors = new ArrayList<Contributor>();
@@ -79,7 +78,7 @@ public class CommitExtractor {
 					Integer timeInt = Integer.parseInt(time);
 					Instant instant = Instant.ofEpochSecond(timeInt);
 					Date commitDate = Date.from(instant);
-					Commit commit = new Commit(contributorCommit, project, commitDate, idCommit);
+					Commit commit = new Commit(contributorCommit, commitDate, idCommit);
 					commits.add(commit);
 				} catch (Exception e) {
 					log.error(e.getMessage());
@@ -92,9 +91,8 @@ public class CommitExtractor {
 			return null;
 		}
 	}
-
-
-	public void extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
+	
+	public List<Commit> extractCommitsFiles(String projectPath, List<Commit> commits, List<File> files) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -123,6 +121,11 @@ public class CommitExtractor {
 			log.error(e.getMessage());
 		}
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() != 0).collect(Collectors.toList());
+		return commits;
+	}
+
+
+	public List<Commit> extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.diffFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -200,6 +203,7 @@ public class CommitExtractor {
 		}catch (Exception e) {
 			log.error(e.getMessage());
 		}
+		return commits;
 	}
 
 }

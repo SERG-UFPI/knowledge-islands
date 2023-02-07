@@ -19,7 +19,6 @@ import org.eclipse.jgit.lib.Repository;
 
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.File;
-import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,7 +44,7 @@ public class FileExtractor {
 	}
 
 	public List<File> extractFromFileList(String path, String fileListName, 
-			String clocFileName, Project project){
+			String clocFileName, String projectName){
 
 		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
@@ -59,8 +58,8 @@ public class FileExtractor {
 		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
 		try {
 			String patterns[] = null;
-			if (Constants.projectPatterns.containsKey(project.getName())) {
-				patterns = Constants.projectPatterns.get(project.getName());
+			if (Constants.projectPatterns.containsKey(projectName)) {
+				patterns = Constants.projectPatterns.get(projectName);
 			}
 			FileInputStream fstream = new FileInputStream(fileListfullPath);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
