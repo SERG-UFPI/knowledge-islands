@@ -28,7 +28,7 @@ public class TruckFactorController {
 		} catch (IOException | GitAPIException e) {
 			e.printStackTrace();
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).body("Analysis finished");
+		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
 	
 	@PostMapping("repo-truck-factor")
@@ -38,7 +38,7 @@ public class TruckFactorController {
 		} catch (IOException | GitAPIException e) {
 			e.printStackTrace();
 		}
-		return ResponseEntity.status(HttpStatus.CREATED).body("Analysis finished");
+		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
 
 }

@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.main.filter;
+package br.com.gitanalyzer.service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.model.Project;
@@ -16,12 +17,13 @@ import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
 
-public class FilterProjects {
+@Service
+public class FilterProjectService {
 	
 	@Autowired
 	private ProjectRepository projectRepository;
 	
-	public void main(String path) {
+	public void filter(String path) {
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
 		ProjectUtils projectUtils = new ProjectUtils();
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
