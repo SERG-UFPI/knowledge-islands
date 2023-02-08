@@ -20,12 +20,12 @@ public class ProjectController {
 	@Autowired
 	private FilterProjectService filterProjectService;
 
-	@PostMapping
+	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
 		return ResponseEntity.ok(service.setProjectsMainLanguage());
 	}
 
-	@PostMapping
+	@PostMapping("/filtering")
 	public ResponseEntity<?> filteringProjects(@RequestBody String folderPath){
 		filterProjectService.filter(folderPath);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
