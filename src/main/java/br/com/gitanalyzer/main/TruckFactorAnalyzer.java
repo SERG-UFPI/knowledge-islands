@@ -92,17 +92,18 @@ public class TruckFactorAnalyzer {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		String projectName = projectUtils.extractProjectName(projectPath);
+		Project project = null;
+		if(projectRepository.existsByName(projectName)) {
+			project = projectRepository.findByName(projectName);
+		}else {
+			project = new Project(projectName);
+		}
 		//if (projectName.equals("rails") == true) {
-		if(invalidsProjects.contains(projectName) == false) {
-			Project project = null;
-			if(projectRepository.existsByName(projectName)) {
-				project = projectRepository.findByName(projectName);
-			}else {
-				project = new Project(projectName);
-			}
+		filteringProjectsCommentsStudy(project);
+		if(project.isFiltered() == false) {
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
-			
+
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
@@ -168,6 +169,12 @@ public class TruckFactorAnalyzer {
 					}
 				}
 			}
+		}
+	}
+
+	private void filteringProjectsCommentsStudy(Project project) {
+		if(invalidsProjects.contains(project.getName())) {
+			project.setFiltered(true);
 		}
 	}
 
