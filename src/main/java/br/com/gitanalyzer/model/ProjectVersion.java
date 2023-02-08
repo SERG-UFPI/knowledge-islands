@@ -41,6 +41,8 @@ public class ProjectVersion {
 	private List<File> files;
 	@javax.persistence.Transient
 	private String projectName;
+	@javax.persistence.Transient
+	private Date firstCommitDate;
 
 	public ProjectVersion(int numberAllDevs, int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
@@ -54,6 +56,10 @@ public class ProjectVersion {
 		this.numberAnalysedCommits = numberAnalysedCommits;
 		this.dateVersion = dateVersion;
 		this.versionId = versionId;
+	}
+	
+	public String getProjectLanguage() {
+		return project.getMainLanguage();
 	}
 
 }

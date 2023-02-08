@@ -52,29 +52,29 @@ public class ProjectVersionExtractor {
 		return projectVersion;
 	}
 	
-	public ProjectVersion extractProjectVersionOnlyNumbers(String projectPath, String projectName) {
-		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
+	public ProjectVersion extractProjectVersionOnlyNumbers(String projectPath) {
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 		List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-				Constants.clocFileName, projectName);
+				Constants.clocFileName, null);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
 		List<Commit> commits = commitExtractor.extractCommits(projectPath);
+		Date firstCommitDate = commits.get(commits.size()-1).getDate();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
 		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
 		int numberAllDevs = contributors.size();
-		contributors = setAlias(contributors, projectName);
+		contributors = setAlias(contributors, null);
 		int numberAnalysedDevs = contributors.size();
-		commits = filterCommitsByFilesTouched(projectName, commits);
+		commits = filterCommitsByFilesTouched(null, commits);
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, dateVersion, versionId);
-		projectVersion.setProjectName(projectName);
+		projectVersion.setFirstCommitDate(firstCommitDate);
 		return projectVersion;
 	}
 	
@@ -115,7 +115,7 @@ public class ProjectVersionExtractor {
 					if(contributorAux.getEmail().equals(contributor.getEmail())) {
 						alias.add(contributorAux);
 					}
-					else if(projectName.toUpperCase().equals("IHEALTH") && 
+					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
 							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
 									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
 									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
@@ -123,7 +123,7 @@ public class ProjectVersionExtractor {
 											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
 						alias.add(contributorAux);
 					}
-					else if(projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
+					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
 							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
 						alias.add(contributorAux);
 					}
@@ -149,7 +149,7 @@ public class ProjectVersionExtractor {
 	}
 	
 	private List<Commit> filterCommitsByFilesTouched(String projectName, List<Commit> commits) {
-		if(projectName.toUpperCase().equals("IHEALTH")) {
+		if(projectName != null && projectName.toUpperCase().equals("IHEALTH")) {
 			return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());
 		}
 		return commits;
