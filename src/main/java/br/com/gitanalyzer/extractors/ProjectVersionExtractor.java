@@ -24,6 +24,9 @@ public class ProjectVersionExtractor {
 	
 	public ProjectVersion extractProjectVersion(String projectPath, String projectName) {
 		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
+		if(projectPath.substring(projectPath.length() -1).equals("/") == false) {
+			projectPath = projectPath+"/";
+		}
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 		List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
 				Constants.clocFileName, projectName);
@@ -51,7 +54,7 @@ public class ProjectVersionExtractor {
 		projectVersion.setFiles(files);
 		return projectVersion;
 	}
-	
+
 	public ProjectVersion extractProjectVersionOnlyNumbers(String projectPath) {
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
 		List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 

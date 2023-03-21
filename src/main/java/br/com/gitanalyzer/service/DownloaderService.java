@@ -33,13 +33,13 @@ public class DownloaderService {
 	
 	public void download(DownloaderForm form) {
 		try {
-			log.info("=========== DOWNLOAD PROJETOS JAVA ==================");
+			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
 			downloader("language:java stars:>500", form);
-			log.info("=========== DOWNLOAD PROJETOS JAVASCRIPT ==================");
+			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
 			downloader("language:javascript stars:>500", form);
-			log.info("=========== DOWNLOAD PROJETOS C++ ==================");
+			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
 			downloader("language:c++ stars:>500", form);
-			log.info("=========== DOWNLOAD PROJETOS PYTHON ==================");
+			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
 			downloader("language:python stars:>500", form);
 		} catch (IOException e) {
 			e.printStackTrace();

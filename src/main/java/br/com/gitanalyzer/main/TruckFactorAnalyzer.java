@@ -103,7 +103,6 @@ public class TruckFactorAnalyzer {
 		if(project.isFiltered() == false) {
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
-
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
