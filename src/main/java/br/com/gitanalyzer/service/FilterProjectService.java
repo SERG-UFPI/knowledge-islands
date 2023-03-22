@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,11 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.CommitFile;
+import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
@@ -46,10 +51,42 @@ public class FilterProjectService {
 		for(var entry: versionMap.entrySet()) {
 			projectsFiltered.addAll(filterProjectBySize(entry.getValue()));
 		}
+		for(ProjectVersion version: versions) {
+			if(projectsFiltered.stream()
+					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
+				if(filterProjectByCommits(version)) {
+					projectsFiltered.add(version.getProject());
+				}
+			}
+		}
 		for (Project project : projectsFiltered) {
 			project.setFiltered(true);
 			projectRepository.save(project);
 		}
+	}
+
+	private boolean filterProjectByCommits(ProjectVersion version) {
+		int numberOfFiles = version.getNumberAnalysedFiles();
+		List<Commit> commits = version.getCommits();
+		Collections.reverse(commits);
+		List<File> addedFiles = new ArrayList<File>();
+		for(int i = 0; i < 20; i++) {
+			for (CommitFile commitFile : commits.get(i).getCommitFiles()) {
+				if(commitFile.getOperation().equals(OperationType.ADD)) {
+					addedFiles.add(commitFile.getFile());
+				}
+			}
+		}
+		int numberOfCurrentFilesAdded = 0;
+		for (File file : addedFiles) {
+			if(version.getFiles().stream().anyMatch(f -> f.isFile(file.getPath()))) {
+				numberOfCurrentFilesAdded++;
+			}
+		}
+		if(numberOfCurrentFilesAdded > (numberOfFiles*0.5)) {
+			return true;
+		}
+		return false;
 	}
 
 	private List<Project> filterProjectBySize(List<ProjectVersion> versions) {

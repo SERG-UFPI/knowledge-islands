@@ -65,7 +65,7 @@ public class ProjectVersionExtractor {
 		Date firstCommitDate = commits.get(commits.size()-1).getDate();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
-		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
+		//commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
 		int numberAllDevs = contributors.size();
