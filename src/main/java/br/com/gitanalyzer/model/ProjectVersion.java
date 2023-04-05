@@ -26,13 +26,13 @@ public class ProjectVersion {
 	private Long id;
 
 	private int numberAllDevs, numberAuthors, numberAnalysedDevs, 
-	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, truckfactor;
+	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
 	private String versionId;
 	@ManyToOne
 	private Project project;
-	
+
 	@javax.persistence.Transient
 	private List<Commit> commits;
 	@javax.persistence.Transient
@@ -57,7 +57,7 @@ public class ProjectVersion {
 		this.dateVersion = dateVersion;
 		this.versionId = versionId;
 	}
-	
+
 	public String getProjectLanguage() {
 		return project.getMainLanguage();
 	}

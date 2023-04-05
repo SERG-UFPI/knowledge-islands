@@ -12,38 +12,45 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
-import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.extractors.CommitExtractor;
+import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.repository.ProjectVersionRepository;
+import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ProjectUtils;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class FilterProjectService {
-	
+
 	@Autowired
 	private ProjectRepository projectRepository;
+	@Autowired
+	private ProjectVersionRepository projectVersionRepository; 
 	
+
 	public void filter(String path) {
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
 		ProjectUtils projectUtils = new ProjectUtils();
-		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 		java.io.File dir = new java.io.File(path);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				String projectName = projectUtils.extractProjectName(projectPath);
 				Project project = projectRepository.findByName(projectName);
-				ProjectVersion version = projectVersionExtractor
-						.extractProjectVersionOnlyNumbers(projectPath);
-				project.setFirstCommitDate(version.getFirstCommitDate());
-				version.setProject(project);
+				log.info("EXTRACTING DATA FROM "+projectName);
+				ProjectVersion version = projectVersionRepository.findFirstByProjectIdOrderByDateVersionDesc(project.getId());
 				versions.add(version);
-				
+				log.info("EXTRACTION FINISHED");
+
 			}
 		}
 		List<Project> projectsFiltered = new ArrayList<Project>();
@@ -54,7 +61,9 @@ public class FilterProjectService {
 		for(ProjectVersion version: versions) {
 			if(projectsFiltered.stream()
 					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
+				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
 				if(filterProjectByCommits(version)) {
+					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
 					projectsFiltered.add(version.getProject());
 				}
 			}
@@ -66,12 +75,18 @@ public class FilterProjectService {
 	}
 
 	private boolean filterProjectByCommits(ProjectVersion version) {
+		FileExtractor fileExtractor = new FileExtractor();
+		CommitExtractor commitExtractor = new CommitExtractor();
+		List<File> files = fileExtractor.extractFromFileList(version.getProject().getCurrentPath(), Constants.linguistFileName, 
+				Constants.clocFileName, null);
+		fileExtractor.getRenamesFiles(version.getProject().getCurrentPath(), files);
+		List<Commit> commits = commitExtractor.extractCommits(version.getProject().getCurrentPath());
+		commits = getFirst20Commits(commits);
+		commits = commitExtractor.extractCommitsFiles(version.getProject().getCurrentPath(), commits, files);
 		int numberOfFiles = version.getNumberAnalysedFiles();
-		List<Commit> commits = version.getCommits();
-		Collections.reverse(commits);
 		List<File> addedFiles = new ArrayList<File>();
-		for(int i = 0; i < 20; i++) {
-			for (CommitFile commitFile : commits.get(i).getCommitFiles()) {
+		for(Commit commit: commits) {
+			for (CommitFile commitFile : commit.getCommitFiles()) {
 				if(commitFile.getOperation().equals(OperationType.ADD)) {
 					addedFiles.add(commitFile.getFile());
 				}
@@ -79,7 +94,7 @@ public class FilterProjectService {
 		}
 		int numberOfCurrentFilesAdded = 0;
 		for (File file : addedFiles) {
-			if(version.getFiles().stream().anyMatch(f -> f.isFile(file.getPath()))) {
+			if(files.stream().anyMatch(f -> f.isFile(file.getPath()))) {
 				numberOfCurrentFilesAdded++;
 			}
 		}
@@ -89,14 +104,38 @@ public class FilterProjectService {
 		return false;
 	}
 
+	private List<Commit> getFirst20Commits(List<Commit> commits) {
+		List<Commit> firstCommits = new ArrayList<Commit>();
+		Collections.reverse(commits);
+		for(int i = 0; i < 20; i++) {
+			firstCommits.add(commits.get(i));
+		}
+		return firstCommits;
+	}
+
 	private List<Project> filterProjectBySize(List<ProjectVersion> versions) {
 		List<Double> devs = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedDevs())).toList();
 		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAllCommits())).toList();
 		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAllFiles())).toList();
 		double[] devsArray = new double[devs.size()];
+		int i=0;
+		for(Double dev: devs) {
+			devsArray[i] = dev;
+			i++;
+		}
 		double[] commitsArray = new double[commits.size()];
+		i=0;
+		for(Double commit: commits) {
+			commitsArray[i] = commit;
+			i++;
+		}
 		double[] filesArray = new double[files.size()];
-		
+		i=0;
+		for(Double file: files) {
+			filesArray[i] = file;
+			i++;
+		}
+
 		Percentile p = new Percentile();
 		double firstQDevs = p.evaluate(devsArray, 25);
 		double firstQCommits = p.evaluate(commitsArray, 25);
@@ -105,6 +144,7 @@ public class FilterProjectService {
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getProject()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAllCommits() < firstQCommits).map(v -> v.getProject()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAllFiles() < firstQFiles).map(v -> v.getProject()).toList());
+		projects.stream().forEach(pr -> pr.setFilteredReason(FilteredEnum.SIZE));
 		return new ArrayList<>(projects);
 	}
 

@@ -2,6 +2,8 @@ package br.com.gitanalyzer.extractors;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,6 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CommitExtractor {
+	
+	public String getLastCommitHash(String projectPath) throws IOException{
+		BufferedReader br = new BufferedReader(new FileReader(projectPath+Constants.commitFileName));
+		String hash = br.readLine().split(";")[0];
+		br.close();
+		return hash;
+	}
 
 	public List<Commit> getCommitsDatesAndHashes(String projectPath){
 		List<Commit> commits = new ArrayList<Commit>();

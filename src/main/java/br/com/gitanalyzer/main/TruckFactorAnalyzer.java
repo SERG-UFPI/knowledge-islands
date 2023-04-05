@@ -26,6 +26,7 @@ import com.opencsv.exceptions.CsvValidationException;
 
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
+import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
@@ -59,6 +60,7 @@ public class TruckFactorAnalyzer {
 	private DoaUtils doaUtils = new DoaUtils();
 	private ProjectUtils projectUtils = new ProjectUtils();
 	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
+	private CommitExtractor commitExtractor = new CommitExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	@Autowired
@@ -99,8 +101,13 @@ public class TruckFactorAnalyzer {
 			project = new Project(projectName);
 		}
 		//if (projectName.equals("rails") == true) {
-		filteringProjectsCommentsStudy(project);
-		if(project.isFiltered() == false) {
+		//filteringProjectsCommentsStudy(project);
+		boolean versionAnalyzed = false;
+		if(project.getId() != null) {
+			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
+			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
+		}
+		if(project.isFiltered() == false && versionAnalyzed == false) {
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
@@ -149,7 +156,7 @@ public class TruckFactorAnalyzer {
 				projectVersion.getContributors().remove(0);
 				tf = tf+1;
 			}
-			log.info("SAVING TF DATA OF"+projectName);
+			log.info("SAVING TF DATA OF "+projectName);
 			if(project.getId() == null) {
 				projectRepository.save(project);
 			}

@@ -8,5 +8,8 @@ import br.com.gitanalyzer.model.ProjectVersion;
 @Repository
 public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, Long>{
 	
-	public boolean existsByVersionId(String versionId);
+	boolean existsByVersionId(String versionId);
+	
+	ProjectVersion findFirstByProjectIdOrderByDateVersionDesc(Long id);
+	
 }

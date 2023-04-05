@@ -7,23 +7,19 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import br.com.gitanalyzer.main.dto.HashNumberYears;
 import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.Project;
+import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HistoryCommitsExtractor {
-
-	public void commitsHashs(HashNumberYears form) {
-		java.io.File dir = new java.io.File(form.getPath());
-		for (java.io.File fileDir: dir.listFiles()) {
-			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
-				saveCommitsHashs(projectPath, form.getNumberYears());
-			}
-		}
-	}
-
+	
 	public void saveCommitsHashs(String path, int numberYears) {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(path);

@@ -16,18 +16,24 @@ import br.com.gitanalyzer.service.ProjectService;
 public class ProjectController {
 
 	@Autowired
-	private ProjectService service;
+	private ProjectService projectService;
 	@Autowired
 	private FilterProjectService filterProjectService;
 
 	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
-		return ResponseEntity.ok(service.setProjectsMainLanguage());
+		return ResponseEntity.ok(projectService.setProjectsMainLanguage());
 	}
 
 	@PostMapping("/filtering")
 	public ResponseEntity<?> filteringProjects(@RequestBody String folderPath){
 		filterProjectService.filter(folderPath);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
+	}
+
+	@PostMapping("extract-version")
+	public ResponseEntity<?> extractVersion(@RequestBody String folderPath){
+		projectService.extractVersion(folderPath);
+		return ResponseEntity.status(HttpStatus.OK).body("Extraction finished");
 	}
 }

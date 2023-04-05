@@ -41,6 +41,7 @@ public class DownloaderService {
 			downloader("language:c++ stars:>500", form);
 			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
 			downloader("language:python stars:>500", form);
+			log.info("=========== DOWNLOADS FINISHED==================");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -55,7 +56,7 @@ public class DownloaderService {
 				System.out.println("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, form.getPath());
 				if(flag) {
-					Project project = new Project(projectInfo.getName(), projectInfo.getLanguage());
+					Project project = new Project(projectInfo.getName(), projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/");
 					projectRepository.save(project);
 				}
 			} catch (Exception e) {
