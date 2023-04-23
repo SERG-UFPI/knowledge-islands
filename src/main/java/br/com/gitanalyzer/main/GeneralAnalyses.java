@@ -1,74 +1,101 @@
 package br.com.gitanalyzer.main;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
 
 
 public class GeneralAnalyses {
 
-	public static void main(String[] args) {
-		List<DoaResultVO> doas = new ArrayList<DoaResultVO>();
-		List<DoeResultVO> does = new ArrayList<DoeResultVO>();
-		List<String[]> doaFile = null;
-		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"reps_doa.csv"))) {
-			doaFile = reader.readAll();
-		} catch (IOException | CsvException e) {
-			e.printStackTrace();
-		}
-		List<String[]> doeFile = null;
-		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"result_tf_ml_all.csv"))) {
-			doeFile = reader.readAll();
-		} catch (IOException | CsvException e) {
-			e.printStackTrace();
-		}
-		for (String[] string : doaFile) {
-			String url = string[0];
-			String[] urlSplited = url.split("/");
-			doas.add(new DoaResultVO(urlSplited[urlSplited.length-1], Integer.parseInt(string[1]), Integer.parseInt(string[2]), Integer.parseInt(string[3])));
-		}
-		for (String[] string : doeFile) {
-			does.add(new DoeResultVO(string[0], Integer.parseInt(string[1]), Integer.parseInt(string[2])));
-		}
-		List<ProjectDoaDoe> projects = new ArrayList<ProjectDoaDoe>();
-		for (DoaResultVO doaResult : doas) {
-			String projectNameDoa = doaResult.name;
-			int tfDoa = doaResult.tf;
-			int numDevs = doaResult.numDevs;
-			int numAuthors = doaResult.numAuthors;
-			int tfDoe = 0, numAuthorsDoe = 0;
-			for (DoeResultVO doeResult : does) {
-				String projectNameDoe = doeResult.name;
-				if (projectNameDoa.equals(projectNameDoe)) {
-					tfDoe = doeResult.tf;
-					numAuthorsDoe = doeResult.numAuthors;
-					break;
-				}
-			}
-			ProjectDoaDoe projectDoaDoe = new ProjectDoaDoe(projectNameDoa, tfDoa, tfDoe, numDevs, numAuthors, numAuthorsDoe);
-			projects.add(projectDoaDoe);
-		}
-		File file = new File(args[0]+"result_tf.csv");
-		FileWriter outputfile;
-		try {
-			outputfile = new FileWriter(file);
-			CSVWriter writer = new CSVWriter(outputfile);
-			for (ProjectDoaDoe projectDoaDoe : projects) {
-				writer.writeNext(projectDoaDoe.objectString());
-			}
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
 
-		System.out.println();
+		//		String path = GeneralAnalyses.class.getResource("/linguist_script.sh").toURI().getPath();
+		//		System.out.println(path);
+		//		Process process = Runtime.getRuntime().exec("sh -c "+path+" /home/otavio/Desktop/ihealth/ihealth/");
+		//		StreamGobbler streamGobbler = 
+		//				  new StreamGobbler(process.getInputStream(), System.out::println);
+		//		Future<?> future = Executors.newSingleThreadExecutor().submit(streamGobbler);
+		//		int exitCode = process.waitFor();
+		//		assert exitCode == 0;
+		//		future.get();
+		
+		//ProcessBuilder pb = new ProcessBuilder("/usr/bin/mawk", "-f", "/home/otavio/Desktop/CodiVision/Codivision/log.awk", "/home/otavio/Desktop/CodiVision/Codivision/log.log");
+		Process process = Runtime.getRuntime().exec("awk -F$\'\t' -f /home/otavio/Desktop/CodiVision/Codivision/log.awk /home/otavio/Desktop/CodiVision/Codivision/log.log");
+		System.out.println("Error stream:");
+		InputStream errorStream = process.getErrorStream();
+		printStream(errorStream);
+
+		process.waitFor();
+
+		System.out.println("Output stream:");
+		InputStream inputStream = process.getInputStream();
+		printStream(inputStream);
+		//		List<DoaResultVO> doas = new ArrayList<DoaResultVO>();
+		//		List<DoeResultVO> does = new ArrayList<DoeResultVO>();
+		//		List<String[]> doaFile = null;
+		//		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"reps_doa.csv"))) {
+		//			doaFile = reader.readAll();
+		//		} catch (IOException | CsvException e) {
+		//			e.printStackTrace();
+		//		}
+		//		List<String[]> doeFile = null;
+		//		try (CSVReader reader = new CSVReader(new FileReader(args[0]+"reps_ml.csv"))) {
+		//			doeFile = reader.readAll();
+		//		} catch (IOException | CsvException e) {
+		//			e.printStackTrace();
+		//		}
+		//		for (String[] string : doaFile) {
+		//			String url = string[0];
+		//			String[] urlSplited = url.split("/");
+		//			doas.add(new DoaResultVO(urlSplited[urlSplited.length-1], Integer.parseInt(string[1]), Integer.parseInt(string[2]), Integer.parseInt(string[3])));
+		//		}
+		//		for (String[] string : doeFile) {
+		//			does.add(new DoeResultVO(string[0], Integer.parseInt(string[1]), Integer.parseInt(string[2])));
+		//		}
+		//		List<ProjectDoaDoe> projects = new ArrayList<ProjectDoaDoe>();
+		//		for (DoaResultVO doaResult : doas) {
+		//			String projectNameDoa = doaResult.name;
+		//			int tfDoa = doaResult.tf;
+		//			int numDevs = doaResult.numDevs;
+		//			int numAuthors = doaResult.numAuthors;
+		//			int tfDoe = 0, numAuthorsDoe = 0;
+		//			for (DoeResultVO doeResult : does) {
+		//				String projectNameDoe = doeResult.name;
+		//				if (projectNameDoa.equals(projectNameDoe)) {
+		//					tfDoe = doeResult.tf;
+		//					numAuthorsDoe = doeResult.numAuthors;
+		//					break;
+		//				}
+		//			}
+		//			ProjectDoaDoe projectDoaDoe = new ProjectDoaDoe(projectNameDoa, tfDoa, tfDoe, numDevs, numAuthors, numAuthorsDoe);
+		//			projects.add(projectDoaDoe);
+		//		}
+		//		File file = new File(args[0]+"result_tf_ml.csv");
+		//		FileWriter outputfile;
+		//		try {
+		//			outputfile = new FileWriter(file);
+		//			CSVWriter writer = new CSVWriter(outputfile);
+		//			for (ProjectDoaDoe projectDoaDoe : projects) {
+		//				writer.writeNext(projectDoaDoe.objectString());
+		//			}
+		//			writer.close();
+		//		} catch (IOException e) {
+		//			e.printStackTrace();
+		//		}
+		//
+		//		System.out.println();
+	}
+
+	public static void printStream (InputStream stream) throws IOException
+	{
+		BufferedReader in = new BufferedReader(new InputStreamReader(stream));
+		String inputLine;
+		while ((inputLine = in.readLine()) != null)
+			System.out.println(inputLine);
+		in.close();
 	}
 
 	static class ProjectDoaDoe{

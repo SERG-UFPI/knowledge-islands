@@ -11,13 +11,13 @@ import br.com.gitanalyzer.utils.ProjectUtils;
 
 @Service
 public class HistoryCommitsService {
-	
+
 	@Autowired
 	private ProjectRepository projectRepository;
+	private ProjectUtils projectUtils = new ProjectUtils();
+	private HistoryCommitsExtractor extractor = new HistoryCommitsExtractor();
 
-	public void commitsHashs(HashNumberYears form) {
-		HistoryCommitsExtractor extractor = new HistoryCommitsExtractor();
-		ProjectUtils projectUtils = new ProjectUtils();
+	public void commitsHashsFolder(HashNumberYears form) {
 		java.io.File dir = new java.io.File(form.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
@@ -30,5 +30,13 @@ public class HistoryCommitsService {
 			}
 		}
 	}
-	
+
+	public void commitsHashsProject(HashNumberYears form) {
+		String projectName = projectUtils.extractProjectName(form.getPath());
+		Project project = projectRepository.findByName(projectName);
+		if(project.isFiltered() == false) {
+			extractor.saveCommitsHashs(form.getPath(), form.getNumberYears());
+		}
+	}
+
 }

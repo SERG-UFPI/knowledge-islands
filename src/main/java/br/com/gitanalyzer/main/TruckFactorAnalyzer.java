@@ -101,7 +101,7 @@ public class TruckFactorAnalyzer {
 			project = new Project(projectName);
 		}
 		//if (projectName.equals("rails") == true) {
-		//filteringProjectsCommentsStudy(project);
+		filteringProjectsCommentsStudy(project);
 		boolean versionAnalyzed = false;
 		if(project.getId() != null) {
 			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);

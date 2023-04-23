@@ -45,6 +45,7 @@ public class Constants {
 	public static final String commitFileName = new String("commitinfo.log");
 	public static final String commitFileFileName = new String("commitfileinfo.log");
 	public static final String diffFileName = new String("diff.log");
+	public static final String logFile = new String("log.log");
 
 	public static final String truckFactorResultFile = new String("truck_factor.log");
 	public static final String truckFactorHistoryFile = new String("truckFactorHistoryFile.log");

@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,6 +31,7 @@ public class Project {
 	private Long id;
 	@Column(unique=true)
 	private String name;
+	private String fullName;
 	private String currentPath;
 	private String mainLanguage;
 	private boolean filtered;
@@ -36,16 +39,21 @@ public class Project {
 	private Date firstCommitDate;
 	@OneToMany(mappedBy="project", fetch=FetchType.LAZY)
 	private List<ProjectVersion> versions;
+	@Enumerated(EnumType.STRING)
 	private FilteredEnum filteredReason;
+	private String defaultBranch;
 
 	public Project(String name) {
 		this.name = name;
 	}
 
-	public Project(String name, String mainLanguage, String currentPath) {
+	public Project(String name, String fullName, String mainLanguage, String currentPath, String defaultBranch) {
 		super();
 		this.name = name;
+		this.fullName = fullName;
 		this.mainLanguage = mainLanguage;
+		this.currentPath = currentPath;
+		this.defaultBranch = defaultBranch; 
 	}
 
 }

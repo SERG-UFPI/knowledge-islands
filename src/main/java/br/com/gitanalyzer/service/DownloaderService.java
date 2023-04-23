@@ -30,7 +30,7 @@ public class DownloaderService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
-	
+
 	public void download(DownloaderForm form) {
 		try {
 			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
@@ -56,7 +56,8 @@ public class DownloaderService {
 				System.out.println("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, form.getPath());
 				if(flag) {
-					Project project = new Project(projectInfo.getName(), projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/");
+					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
+							projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/", projectInfo.getDefault_branch());
 					projectRepository.save(project);
 				}
 			} catch (Exception e) {

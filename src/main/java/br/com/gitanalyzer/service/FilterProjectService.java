@@ -80,7 +80,7 @@ public class FilterProjectService {
 		List<File> files = fileExtractor.extractFromFileList(version.getProject().getCurrentPath(), Constants.linguistFileName, 
 				Constants.clocFileName, null);
 		fileExtractor.getRenamesFiles(version.getProject().getCurrentPath(), files);
-		List<Commit> commits = commitExtractor.extractCommits(version.getProject().getCurrentPath());
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getProject().getCurrentPath());
 		commits = getFirst20Commits(commits);
 		commits = commitExtractor.extractCommitsFiles(version.getProject().getCurrentPath(), commits, files);
 		int numberOfFiles = version.getNumberAnalysedFiles();

@@ -32,7 +32,7 @@ public class ProjectVersionExtractor {
 				Constants.clocFileName, projectName);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
-		List<Commit> commits = commitExtractor.extractCommits(projectPath);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
 		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
@@ -45,6 +45,7 @@ public class ProjectVersionExtractor {
 		//commitsFilesFrequency(commits, files);
 		commits = filterCommitsByFilesTouched(projectName, commits);
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
+		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
@@ -61,7 +62,7 @@ public class ProjectVersionExtractor {
 				Constants.clocFileName, null);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
-		List<Commit> commits = commitExtractor.extractCommits(projectPath);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		Date firstCommitDate = commits.get(commits.size()-1).getDate();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
@@ -73,6 +74,7 @@ public class ProjectVersionExtractor {
 		int numberAnalysedDevs = contributors.size();
 		commits = filterCommitsByFilesTouched(null, commits);
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
+		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 

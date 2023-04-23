@@ -18,9 +18,15 @@ public class HistoryCommits {
 	@Autowired
 	private HistoryCommitsService service;
 
-	@PostMapping
-	public ResponseEntity<?> saveHistory(@RequestBody HashNumberYears form){
-		service.commitsHashs(form);
+	@PostMapping("history-folder")
+	public ResponseEntity<?> saveHistoryFolder(@RequestBody HashNumberYears form){
+		service.commitsHashsFolder(form);
+		return ResponseEntity.ok(HttpStatus.OK);
+	}
+
+	@PostMapping("history-project")
+	public ResponseEntity<?> saveHistoryProject(@RequestBody HashNumberYears form){
+		service.commitsHashsProject(form);
 		return ResponseEntity.ok(HttpStatus.OK);
 	}
 }

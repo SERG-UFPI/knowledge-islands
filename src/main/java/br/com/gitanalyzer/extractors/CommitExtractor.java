@@ -1,10 +1,13 @@
 package br.com.gitanalyzer.extractors;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,7 +31,7 @@ public class CommitExtractor {
 		br.close();
 		return hash;
 	}
-
+	
 	public List<Commit> getCommitsDatesAndHashes(String projectPath){
 		List<Commit> commits = new ArrayList<Commit>();
 		try {
@@ -56,8 +59,8 @@ public class CommitExtractor {
 			return null;
 		}
 	}
-
-	public List<Commit> extractCommits(String projectPath) {
+	
+	public List<Commit> extractCommitsFromLogFiles(String projectPath) {
 		int id = 0;
 		List<Commit> commits = new ArrayList<Commit>();
 		List<Contributor> contributors = new ArrayList<Contributor>();
@@ -132,7 +135,59 @@ public class CommitExtractor {
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() != 0).collect(Collectors.toList());
 		return commits;
 	}
-
+	
+	public void generateCommitFileFile(String projectPath) {
+		try {
+			FileInputStream fstream = new FileInputStream(projectPath+Constants.logFile);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+			String strLine;
+			String commitHash = null;
+			List<String> lines = new ArrayList<String>();
+			whileFile:while ((strLine = br.readLine()) != null) {
+				if (strLine.trim().isEmpty()) {
+					continue whileFile;
+				}
+				String[] splited = strLine.split("\t");
+				String string1 = splited[0];
+				if (string1.equals("commit")) {
+					commitHash = splited[1];
+					continue whileFile;
+				}else {
+					String operation = null;
+					String file1 = splited[1]; 
+					String file2 = null;
+					if(splited[0].equals("A")) {
+						operation = "ADDED";
+					}else if(splited[0].equals("M")) {
+						operation = "MODIFIED";
+					}else if(splited[0].indexOf("R") != -1) {
+						operation = "RENAMED";
+						file2 = splited[2];
+					}
+					if(operation != null) {
+						String line = null;
+						if(file2 == null) {
+							line = commitHash+";"+operation+"; ;"+file1;
+						}else {
+							line = commitHash+";"+operation+";"+file1+";"+file2;
+						}
+						lines.add(line);
+					}
+				}
+			}
+			java.io.File file = new java.io.File(projectPath+"commitfileinfo.log");
+			FileOutputStream fos = new FileOutputStream(file);
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+			for (String line : lines) {
+				bw.write(line);
+				bw.newLine();
+			}
+			bw.close();
+			br.close();
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
+	}
 
 	public List<Commit> extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
 		try {

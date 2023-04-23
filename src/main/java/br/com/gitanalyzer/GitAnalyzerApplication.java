@@ -1,3 +1,4 @@
+
 package br.com.gitanalyzer;
 
 import org.springframework.boot.SpringApplication;
