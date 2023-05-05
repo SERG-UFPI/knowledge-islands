@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,28 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CommitExtractor {
+	
+	public Date getFirstCommitDate(String projectPath) throws IOException {
+		List<Date> dates = new ArrayList<Date>();
+		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+		String strLine;
+		while ((strLine = br.readLine()) != null) {
+			try {
+				String[] commitSplited = strLine.split(";");
+				String time = commitSplited[3];
+				Integer timeInt = Integer.parseInt(time);
+				Instant instant = Instant.ofEpochSecond(timeInt);
+				Date commitDate = Date.from(instant);
+				dates.add(commitDate);
+			} catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+		br.close();
+		Collections.sort(dates);
+		return dates.get(0);
+	}
 	
 	public String getLastCommitHash(String projectPath) throws IOException{
 		BufferedReader br = new BufferedReader(new FileReader(projectPath+Constants.commitFileName));

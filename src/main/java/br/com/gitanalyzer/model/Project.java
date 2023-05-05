@@ -42,18 +42,23 @@ public class Project {
 	@Enumerated(EnumType.STRING)
 	private FilteredEnum filteredReason;
 	private String defaultBranch;
+	private Integer numberStars;
+
+	@javax.persistence.Transient
+	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
 	public Project(String name) {
 		this.name = name;
 	}
 
-	public Project(String name, String fullName, String mainLanguage, String currentPath, String defaultBranch) {
+	public Project(String name, String fullName, String mainLanguage, 
+			String currentPath, String defaultBranch, Integer numberStars) {
 		super();
 		this.name = name;
 		this.fullName = fullName;
 		this.mainLanguage = mainLanguage;
 		this.currentPath = currentPath;
-		this.defaultBranch = defaultBranch; 
+		this.defaultBranch = defaultBranch;
+		this.numberStars = numberStars;
 	}
-
-}
+}		

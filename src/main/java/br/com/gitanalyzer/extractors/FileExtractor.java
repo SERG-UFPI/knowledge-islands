@@ -43,27 +43,24 @@ public class FileExtractor {
 		return lines;
 	}
 
-	public List<File> extractFromFileList(String path, String fileListName, 
-			String clocFileName, String projectName){
-
-		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
-		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
-		String arrayHomebrewCask[]  = new String[] {"Casks/"};
-
-		List<File> files = new ArrayList<File>();
-		String fileListfullPath = path+fileListName;
-		String clocListfullPath = path+clocFileName;
-		Constants.projectPatterns.put("linux", arrayLinux);
-		Constants.projectPatterns.put("homebrew", arrayHomebrew);
-		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
+	public List<File> extractFileList(String path, String fileListName, String projectName) {
 		try {
+			String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
+			String arrayHomebrew[]  = new String[] {"Library/Formula/"};
+			String arrayHomebrewCask[]  = new String[] {"Casks/"};
+
+			List<File> files = new ArrayList<File>();
+			String fileListfullPath = path+fileListName;
+			Constants.projectPatterns.put("linux", arrayLinux);
+			Constants.projectPatterns.put("homebrew", arrayHomebrew);
+			Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
 			String patterns[] = null;
 			if (Constants.projectPatterns.containsKey(projectName)) {
 				patterns = Constants.projectPatterns.get(projectName);
 			}
 			FileInputStream fstream = new FileInputStream(fileListfullPath);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-			String strLine, strLineCloc;
+			String strLine;
 			whileFile:while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				String filePath = null;
@@ -84,7 +81,20 @@ public class FileExtractor {
 				}
 			}
 			br.close();
+			return files;
+		} catch (IOException e) {
+			log.error(e.getMessage());
+		}
+		return null;
+	}
+
+	public List<File> extractFileSizeList(String path, String fileListName, 
+			String clocFileName, String projectName){
+		try {
+			List<File> files = extractFileList(path, fileListName, projectName);
 			if (clocFileName.equals(Constants.clocFileName)) {
+				String strLineCloc;
+				String clocListfullPath = path+clocFileName;
 				FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
 				BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
 				while ((strLineCloc = brCloc.readLine()) != null) {
@@ -122,11 +132,11 @@ public class FileExtractor {
 					}
 				}
 			}
-
+			return files;
 		} catch (IOException | GitAPIException e) {
 			log.error(e.getMessage());
 		}
-		return files;
+		return null;
 	}
 
 	public void getRenamesFiles(String projectPath, List<File> files) {

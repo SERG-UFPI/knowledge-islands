@@ -18,17 +18,17 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProjectVersionExtractor {
-	
+
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
-	
+
 	public ProjectVersion extractProjectVersion(String projectPath, String projectName) {
 		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
 		if(projectPath.substring(projectPath.length() -1).equals("/") == false) {
 			projectPath = projectPath+"/";
 		}
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-		List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
+		List<File> files = fileExtractor.extractFileSizeList(projectPath, Constants.linguistFileName, 
 				Constants.clocFileName, projectName);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
@@ -56,33 +56,18 @@ public class ProjectVersionExtractor {
 		return projectVersion;
 	}
 
-	public ProjectVersion extractProjectVersionOnlyNumbers(String projectPath) {
+	public ProjectVersion extractProjectVersionFiltering(String projectPath) {
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-		List<File> files = fileExtractor.extractFromFileList(projectPath, Constants.linguistFileName, 
-				Constants.clocFileName, null);
-		int numberAnalysedFiles = files.size();
-		fileExtractor.getRenamesFiles(projectPath, files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
-		Date firstCommitDate = commits.get(commits.size()-1).getDate();
 		int numberAllCommits = commits.size();
-		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
-		//commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
-		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
-		int numberAllDevs = contributors.size();
 		contributors = setAlias(contributors, null);
 		int numberAnalysedDevs = contributors.size();
-		commits = filterCommitsByFilesTouched(null, commits);
-		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
-		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
-		Date dateVersion = commits.get(0).getDate();
-		String versionId = commits.get(0).getExternalId();
-		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
-				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, dateVersion, versionId);
-		projectVersion.setFirstCommitDate(firstCommitDate);
+		ProjectVersion projectVersion = ProjectVersion.builder().numberAllCommits(numberAllCommits)
+				.numberAllFiles(numberAllFiles).numberAnalysedDevs(numberAnalysedDevs).build();
 		return projectVersion;
 	}
-	
+
 	private List<Contributor> extractContributorFromCommits(List<Commit> commits){
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		for (Commit commit : commits) {
@@ -100,7 +85,7 @@ public class ProjectVersionExtractor {
 		}
 		return contributors;
 	}
-	
+
 	private List<Contributor> setAlias(List<Contributor> contributors, String projectName){
 		List<Contributor> contributorsAliases = new ArrayList<Contributor>();
 		forContributors:for (Contributor contributor : contributors) {
@@ -152,7 +137,7 @@ public class ProjectVersionExtractor {
 		}
 		return contributorsAliases;
 	}
-	
+
 	private List<Commit> filterCommitsByFilesTouched(String projectName, List<Commit> commits) {
 		if(projectName != null && projectName.toUpperCase().equals("IHEALTH")) {
 			return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());

@@ -2,6 +2,7 @@ package br.com.gitanalyzer.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,11 @@ import javax.json.JsonObject;
 import javax.json.JsonValue;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.jcabi.github.Github;
@@ -18,20 +23,27 @@ import com.jcabi.github.RtGithub;
 import com.jcabi.http.Request;
 import com.jcabi.http.response.JsonResponse;
 
+import br.com.gitanalyzer.main.dto.CloneRepoForm;
 import br.com.gitanalyzer.main.dto.DownloaderForm;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class DownloaderService {
-
+	
+	@Value("${configuration.clone.path}")
+	private String projectFolder;
 	@Autowired
 	private ProjectRepository projectRepository;
+	@Autowired
+	private ProjectService projectService;
+	private ProjectUtils projectUtils = new ProjectUtils();
 
-	public void download(DownloaderForm form) {
+	public void download(DownloaderForm form) throws URISyntaxException, InterruptedException {
 		try {
 			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
 			downloader("language:java stars:>500", form);
@@ -42,6 +54,8 @@ public class DownloaderService {
 			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
 			downloader("language:python stars:>500", form);
 			log.info("=========== DOWNLOADS FINISHED==================");
+			projectService.generateLogFilesFolder(form.getPath());
+			projectService.setFirstDateFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -57,7 +71,8 @@ public class DownloaderService {
 				boolean flag = cloneIfNotExists(projectInfo, form.getPath());
 				if(flag) {
 					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
-							projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/", projectInfo.getDefault_branch());
+							projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/", projectInfo.getDefault_branch(), 
+							projectInfo.getStargazers_count());
 					projectRepository.save(project);
 				}
 			} catch (Exception e) {
@@ -105,6 +120,9 @@ public class DownloaderService {
 				p.setFullName(repoData.getString("full_name"));
 				p.setName(repoData.getString("name"));
 			}
+			if(!repoData.isNull("stargazers_count")) {
+				p.setStargazers_count(repoData.getInt("stargazers_count"));
+			}
 			if (!repoData.isNull("default_branch"))
 				p.setDefault_branch(repoData.getString("default_branch"));
 			if (!repoData.isNull("language"))
@@ -113,6 +131,14 @@ public class DownloaderService {
 			projects.add(p);
 		}
 		return projects;
+	}
+
+	public void cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
+		String projectName = projectUtils.extractProjectName(form.getUrl());
+		File file = new File(projectFolder+projectName);
+		Git.cloneRepository().setURI(form.getUrl()).setDirectory(file). 
+				call();
+		System.out.println();
 	}
 
 }

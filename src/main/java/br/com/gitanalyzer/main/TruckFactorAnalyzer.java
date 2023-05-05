@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +28,9 @@ import com.opencsv.exceptions.CsvValidationException;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
+import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.main.dto.HistoryReposTruckFactorDTO;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
 import br.com.gitanalyzer.main.vo.MlOutput;
@@ -46,6 +49,7 @@ import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
+import br.com.gitanalyzer.service.ProjectService;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
@@ -71,6 +75,8 @@ public class TruckFactorAnalyzer {
 	private TruckFactorDevelopersRepository truckFactorDevelopersRepository;
 	@Autowired
 	private ProjectVersionRepository projectVersionRepository;
+	@Autowired
+	private ProjectService projectService;
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
@@ -89,7 +95,7 @@ public class TruckFactorAnalyzer {
 		return commitsReturn;
 	}
 
-	public void projectTruckFactorAnalyzes(RepositoryKnowledgeMetricDTO repo)
+	public void analyzeTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
@@ -390,7 +396,7 @@ public class TruckFactorAnalyzer {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				RepositoryKnowledgeMetricDTO repo = new RepositoryKnowledgeMetricDTO(projectPath, request.getKnowledgeMetric());
-				projectTruckFactorAnalyzes(repo);
+				analyzeTruckFactorProject(repo);
 			}
 		}
 	}
@@ -567,6 +573,26 @@ public class TruckFactorAnalyzer {
 			this.numberCommits = numberCommits;
 			this.fa = fa;
 			this.ac = ac;
+		}
+	}
+
+	public void historyReposTruckFactor(HistoryReposTruckFactorDTO form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
+		String pathCheckoutScript = TruckFactorAnalyzer.class.getResource("/checkout_script.sh").toURI().getPath();
+		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
+		java.io.File dir = new java.io.File(form.getPath());
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				String[] hashes = historyCommitsExtractor.getCommitHashes(projectPath, form.getNumberYears());
+				for (String hash : hashes) {
+					String command = "sh "+pathCheckoutScript+" "+projectPath+" "+hash;
+					Process process = Runtime.getRuntime().exec(command);
+					process.waitFor();
+					projectService.generateLogFiles(projectPath);
+					analyzeTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+							.knowledgeMetric(KnowledgeMetric.DOE).path(projectPath).build());
+				}
+			}
 		}
 	}
 }

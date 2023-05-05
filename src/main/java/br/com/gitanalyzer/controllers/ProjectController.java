@@ -37,24 +37,24 @@ public class ProjectController {
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 
-	@PostMapping("extract-version")
+	@PostMapping("/extract-version")
 	public ResponseEntity<?> extractVersion(@RequestBody String folderPath){
 		projectService.extractVersion(folderPath);
 		return ResponseEntity.status(HttpStatus.OK).body("Extraction finished");
 	}
-	
+
 	@PostMapping("generate-linguist-file")
 	public ResponseEntity<?> generateLinguistFile(@RequestBody String projectPath){
 		try {
-			commitService.generateFileLists(projectPath);
+			projectService.generateFileLists(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
-	@PostMapping("generate-commit-file")
+
+	@PostMapping("/generate-commit-file")
 	public ResponseEntity<?> generateCommitFile(@RequestBody String projectPath){
 		try {
 			commitService.generateCommitFile(projectPath);
@@ -64,11 +64,33 @@ public class ProjectController {
 		}
 		return null;
 	}
-	
-	@PostMapping("generate-commitFile-file")
+
+	@PostMapping("/generate-commitFile-file")
 	public ResponseEntity<?> generateCommitFileFile(@RequestBody String projectPath){
 		try {
 			commitService.generateCommitFileFile(projectPath);
+			return ResponseEntity.status(HttpStatus.OK).body("");
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@PostMapping("/generate-cloc-file")
+	public ResponseEntity<?> generateClocFile(@RequestBody String projectPath){
+		try {
+			projectService.generateClocFile(projectPath);
+			return ResponseEntity.status(HttpStatus.OK).body("");
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@PostMapping("/generate-logs-folder")
+	public ResponseEntity<?> generateLogsFolder(@RequestBody String projectPath){
+		try {
+			projectService.generateLogFilesFolder(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();

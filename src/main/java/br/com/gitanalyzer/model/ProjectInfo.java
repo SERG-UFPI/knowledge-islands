@@ -15,5 +15,5 @@ public class ProjectInfo{
 	private String default_branch;
 	private String language;
 	private String mainLanguage;
-
+	private Integer stargazers_count;
 }

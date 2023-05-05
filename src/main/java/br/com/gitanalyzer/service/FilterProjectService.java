@@ -16,6 +16,7 @@ import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
+import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.File;
@@ -33,11 +34,10 @@ public class FilterProjectService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
-	@Autowired
-	private ProjectVersionRepository projectVersionRepository; 
 	
 
 	public void filter(String path) {
+		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
 		ProjectUtils projectUtils = new ProjectUtils();
 		java.io.File dir = new java.io.File(path);
@@ -47,7 +47,8 @@ public class FilterProjectService {
 				String projectName = projectUtils.extractProjectName(projectPath);
 				Project project = projectRepository.findByName(projectName);
 				log.info("EXTRACTING DATA FROM "+projectName);
-				ProjectVersion version = projectVersionRepository.findFirstByProjectIdOrderByDateVersionDesc(project.getId());
+				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
+				version.setProject(project);
 				versions.add(version);
 				log.info("EXTRACTION FINISHED");
 
@@ -77,8 +78,7 @@ public class FilterProjectService {
 	private boolean filterProjectByCommits(ProjectVersion version) {
 		FileExtractor fileExtractor = new FileExtractor();
 		CommitExtractor commitExtractor = new CommitExtractor();
-		List<File> files = fileExtractor.extractFromFileList(version.getProject().getCurrentPath(), Constants.linguistFileName, 
-				Constants.clocFileName, null);
+		List<File> files = fileExtractor.extractFileList(version.getProject().getCurrentPath(), Constants.linguistFileName, null);
 		fileExtractor.getRenamesFiles(version.getProject().getCurrentPath(), files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getProject().getCurrentPath());
 		commits = getFirst20Commits(commits);
