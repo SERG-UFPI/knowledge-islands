@@ -3,7 +3,6 @@ package br.com.gitanalyzer.model;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -15,6 +14,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import br.com.gitanalyzer.dto.ProjectDTO;
 import br.com.gitanalyzer.enums.FilteredEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,7 +29,6 @@ public class Project {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(unique=true)
 	private String name;
 	private String fullName;
 	private String currentPath;
@@ -60,5 +59,17 @@ public class Project {
 		this.currentPath = currentPath;
 		this.defaultBranch = defaultBranch;
 		this.numberStars = numberStars;
+	}
+
+	public ProjectDTO toDto() {
+		return ProjectDTO.builder()
+				.currentPath(currentPath)
+				.defaultBranch(defaultBranch)
+				.firstCommitDate(firstCommitDate)
+				.fullName(fullName)
+				.mainLanguage(mainLanguage)
+				.name(name)
+				.numberStars(numberStars)
+				.build();
 	}
 }		

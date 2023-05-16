@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.main;
+package br.com.gitanalyzer.service;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -25,6 +25,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
+import br.com.gitanalyzer.dto.TruckFactorAnalysisDTO;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
@@ -49,7 +50,6 @@ import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
-import br.com.gitanalyzer.service.ProjectService;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
@@ -58,7 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class TruckFactorAnalyzer {
+public class TruckFactorService {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
@@ -95,12 +95,14 @@ public class TruckFactorAnalyzer {
 		return commitsReturn;
 	}
 
-	public void analyzeTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
+	public TruckFactorAnalysisDTO truckFactorProject(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		String projectName = projectUtils.extractProjectName(projectPath);
 		Project project = null;
+		ProjectVersion projectVersion = null;
+		TruckFactor truckFactor = null;
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
@@ -115,7 +117,7 @@ public class TruckFactorAnalyzer {
 		}
 		if(project.isFiltered() == false && versionAnalyzed == false) {
 			log.info("EXTRACTING DATA FROM "+projectPath);
-			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
+			projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
@@ -154,9 +156,13 @@ public class TruckFactorAnalyzer {
 			List<Contributor> topContributors = new ArrayList<Contributor>();
 			log.info("CALCULATING TF OF "+projectName);
 			int tf = 0;
+			List<File> coveredFiles = null;
 			while(projectVersion.getContributors().isEmpty() == false) {
-				double covarage = getCoverage(projectVersion.getContributors(), projectVersion.getFiles(), knowledgeMetric);
-				if(covarage < 0.5) 
+				double fileSize = projectVersion.getFiles().size();
+				coveredFiles = getCoverageFiles(projectVersion.getContributors(), projectVersion.getFiles(), knowledgeMetric);
+				double numberFilesCovarage = coveredFiles.size(); 
+				double coverage = numberFilesCovarage/fileSize;
+				if(coverage < 0.5) 
 					break;
 				topContributors.add(projectVersion.getContributors().get(0));
 				projectVersion.getContributors().remove(0);
@@ -169,7 +175,8 @@ public class TruckFactorAnalyzer {
 			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
 				projectVersion.setProject(project);
 				projectVersionRepository.save(projectVersion);
-				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric);
+				truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric, getImplicatedFiles(coveredFiles, projectVersion.getFiles()));
+				//TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric);
 				truckFactorRepository.save(truckFactor);
 				for (Contributor contributor : topContributors) {
 					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(),
@@ -182,6 +189,23 @@ public class TruckFactorAnalyzer {
 				}
 			}
 		}
+		return TruckFactorAnalysisDTO.builder()
+				.projectVersion(projectVersion.toDto())
+				.truckFactor(truckFactor.toDto())
+				.project(project.toDto()).build();
+	}
+
+	private List<String> getImplicatedFiles(List<File> coveredFiles, List<File> files) {
+		List<String> filePaths = new ArrayList<String>();
+		forFile:for (File file : files) {
+			for(File coveredFile: coveredFiles) {
+				if (file.isFile(coveredFile.getPath())) {
+					continue forFile;
+				}
+			}
+			filePaths.add(file.getPath());
+		} 
+		return filePaths;
 	}
 
 	private void filteringProjectsCommentsStudy(Project project) {
@@ -396,7 +420,7 @@ public class TruckFactorAnalyzer {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				RepositoryKnowledgeMetricDTO repo = new RepositoryKnowledgeMetricDTO(projectPath, request.getKnowledgeMetric());
-				analyzeTruckFactorProject(repo);
+				truckFactorProject(repo);
 			}
 		}
 	}
@@ -463,6 +487,23 @@ public class TruckFactorAnalyzer {
 		}
 		double coverage = (double)numberFilesCovarage/(double)fileSize;
 		return coverage; 
+	}
+	
+	protected List<File> getCoverageFiles(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {
+		List<File> coveredFiles = new ArrayList<File>();
+		forFiles:for(File file: files) {
+			if (file.getMantainers().size() > 0) {
+				for (Contributor maintainer : file.getMantainers()) {
+					for (Contributor contributor : contributors) {
+						if (maintainer.equals(contributor)) {
+							coveredFiles.add(file);
+							continue forFiles;
+						}
+					}
+				}
+			}
+		}
+		return coveredFiles;
 	}
 
 	protected void setContributorNumberAuthorAndFileMaintainers(List<Contributor> contributors, 
@@ -577,20 +618,26 @@ public class TruckFactorAnalyzer {
 	}
 
 	public void historyReposTruckFactor(HistoryReposTruckFactorDTO form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
-		String pathCheckoutScript = TruckFactorAnalyzer.class.getResource("/checkout_script.sh").toURI().getPath();
+		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
 		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
 		java.io.File dir = new java.io.File(form.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				String[] hashes = historyCommitsExtractor.getCommitHashes(projectPath, form.getNumberYears());
-				for (String hash : hashes) {
-					String command = "sh "+pathCheckoutScript+" "+projectPath+" "+hash;
+				Project project = projectService.returnProjectByPath(projectPath);
+				if(project.isFiltered() == false) {
+					String[] hashes = historyCommitsExtractor.getCommitHashes(projectPath, form.getNumberYears());
+					for (String hash : hashes) {
+						String command = "sh "+pathCheckoutScript+" "+projectPath+" "+hash;
+						Process process = Runtime.getRuntime().exec(command);
+						process.waitFor();
+						projectService.generateLogFiles(projectPath);
+						truckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+								.knowledgeMetric(KnowledgeMetric.DOE).path(projectPath).build());
+					}
+					String command = "sh "+pathCheckoutScript+" "+projectPath+" "+hashes[0];
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
-					projectService.generateLogFiles(projectPath);
-					analyzeTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
-							.knowledgeMetric(KnowledgeMetric.DOE).path(projectPath).build());
 				}
 			}
 		}

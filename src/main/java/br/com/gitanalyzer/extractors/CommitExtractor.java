@@ -107,7 +107,7 @@ public class CommitExtractor {
 						}
 					}
 					if(contributorCommit == null) {
-						contributorCommit = new Contributor(authorName, authorEmail, id++);
+						contributorCommit = new Contributor(authorName, authorEmail);
 						contributors.add(contributorCommit);
 					}
 					Integer timeInt = Integer.parseInt(time);

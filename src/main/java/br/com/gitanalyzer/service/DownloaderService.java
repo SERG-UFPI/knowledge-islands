@@ -54,7 +54,7 @@ public class DownloaderService {
 			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
 			downloader("language:python stars:>500", form);
 			log.info("=========== DOWNLOADS FINISHED==================");
-			projectService.generateLogFilesFolder(form.getPath());
+			projectService.generateLogFilesFolderWithoutCloc(form.getPath());
 			projectService.setFirstDateFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -133,12 +133,13 @@ public class DownloaderService {
 		return projects;
 	}
 
-	public void cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
+	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
 		String projectName = projectUtils.extractProjectName(form.getUrl());
+		projectName = projectName.replace(".git", "");
 		File file = new File(projectFolder+projectName);
 		Git.cloneRepository().setURI(form.getUrl()).setDirectory(file). 
 				call();
-		System.out.println();
+		return projectFolder+projectName+"/";
 	}
 
 }

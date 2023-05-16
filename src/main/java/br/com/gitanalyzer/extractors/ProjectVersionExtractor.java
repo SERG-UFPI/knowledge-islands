@@ -14,6 +14,7 @@ import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.ContributorUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,6 +22,7 @@ public class ProjectVersionExtractor {
 
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
+	private ContributorUtils contributorUtils = new ContributorUtils();
 
 	public ProjectVersion extractProjectVersion(String projectPath, String projectName) {
 		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
@@ -49,7 +51,8 @@ public class ProjectVersionExtractor {
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
-				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, dateVersion, versionId);
+				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
+				dateVersion, versionId, contributorUtils.getActiveContributors(contributors, commits));
 		projectVersion.setCommits(commits);
 		projectVersion.setContributors(contributors);
 		projectVersion.setFiles(files);

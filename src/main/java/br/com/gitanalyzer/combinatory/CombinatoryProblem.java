@@ -46,26 +46,26 @@ public class CombinatoryProblem {
 		return files.stream().map(f -> f.getId()).toList();
 	}
 	
-	protected int checkSolution(int[] abandonedFilesIds) {
-		int j = 0;
-		int[] contributors = new int[contributorsSize];
-		for(int index: abandonedFilesIds) {
-			File file = files.get(index);
-			forMantainer:for (Contributor mantainer : file.getMantainers()) {
-				if (arrayContains(contributors, mantainer.getId())) {
-						continue forMantainer;
-				}
-				j++;
-				for(int i = 0; i < contributors.length; i++) {
-					if(contributors[i] == 0) {
-						contributors[i] = mantainer.getId();
-						break;
-					}
-				}
-			}
-		}
-		return j;
-	}
+//	protected int checkSolution(int[] abandonedFilesIds) {
+//		int j = 0;
+//		int[] contributors = new int[contributorsSize];
+//		for(int index: abandonedFilesIds) {
+//			File file = files.get(index);
+//			forMantainer:for (Contributor mantainer : file.getMantainers()) {
+//				if (arrayContains(contributors, mantainer.getId())) {
+//						continue forMantainer;
+//				}
+//				j++;
+//				for(int i = 0; i < contributors.length; i++) {
+//					if(contributors[i] == 0) {
+//						contributors[i] = mantainer.getId();
+//						break;
+//					}
+//				}
+//			}
+//		}
+//		return j;
+//	}
 	
 	protected int[] getSolution() {
 		Random rd = new Random();

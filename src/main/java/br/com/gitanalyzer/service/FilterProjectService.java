@@ -23,9 +23,7 @@ import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.utils.Constants;
-import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,19 +32,19 @@ public class FilterProjectService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
+	@Autowired
+	private ProjectService projectService;
 	
 
 	public void filter(String path) {
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
-		ProjectUtils projectUtils = new ProjectUtils();
 		java.io.File dir = new java.io.File(path);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				String projectName = projectUtils.extractProjectName(projectPath);
-				Project project = projectRepository.findByName(projectName);
-				log.info("EXTRACTING DATA FROM "+projectName);
+				Project project = projectService.returnProjectByPath(projectPath);
+				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
 				version.setProject(project);
 				versions.add(version);
@@ -59,16 +57,16 @@ public class FilterProjectService {
 		for(var entry: versionMap.entrySet()) {
 			projectsFiltered.addAll(filterProjectBySize(entry.getValue()));
 		}
-		for(ProjectVersion version: versions) {
-			if(projectsFiltered.stream()
-					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
-				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
-				if(filterProjectByCommits(version)) {
-					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-					projectsFiltered.add(version.getProject());
-				}
-			}
-		}
+//		for(ProjectVersion version: versions) {
+//			if(projectsFiltered.stream()
+//					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
+//				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
+//				if(filterProjectByCommits(version)) {
+//					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+//					projectsFiltered.add(version.getProject());
+//				}
+//			}
+//		}
 		for (Project project : projectsFiltered) {
 			project.setFiltered(true);
 			projectRepository.save(project);

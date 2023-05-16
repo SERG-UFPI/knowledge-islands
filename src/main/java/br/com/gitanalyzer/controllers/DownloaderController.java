@@ -32,8 +32,7 @@ public class DownloaderController {
 
 	@PostMapping("clone-repository")
 	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException{
-		service.cloneProject(form);
-		return ResponseEntity.ok("Download finished");
+		return ResponseEntity.ok(service.cloneProject(form));
 	}
 
 }

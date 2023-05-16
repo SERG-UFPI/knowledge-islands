@@ -20,9 +20,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
 import br.com.gitanalyzer.extractors.CommitExtractor;
-import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.model.Project;
-import br.com.gitanalyzer.model.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
@@ -39,6 +37,12 @@ public class ProjectService {
 	@Autowired
 	private CommitService commitService;
 	private ProjectUtils projectUtils = new ProjectUtils();
+	
+	public Project returnProjectByPath(String projectPath) {
+		String projectName = projectUtils.extractProjectName(projectPath);
+		Project project = projectRepository.findByName(projectName);
+		return project;
+	}
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = projectUtils.extractProjectName(projectPath);
@@ -47,6 +51,14 @@ public class ProjectService {
 		commitService.generateCommitFile(projectPath);
 		commitService.generateCommitFileFile(projectPath);
 		generateClocFile(projectPath);
+	}
+	
+	public void generateLogFilesWithoutCloc(String projectPath) throws URISyntaxException, IOException, InterruptedException {
+		String name = projectUtils.extractProjectName(projectPath);
+		log.info("======= Generating logs from "+name+" =======");
+		generateFileLists(projectPath);
+		commitService.generateCommitFile(projectPath);
+		commitService.generateCommitFileFile(projectPath);
 	}
 
 	public void generateClocFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
@@ -110,22 +122,22 @@ public class ProjectService {
 	}
 
 	public void extractVersion(String folderPath) {
-		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
-		java.io.File dir = new java.io.File(folderPath);
-		for (java.io.File fileDir: dir.listFiles()) {
-			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
-				String projectName = projectUtils.extractProjectName(projectPath);
-				Project project = projectRepository.findByName(projectName);
-				log.info("EXTRACTING DATA FROM "+projectName);
-				ProjectVersion version = projectVersionExtractor
-						.extractProjectVersionOnlyNumbers(projectPath);
-				project.setFirstCommitDate(version.getFirstCommitDate());
-				version.setProject(project);
-				projectVersionRepository.save(version);
-				log.info("EXTRACTION FINISHED");
-			}
-		}
+//		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
+//		java.io.File dir = new java.io.File(folderPath);
+//		for (java.io.File fileDir: dir.listFiles()) {
+//			if (fileDir.isDirectory()) {
+//				String projectPath = fileDir.getAbsolutePath()+"/";
+//				String projectName = projectUtils.extractProjectName(projectPath);
+//				Project project = projectRepository.findByName(projectName);
+//				log.info("EXTRACTING DATA FROM "+projectName);
+//				ProjectVersion version = projectVersionExtractor
+//						.extractProjectVersionOnlyNumbers(projectPath);
+//				project.setFirstCommitDate(version.getFirstCommitDate());
+//				version.setProject(project);
+//				projectVersionRepository.save(version);
+//				log.info("EXTRACTION FINISHED");
+//			}
+//		}
 	}
 
 	public void generateLogFilesFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -134,6 +146,16 @@ public class ProjectService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				generateLogFiles(projectPath);
+			}
+		}
+	}
+	
+	public void generateLogFilesFolderWithoutCloc(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+		java.io.File dir = new java.io.File(folderPath);
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				generateLogFilesWithoutCloc(projectPath);
 			}
 		}
 	}
