@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.main.dto.HashNumberYears;
-import br.com.gitanalyzer.model.Project;
+import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
 

@@ -9,20 +9,23 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
+import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
-import br.com.gitanalyzer.model.Project;
+import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,15 +36,27 @@ public class ProjectService {
 	@Autowired
 	private ProjectRepository projectRepository;
 	@Autowired
-	private ProjectVersionRepository projectVersionRepository;
-	@Autowired
 	private CommitService commitService;
 	private ProjectUtils projectUtils = new ProjectUtils();
-	
+	@Value("${configuration.project-logs.path}")
+	private String projectLogsFolder;
+
 	public Project returnProjectByPath(String projectPath) {
 		String projectName = projectUtils.extractProjectName(projectPath);
 		Project project = projectRepository.findByName(projectName);
 		return project;
+	}
+
+	public void deleteProjectFolder(String pathFolder) throws IOException {
+		File directory = new File(pathFolder);
+		org.apache.commons.io.FileUtils.deleteDirectory(directory); 
+	}
+
+	public GenerateFolderProjectLogDTO createFolderProjectLogs(GenerateFolderProjectLogDTO form) throws IOException {
+		String folderName = form.getProjectName()+"+"+form.getVersionId();
+		String fullPath = projectLogsFolder+folderName;
+		Files.createDirectory(Paths.get(fullPath));
+		return form;
 	}
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {
@@ -52,7 +67,7 @@ public class ProjectService {
 		commitService.generateCommitFileFile(projectPath);
 		generateClocFile(projectPath);
 	}
-	
+
 	public void generateLogFilesWithoutCloc(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = projectUtils.extractProjectName(projectPath);
 		log.info("======= Generating logs from "+name+" =======");
@@ -85,7 +100,7 @@ public class ProjectService {
 		FileOutputStream fos = new FileOutputStream(file);
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
 		while ((line = reader.readLine()) != null) {
-		    bw.write(line);
+			bw.write(line);
 			bw.newLine();
 		}
 		process.waitFor();
@@ -122,22 +137,22 @@ public class ProjectService {
 	}
 
 	public void extractVersion(String folderPath) {
-//		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
-//		java.io.File dir = new java.io.File(folderPath);
-//		for (java.io.File fileDir: dir.listFiles()) {
-//			if (fileDir.isDirectory()) {
-//				String projectPath = fileDir.getAbsolutePath()+"/";
-//				String projectName = projectUtils.extractProjectName(projectPath);
-//				Project project = projectRepository.findByName(projectName);
-//				log.info("EXTRACTING DATA FROM "+projectName);
-//				ProjectVersion version = projectVersionExtractor
-//						.extractProjectVersionOnlyNumbers(projectPath);
-//				project.setFirstCommitDate(version.getFirstCommitDate());
-//				version.setProject(project);
-//				projectVersionRepository.save(version);
-//				log.info("EXTRACTION FINISHED");
-//			}
-//		}
+		//		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
+		//		java.io.File dir = new java.io.File(folderPath);
+		//		for (java.io.File fileDir: dir.listFiles()) {
+		//			if (fileDir.isDirectory()) {
+		//				String projectPath = fileDir.getAbsolutePath()+"/";
+		//				String projectName = projectUtils.extractProjectName(projectPath);
+		//				Project project = projectRepository.findByName(projectName);
+		//				log.info("EXTRACTING DATA FROM "+projectName);
+		//				ProjectVersion version = projectVersionExtractor
+		//						.extractProjectVersionOnlyNumbers(projectPath);
+		//				project.setFirstCommitDate(version.getFirstCommitDate());
+		//				version.setProject(project);
+		//				projectVersionRepository.save(version);
+		//				log.info("EXTRACTION FINISHED");
+		//			}
+		//		}
 	}
 
 	public void generateLogFilesFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -149,7 +164,7 @@ public class ProjectService {
 			}
 		}
 	}
-	
+
 	public void generateLogFilesFolderWithoutCloc(String folderPath) throws URISyntaxException, IOException, InterruptedException {
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {

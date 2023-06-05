@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.Project;
 import lombok.Data;
 
 @Data

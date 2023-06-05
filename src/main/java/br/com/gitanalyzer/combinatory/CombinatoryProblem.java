@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
+import br.com.gitanalyzer.model.entity.Contributor;
 import lombok.Data;
 
 @Data

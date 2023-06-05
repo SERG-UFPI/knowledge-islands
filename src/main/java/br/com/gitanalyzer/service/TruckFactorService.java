@@ -25,12 +25,13 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
-import br.com.gitanalyzer.dto.TruckFactorAnalysisDTO;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
+import br.com.gitanalyzer.enums.StageEnum;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.main.dto.CloneRepoForm;
 import br.com.gitanalyzer.main.dto.HistoryReposTruckFactorDTO;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
@@ -38,17 +39,19 @@ import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
-import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.MetricsDoa;
 import br.com.gitanalyzer.model.MetricsDoe;
-import br.com.gitanalyzer.model.Project;
-import br.com.gitanalyzer.model.ProjectVersion;
-import br.com.gitanalyzer.model.TruckFactor;
-import br.com.gitanalyzer.model.TruckFactorDevelopers;
+import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.Project;
+import br.com.gitanalyzer.model.entity.ProjectVersion;
+import br.com.gitanalyzer.model.entity.TruckFactor;
+import br.com.gitanalyzer.model.entity.TruckFactorDevelopers;
+import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
+import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
@@ -77,9 +80,55 @@ public class TruckFactorService {
 	private ProjectVersionRepository projectVersionRepository;
 	@Autowired
 	private ProjectService projectService;
+	@Autowired
+	private DownloaderService downloaderService;
+	@Autowired
+	private TruckFactorProcessRepository truckFactorProcessRepository; 
+
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
+
+	class CloneTruckFactorTask implements Runnable {
+
+		private CloneRepoForm form;
+		private TruckFactorProcess process;
+
+		CloneTruckFactorTask(CloneRepoForm form, TruckFactorProcess process){
+			this.form = form;
+			this.process = process;
+		}
+
+		@Override
+		public void run() {
+			try {
+				String projectPath = downloaderService.cloneProject(form);
+				setProcessStage(process, StageEnum.EXTRACT_DATA);
+				projectService.generateLogFiles(projectPath);
+				setProcessStage(process, StageEnum.CALCULATING);
+				process.setTruckFactor(generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+						.path(projectPath).knowledgeMetric(KnowledgeMetric.DOE).build()));
+				process.setEndDate(new Date());
+				setProcessStage(process, StageEnum.ANALYSIS_FINISHED);
+			} catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+
+	}
+
+	public void setProcessStage(TruckFactorProcess process, StageEnum stage) {
+		process.setStage(stage);
+		truckFactorProcessRepository.save(process);
+	}
+
+	public TruckFactorProcess cloneAndCalculateTruckFactor(CloneRepoForm form) {
+		TruckFactorProcess process = new TruckFactorProcess(StageEnum.DOWNLOAD);
+		truckFactorProcessRepository.save(process);
+		Thread t = new Thread(new CloneTruckFactorTask(form, process));
+		t.start();
+		return process;
+	}
 
 	private List<Commit> getCommitsFromAHash(List<Commit> commits, String hash){
 		boolean flag = false;
@@ -95,7 +144,7 @@ public class TruckFactorService {
 		return commitsReturn;
 	}
 
-	public TruckFactorAnalysisDTO truckFactorProject(RepositoryKnowledgeMetricDTO repo)
+	public TruckFactor generateTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
@@ -106,7 +155,7 @@ public class TruckFactorService {
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
-			project = new Project(projectName);
+			project = new Project(projectName, repo.getPath());
 		}
 		//if (projectName.equals("rails") == true) {
 		filteringProjectsCommentsStudy(project);
@@ -189,10 +238,7 @@ public class TruckFactorService {
 				}
 			}
 		}
-		return TruckFactorAnalysisDTO.builder()
-				.projectVersion(projectVersion.toDto())
-				.truckFactor(truckFactor.toDto())
-				.project(project.toDto()).build();
+		return truckFactor;
 	}
 
 	private List<String> getImplicatedFiles(List<File> coveredFiles, List<File> files) {
@@ -420,7 +466,7 @@ public class TruckFactorService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				RepositoryKnowledgeMetricDTO repo = new RepositoryKnowledgeMetricDTO(projectPath, request.getKnowledgeMetric());
-				truckFactorProject(repo);
+				generateTruckFactorProject(repo);
 			}
 		}
 	}
@@ -488,7 +534,7 @@ public class TruckFactorService {
 		double coverage = (double)numberFilesCovarage/(double)fileSize;
 		return coverage; 
 	}
-	
+
 	protected List<File> getCoverageFiles(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {
 		List<File> coveredFiles = new ArrayList<File>();
 		forFiles:for(File file: files) {
@@ -632,7 +678,7 @@ public class TruckFactorService {
 						Process process = Runtime.getRuntime().exec(command);
 						process.waitFor();
 						projectService.generateLogFiles(projectPath);
-						truckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+						generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
 								.knowledgeMetric(KnowledgeMetric.DOE).path(projectPath).build());
 					}
 					String command = "sh "+pathCheckoutScript+" "+projectPath+" "+hashes[0];

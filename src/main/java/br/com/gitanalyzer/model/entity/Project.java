@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.Date;
 import java.util.List;
@@ -46,8 +46,9 @@ public class Project {
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
-	public Project(String name) {
+	public Project(String name, String currentPath) {
 		this.name = name;
+		this.currentPath = currentPath;
 	}
 
 	public Project(String name, String fullName, String mainLanguage, 

@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.Contributor;
+import br.com.gitanalyzer.model.entity.Contributor;
 
 public class ContributorUtils {
 

@@ -25,8 +25,8 @@ import com.jcabi.http.response.JsonResponse;
 
 import br.com.gitanalyzer.main.dto.CloneRepoForm;
 import br.com.gitanalyzer.main.dto.DownloaderForm;
-import br.com.gitanalyzer.model.Project;
 import br.com.gitanalyzer.model.ProjectInfo;
+import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DownloaderService {
-	
+
 	@Value("${configuration.clone.path}")
-	private String projectFolder;
+	private String cloneFolder;
 	@Autowired
 	private ProjectRepository projectRepository;
 	@Autowired
@@ -136,10 +136,16 @@ public class DownloaderService {
 	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
 		String projectName = projectUtils.extractProjectName(form.getUrl());
 		projectName = projectName.replace(".git", "");
-		File file = new File(projectFolder+projectName);
-		Git.cloneRepository().setURI(form.getUrl()).setDirectory(file). 
-				call();
-		return projectFolder+projectName+"/";
+		File file = new File(cloneFolder+projectName);
+		if(form.getBranch() != null) {
+			Git.cloneRepository().setURI(form.getUrl()).setDirectory(file)
+			.setBranch(form.getBranch()) 
+			.call();
+		}else {
+			Git.cloneRepository().setURI(form.getUrl()).setDirectory(file)
+			.call();
+		}
+		return cloneFolder+projectName+"/";
 	}
 
 }

@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

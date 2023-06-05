@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.Date;
 import java.util.List;
@@ -14,6 +14,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import br.com.gitanalyzer.dto.ProjectVersionDTO;
+import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.File;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

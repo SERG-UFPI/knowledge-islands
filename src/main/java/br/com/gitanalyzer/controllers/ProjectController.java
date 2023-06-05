@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.service.CommitService;
 import br.com.gitanalyzer.service.FilterProjectService;
 import br.com.gitanalyzer.service.ProjectService;
@@ -29,6 +30,11 @@ public class ProjectController {
 	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
 		return ResponseEntity.ok(projectService.setProjectsMainLanguage());
+	}
+
+	@PostMapping("/create-folder-project-log")
+	public ResponseEntity<?> createFolderProjectLog(@RequestBody GenerateFolderProjectLogDTO form) throws IOException{
+		return ResponseEntity.ok(projectService.createFolderProjectLogs(form));
 	}
 
 	@PostMapping("/filtering")
@@ -86,7 +92,7 @@ public class ProjectController {
 		}
 		return null;
 	}
-	
+
 	@PostMapping("/generate-logs-folder")
 	public ResponseEntity<?> generateLogsFolder(@RequestBody String projectPath){
 		try {

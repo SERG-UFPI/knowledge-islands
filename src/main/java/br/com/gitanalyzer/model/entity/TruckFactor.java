@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.List;
 

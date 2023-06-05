@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,27 +13,8 @@ public class GeneralAnalyses {
 
 	public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
 
-		//		String path = GeneralAnalyses.class.getResource("/linguist_script.sh").toURI().getPath();
-		//		System.out.println(path);
-		//		Process process = Runtime.getRuntime().exec("sh -c "+path+" /home/otavio/Desktop/ihealth/ihealth/");
-		//		StreamGobbler streamGobbler = 
-		//				  new StreamGobbler(process.getInputStream(), System.out::println);
-		//		Future<?> future = Executors.newSingleThreadExecutor().submit(streamGobbler);
-		//		int exitCode = process.waitFor();
-		//		assert exitCode == 0;
-		//		future.get();
-		
-		//ProcessBuilder pb = new ProcessBuilder("/usr/bin/mawk", "-f", "/home/otavio/Desktop/CodiVision/Codivision/log.awk", "/home/otavio/Desktop/CodiVision/Codivision/log.log");
-		Process process = Runtime.getRuntime().exec("awk -F$\'\t' -f /home/otavio/Desktop/CodiVision/Codivision/log.awk /home/otavio/Desktop/CodiVision/Codivision/log.log");
-		System.out.println("Error stream:");
-		InputStream errorStream = process.getErrorStream();
-		printStream(errorStream);
-
-		process.waitFor();
-
-		System.out.println("Output stream:");
-		InputStream inputStream = process.getInputStream();
-		printStream(inputStream);
+		File directory = new File("/home/otavio/Desktop/GitAnalyzer/git-analyzer/tmp_projects");
+		org.apache.commons.io.FileUtils.deleteDirectory(directory); 
 		//		List<DoaResultVO> doas = new ArrayList<DoaResultVO>();
 		//		List<DoeResultVO> does = new ArrayList<DoeResultVO>();
 		//		List<String[]> doaFile = null;

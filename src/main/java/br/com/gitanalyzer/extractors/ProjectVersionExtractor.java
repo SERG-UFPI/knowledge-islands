@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 
 import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.Contributor;
 import br.com.gitanalyzer.model.File;
-import br.com.gitanalyzer.model.ProjectVersion;
+import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ContributorUtils;
 import lombok.extern.slf4j.Slf4j;
