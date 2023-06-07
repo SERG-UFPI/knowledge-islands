@@ -10,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 import br.com.gitanalyzer.dto.TruckFactorDTO;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
@@ -31,6 +32,8 @@ public class TruckFactor {
 	private KnowledgeMetric knowledgeMetric;
 	@ManyToOne
 	private ProjectVersion projectVersion;
+	@OneToMany(mappedBy="truckFactor", orphanRemoval = true)
+	private List<TruckFactorDevelopers> truckFactorDevelopers;
 	@ElementCollection
 	private List<String> implicatedFiles;
 
@@ -52,9 +55,13 @@ public class TruckFactor {
 
 	public TruckFactorDTO toDto() {
 		return TruckFactorDTO.builder()
+				.id(id)
+				.projectVersion(projectVersion.toDto())
 				.implicatedFiles(implicatedFiles)
 				.knowledgeMetric(knowledgeMetric)
 				.truckfactor(truckfactor)
+				.truckFactorDevelopers(truckFactorDevelopers!=null?
+						truckFactorDevelopers.stream().map(t -> t.toDto()).toList():null)
 				.build();
 	}
 }

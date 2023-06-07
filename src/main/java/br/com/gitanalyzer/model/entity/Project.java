@@ -64,6 +64,7 @@ public class Project {
 
 	public ProjectDTO toDto() {
 		return ProjectDTO.builder()
+				.id(id)
 				.currentPath(currentPath)
 				.defaultBranch(defaultBranch)
 				.firstCommitDate(firstCommitDate)

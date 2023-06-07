@@ -25,6 +25,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
+import br.com.gitanalyzer.dto.TruckFactorDTO;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.enums.StageEnum;
@@ -106,8 +107,9 @@ public class TruckFactorService {
 				setProcessStage(process, StageEnum.EXTRACT_DATA);
 				projectService.generateLogFiles(projectPath);
 				setProcessStage(process, StageEnum.CALCULATING);
-				process.setTruckFactor(generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
-						.path(projectPath).knowledgeMetric(KnowledgeMetric.DOE).build()));
+				TruckFactorDTO truckFactor = generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+						.path(projectPath).knowledgeMetric(KnowledgeMetric.DOE).build());
+				process.setTruckFactor(truckFactorRepository.findById(truckFactor.getId()).get());
 				process.setEndDate(new Date());
 				setProcessStage(process, StageEnum.ANALYSIS_FINISHED);
 			} catch (Exception e) {
@@ -144,7 +146,7 @@ public class TruckFactorService {
 		return commitsReturn;
 	}
 
-	public TruckFactor generateTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
+	public TruckFactorDTO generateTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
 		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
@@ -167,6 +169,7 @@ public class TruckFactorService {
 		if(project.isFiltered() == false && versionAnalyzed == false) {
 			log.info("EXTRACTING DATA FROM "+projectPath);
 			projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
+			projectService.createFolderLogsAndCopyFiles(projectPath, projectName, projectVersion.getVersionId());
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
@@ -234,11 +237,15 @@ public class TruckFactorService {
 							existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), contributor.getName(),
 									contributor.getEmail()) == false) {
 						truckFactorDevelopersRepository.save(truckFactorDevelopers);
+						if(truckFactor.getTruckFactorDevelopers() == null) {
+							truckFactor.setTruckFactorDevelopers(new ArrayList<>());
+						}
+						truckFactor.getTruckFactorDevelopers().add(truckFactorDevelopers);
 					}
 				}
 			}
 		}
-		return truckFactor;
+		return truckFactor.toDto();
 	}
 
 	private List<String> getImplicatedFiles(List<File> coveredFiles, List<File> files) {

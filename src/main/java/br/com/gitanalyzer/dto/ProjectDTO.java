@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProjectDTO {
 
+	private Long id;
 	private String name;
 	private String fullName;
 	private String currentPath;

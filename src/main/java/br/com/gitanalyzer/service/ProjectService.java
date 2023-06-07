@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,11 +54,46 @@ public class ProjectService {
 		org.apache.commons.io.FileUtils.deleteDirectory(directory); 
 	}
 
-	public GenerateFolderProjectLogDTO createFolderProjectLogs(GenerateFolderProjectLogDTO form) throws IOException {
+	public void createFolderLogsAndCopyFiles(String path, String projectName, String versionId) {
+		try {
+			if(path.substring(path.length()-1).equals("/") == false) {
+				path = path+"/";
+			}
+			String folderPath = createFolderProjectLogs(GenerateFolderProjectLogDTO.builder().projectName(projectName).versionId(versionId).build());
+
+			Path sourceClocFile = Paths.get(path+Constants.clocFileName);
+			Path targetClocFile = Paths.get(folderPath+Constants.clocFileName);
+			Files.copy(sourceClocFile, targetClocFile);
+
+			Path sourceFileList = Paths.get(path+Constants.allFilesFileName);
+			Path targetFileList = Paths.get(folderPath+Constants.allFilesFileName);
+			Files.copy(sourceFileList, targetFileList);
+
+			Path sourceFileLinguist = Paths.get(path+Constants.linguistFileName);
+			Path targetFileLinguist = Paths.get(folderPath+Constants.linguistFileName);
+			Files.copy(sourceFileLinguist, targetFileLinguist);
+
+			Path sourceCommit = Paths.get(path+Constants.commitFileName);
+			Path targetCommit = Paths.get(folderPath+Constants.commitFileName);
+			Files.copy(sourceCommit, targetCommit);
+
+			Path sourceCommitFile = Paths.get(path+Constants.commitFileFileName);
+			Path targetCommitFile = Paths.get(folderPath+Constants.commitFileFileName);
+			Files.copy(sourceCommitFile, targetCommitFile);
+
+			Path sourceDiff = Paths.get(path+Constants.diffFileName);
+			Path targetDiff = Paths.get(folderPath+Constants.diffFileName);
+			Files.copy(sourceDiff, targetDiff);
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
+	}
+
+	public String createFolderProjectLogs(GenerateFolderProjectLogDTO form) throws IOException {
 		String folderName = form.getProjectName()+"+"+form.getVersionId();
 		String fullPath = projectLogsFolder+folderName;
 		Files.createDirectory(Paths.get(fullPath));
-		return form;
+		return fullPath+"/";
 	}
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {

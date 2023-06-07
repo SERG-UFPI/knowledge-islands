@@ -6,6 +6,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import br.com.gitanalyzer.dto.TruckFactorDevelopersDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,4 +33,9 @@ public class TruckFactorDevelopers {
 		this.percentOfFilesAuthored = percentOfFilesAuthored;
 	}
 
+	public TruckFactorDevelopersDTO toDto() {
+		return TruckFactorDevelopersDTO.builder()
+				.email(email).id(id).name(name).percentOfFilesAuthored(percentOfFilesAuthored)
+				.build();
+	}
 }

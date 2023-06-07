@@ -6,15 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ContributorDTO {
-
+@Builder
+public class TruckFactorDevelopersDTO {
+	
 	private Long id;
-	private String name;
-	private String email;
-	private int numberFilesAuthor;
-	private double sumFileImportance;
-
+	private String name, email;
+	private double percentOfFilesAuthored;
+	
 }

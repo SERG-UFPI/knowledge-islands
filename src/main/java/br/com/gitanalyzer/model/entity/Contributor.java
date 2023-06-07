@@ -45,6 +45,7 @@ public class Contributor {
 
 	public ContributorDTO toDto() {
 		return ContributorDTO.builder()
+				.id(id)
 				.email(email)
 				.name(name)
 				.numberFilesAuthor(numberFilesAuthor)

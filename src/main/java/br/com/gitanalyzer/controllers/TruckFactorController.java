@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.gitanalyzer.dto.TruckFactorDTO;
 import br.com.gitanalyzer.main.dto.CloneRepoForm;
 import br.com.gitanalyzer.main.dto.HistoryReposTruckFactorDTO;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
-import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.service.TruckFactorService;
 
@@ -42,7 +42,7 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("repo-truck-factor")
-	public ResponseEntity<TruckFactor> directoryTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricDTO form){
+	public ResponseEntity<TruckFactorDTO> directoryTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricDTO form){
 		try {
 			return ResponseEntity.ok(service.generateTruckFactorProject(form));
 		} catch (IOException | GitAPIException e) {

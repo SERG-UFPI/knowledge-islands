@@ -18,5 +18,6 @@ public class ProjectVersionDTO {
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits;
 	private Date dateVersion; 
 	private String versionId;
+	private ProjectDTO project;
 	private List<ContributorDTO> activeContributors;
 }

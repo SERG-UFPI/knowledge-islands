@@ -74,6 +74,7 @@ public class ProjectVersion {
 
 	public ProjectVersionDTO toDto() {
 		return ProjectVersionDTO.builder()
+				.project(project.toDto())
 				.activeContributors(activeContributors.stream().map(a -> a.toDto()).toList())
 				.dateVersion(dateVersion)
 				.numberAllCommits(numberAllCommits)

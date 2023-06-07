@@ -14,8 +14,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class TruckFactorDTO {
 
+	private Long id;
 	private int truckfactor;
 	private KnowledgeMetric knowledgeMetric;
+	private ProjectVersionDTO projectVersion;
 	private List<String> implicatedFiles;
+	private List<TruckFactorDevelopersDTO> truckFactorDevelopers;
 
 }
