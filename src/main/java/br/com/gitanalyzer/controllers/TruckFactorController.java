@@ -20,7 +20,7 @@ import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.service.TruckFactorService;
 
 @RestController
-@RequestMapping("/truck-factor")
+@RequestMapping("/api/truck-factor")
 public class TruckFactorController {
 
 	@Autowired

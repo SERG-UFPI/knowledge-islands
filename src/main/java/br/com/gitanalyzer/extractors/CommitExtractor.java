@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CommitExtractor {
-	
+
 	public Date getFirstCommitDate(String projectPath) throws IOException {
 		List<Date> dates = new ArrayList<Date>();
 		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
@@ -47,14 +47,14 @@ public class CommitExtractor {
 		Collections.sort(dates);
 		return dates.get(0);
 	}
-	
+
 	public String getLastCommitHash(String projectPath) throws IOException{
 		BufferedReader br = new BufferedReader(new FileReader(projectPath+Constants.commitFileName));
 		String hash = br.readLine().split(";")[0];
 		br.close();
 		return hash;
 	}
-	
+
 	public List<Commit> getCommitsDatesAndHashes(String projectPath){
 		List<Commit> commits = new ArrayList<Commit>();
 		try {
@@ -82,9 +82,8 @@ public class CommitExtractor {
 			return null;
 		}
 	}
-	
+
 	public List<Commit> extractCommitsFromLogFiles(String projectPath) {
-		int id = 0;
 		List<Commit> commits = new ArrayList<Commit>();
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		try {
@@ -126,7 +125,7 @@ public class CommitExtractor {
 			return null;
 		}
 	}
-	
+
 	public List<Commit> extractCommitsFiles(String projectPath, List<Commit> commits, List<File> files) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
@@ -158,7 +157,7 @@ public class CommitExtractor {
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() != 0).collect(Collectors.toList());
 		return commits;
 	}
-	
+
 	public void generateCommitFileFile(String projectPath) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.logFile);

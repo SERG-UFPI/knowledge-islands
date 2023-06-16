@@ -24,6 +24,16 @@ public class CommitService {
 		process.waitFor();
 		log.info("End generation commit file");
 	}
+	
+	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+		java.io.File dir = new java.io.File(folderPath);
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				generateCommitFile(projectPath);
+			}
+		}
+	}
 
 	public void generateCommitFileFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = projectUtils.extractProjectName(projectPath);

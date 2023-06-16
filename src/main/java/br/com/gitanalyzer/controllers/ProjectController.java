@@ -17,7 +17,7 @@ import br.com.gitanalyzer.service.FilterProjectService;
 import br.com.gitanalyzer.service.ProjectService;
 
 @RestController
-@RequestMapping("/project")
+@RequestMapping("/api/project")
 public class ProjectController {
 
 	@Autowired
@@ -38,7 +38,7 @@ public class ProjectController {
 	}
 
 	@PostMapping("/filtering")
-	public ResponseEntity<?> filteringProjects(@RequestBody String folderPath){
+	public ResponseEntity<?> filteringProjects(@RequestBody String folderPath) throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filter(folderPath);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}

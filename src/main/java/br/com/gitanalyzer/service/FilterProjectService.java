@@ -1,5 +1,7 @@
 package br.com.gitanalyzer.service;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,13 +38,14 @@ public class FilterProjectService {
 	private ProjectService projectService;
 	
 
-	public void filter(String path) {
+	public void filter(String path) throws URISyntaxException, IOException, InterruptedException {
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
 		java.io.File dir = new java.io.File(path);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
+				projectService.generateLogFilesFolderWithoutCloc(projectPath);
 				Project project = projectService.returnProjectByPath(projectPath);
 				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);

@@ -12,7 +12,7 @@ import br.com.gitanalyzer.main.dto.HashNumberYears;
 import br.com.gitanalyzer.service.HistoryCommitsService;
 
 @RestController
-@RequestMapping("/history-commits")
+@RequestMapping("/api/history-commits")
 public class HistoryCommits {
 
 	@Autowired

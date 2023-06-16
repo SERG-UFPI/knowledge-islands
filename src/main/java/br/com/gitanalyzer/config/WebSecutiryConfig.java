@@ -27,7 +27,8 @@ public class WebSecutiryConfig {
 			"/v3/api-docs/**",
 			"/swagger-ui/**",
 			"/v2/api-docs/**",
-			"/swagger-resources/**", "/auth/**"
+			"/swagger-resources/**", "/api/auth/**"
+			//,"/api/**"
 	};
 
 	@Bean 
@@ -55,7 +56,7 @@ public class WebSecutiryConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
-		http.cors().and().csrf().disable()
+		http.csrf().disable().cors().and()
 		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		.authorizeRequests().antMatchers(AUTH_WHITE_LIST).permitAll().anyRequest().authenticated();
 

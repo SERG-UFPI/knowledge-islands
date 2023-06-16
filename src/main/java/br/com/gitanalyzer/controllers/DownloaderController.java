@@ -18,7 +18,7 @@ import br.com.gitanalyzer.main.dto.DownloaderForm;
 import br.com.gitanalyzer.service.DownloaderService;
 
 @RestController
-@RequestMapping("/downloader")
+@RequestMapping("/api/downloader")
 public class DownloaderController {
 
 	@Autowired
