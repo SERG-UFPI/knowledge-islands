@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.service.CommitService;
 import br.com.gitanalyzer.service.FilterProjectService;
@@ -38,8 +39,8 @@ public class ProjectController {
 	}
 
 	@PostMapping("/filtering")
-	public ResponseEntity<?> filteringProjects(@RequestBody String folderPath) throws URISyntaxException, IOException, InterruptedException{
-		filterProjectService.filter(folderPath);
+	public ResponseEntity<?> filteringProjects(@RequestBody FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException{
+		filterProjectService.filter(form);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 

@@ -14,7 +14,6 @@ public class Commit {
 	//private Project project;
 	private Date date;
 	private String externalId;
-	private int numberOfFilesTouched;
 
 	private List<CommitFile> commitFiles = new ArrayList<CommitFile>();
 

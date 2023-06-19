@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.Commit;
@@ -136,13 +135,11 @@ public class CommitExtractor {
 				String id = splited[0];
 				commitFor:for (Commit commit : commits) {
 					if (id.equals(commit.getExternalId())) {
-						commit.setNumberOfFilesTouched(commit.getNumberOfFilesTouched()+1);
 						String operation = splited[1];
 						String filePath = splited[3];
 						for (File fileCommitFile : files) {
 							if (fileCommitFile.isFile(filePath)) {
-								CommitFile commitFile = new CommitFile(fileCommitFile, commit, 
-										OperationType.getEnumByType(operation));
+								CommitFile commitFile = new CommitFile(fileCommitFile, OperationType.getEnumByType(operation));
 								commit.getCommitFiles().add(commitFile);
 								break commitFor;
 							}
@@ -154,7 +151,6 @@ public class CommitExtractor {
 		}catch (Exception e) {
 			log.error(e.getMessage());
 		}
-		commits = commits.stream().filter(c -> c.getCommitFiles().size() != 0).collect(Collectors.toList());
 		return commits;
 	}
 

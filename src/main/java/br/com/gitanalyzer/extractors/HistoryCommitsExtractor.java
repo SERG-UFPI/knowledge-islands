@@ -60,4 +60,9 @@ public class HistoryCommitsExtractor {
 		return hashes;
 	}
 
+	public int getNumberOfYearsFromFolderProjects() {
+		
+		return 0;
+	}
+
 }

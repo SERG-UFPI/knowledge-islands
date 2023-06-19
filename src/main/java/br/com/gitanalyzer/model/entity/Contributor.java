@@ -28,6 +28,7 @@ public class Contributor {
 
 	private int numberFilesAuthor;
 	private double sumFileImportance;
+	private boolean active;
 	@Transient
 	private Set<Contributor> alias;
 

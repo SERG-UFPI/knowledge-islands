@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.TruckFactorDTO;
+import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
 import br.com.gitanalyzer.main.dto.CloneRepoForm;
-import br.com.gitanalyzer.main.dto.HistoryReposTruckFactorDTO;
 import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.service.TruckFactorService;
@@ -52,7 +52,7 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("history-repos-truck-factor")
-	public ResponseEntity<?> historyReposTruckFactor(@RequestBody HistoryReposTruckFactorDTO form) throws URISyntaxException, InterruptedException{
+	public ResponseEntity<?> historyReposTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
 		try {
 			service.historyReposTruckFactor(form);
 		} catch (IOException | GitAPIException e) {

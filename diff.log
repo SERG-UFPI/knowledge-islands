@@ -1,0 +1,452 @@
+commit c25d20723255f4888760bb6eab2ae0fc3da2c600
+57	0	front-end/knowledge-islands/package-lock.json
+2	0	front-end/knowledge-islands/package.json
+0	38	front-end/knowledge-islands/src/App.css
+17	3	front-end/knowledge-islands/src/App.js
+-	-	front-end/knowledge-islands/src/assets/images/logo.png
+40	0	front-end/knowledge-islands/src/components/CreateTruckFactorProcess.js
+20	0	front-end/knowledge-islands/src/components/TruckFactorProcess.js
+39	0	front-end/knowledge-islands/src/components/shared/AuthContext.js
+22	2	front-end/knowledge-islands/src/components/shared/Layout.js
+19	0	front-end/knowledge-islands/src/components/shared/ProtectedRoute.js
+0	13	front-end/knowledge-islands/src/index.css
+1	2	front-end/knowledge-islands/src/index.js
+4	11	front-end/knowledge-islands/src/pages/Home.js
+30	8	front-end/knowledge-islands/src/pages/Login.js
+11	0	front-end/knowledge-islands/src/setupProxy.js
+3	2	src/main/java/br/com/gitanalyzer/config/WebSecutiryConfig.java
+1	1	src/main/java/br/com/gitanalyzer/controllers/DownloaderController.java
+1	1	src/main/java/br/com/gitanalyzer/controllers/HistoryCommits.java
+2	2	src/main/java/br/com/gitanalyzer/controllers/LoginController.java
+2	2	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+1	1	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+5	2	src/main/java/br/com/gitanalyzer/controllers/TruckFactorProcessController.java
+6	7	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+4	0	src/main/java/br/com/gitanalyzer/main/dto/CloneRepoForm.java
+10	0	src/main/java/br/com/gitanalyzer/service/CommitService.java
+9	5	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+4	1	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+
+commit ee8871313979ee04006bf095d28bd00474e26acc
+448	0	front-end/knowledge-islands/package-lock.json
+3	0	front-end/knowledge-islands/package.json
+26	13	front-end/knowledge-islands/src/App.js
+14	0	front-end/knowledge-islands/src/components/shared/Layout.js
+8	3	front-end/knowledge-islands/src/index.js
+21	0	front-end/knowledge-islands/src/pages/Home.js
+24	0	front-end/knowledge-islands/src/pages/Login.js
+2	2	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+1	0	src/main/java/br/com/gitanalyzer/dto/ContributorDTO.java
+1	0	src/main/java/br/com/gitanalyzer/dto/ProjectDTO.java
+1	0	src/main/java/br/com/gitanalyzer/dto/ProjectVersionDTO.java
+3	0	src/main/java/br/com/gitanalyzer/dto/TruckFactorDTO.java
+18	0	src/main/java/br/com/gitanalyzer/dto/TruckFactorDevelopersDTO.java
+1	0	src/main/java/br/com/gitanalyzer/model/entity/Contributor.java
+1	0	src/main/java/br/com/gitanalyzer/model/entity/Project.java
+1	0	src/main/java/br/com/gitanalyzer/model/entity/ProjectVersion.java
+7	0	src/main/java/br/com/gitanalyzer/model/entity/TruckFactor.java
+6	0	src/main/java/br/com/gitanalyzer/model/entity/TruckFactorDevelopers.java
+39	2	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+11	4	src/main/java/br/com/gitanalyzer/service/TruckFactorService.java
+0	1	tmp_projects/git-analyzer
+
+commit 2a3a8a125eeba8e9f3e6c2820a2546da9339b7ff
+23	0	front-end/knowledge-islands/.gitignore
+70	0	front-end/knowledge-islands/README.md
+29861	0	front-end/knowledge-islands/package-lock.json
+38	0	front-end/knowledge-islands/package.json
+-	-	front-end/knowledge-islands/public/favicon.ico
+43	0	front-end/knowledge-islands/public/index.html
+-	-	front-end/knowledge-islands/public/logo192.png
+-	-	front-end/knowledge-islands/public/logo512.png
+25	0	front-end/knowledge-islands/public/manifest.json
+3	0	front-end/knowledge-islands/public/robots.txt
+38	0	front-end/knowledge-islands/src/App.css
+23	0	front-end/knowledge-islands/src/App.js
+8	0	front-end/knowledge-islands/src/App.test.js
+13	0	front-end/knowledge-islands/src/index.css
+17	0	front-end/knowledge-islands/src/index.js
+1	0	front-end/knowledge-islands/src/logo.svg
+13	0	front-end/knowledge-islands/src/reportWebVitals.js
+5	0	front-end/knowledge-islands/src/setupTests.js
+19	0	pom.xml
+13	0	src/main/java/br/com/gitanalyzer/GitAnalyzerApplication.java
+1	1	src/main/java/br/com/gitanalyzer/combinatory/CombinatoryProblem.java
+62	0	src/main/java/br/com/gitanalyzer/config/AuthTokenFilter.java
+68	0	src/main/java/br/com/gitanalyzer/config/WebSecutiryConfig.java
+105	0	src/main/java/br/com/gitanalyzer/controllers/LoginController.java
+7	1	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+9	12	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+22	0	src/main/java/br/com/gitanalyzer/controllers/TruckFactorProcessController.java
+17	0	src/main/java/br/com/gitanalyzer/dto/GenerateFolderProjectLogDTO.java
+24	0	src/main/java/br/com/gitanalyzer/dto/LoginRequestDTO.java
+15	0	src/main/java/br/com/gitanalyzer/dto/MessageResponseDTO.java
+35	0	src/main/java/br/com/gitanalyzer/dto/SignupRequestDTO.java
+21	0	src/main/java/br/com/gitanalyzer/dto/UserInfoResponseDTO.java
+14	0	src/main/java/br/com/gitanalyzer/enums/StageEnum.java
+11	0	src/main/java/br/com/gitanalyzer/exception/UserAlreadyExistException.java
+1	1	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+2	2	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+3	21	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+3	0	src/main/java/br/com/gitanalyzer/main/dto/CloneRepoForm.java
+1	0	src/main/java/br/com/gitanalyzer/model/AuthorFile.java
+1	0	src/main/java/br/com/gitanalyzer/model/Commit.java
+2	0	src/main/java/br/com/gitanalyzer/model/File.java
+73	0	src/main/java/br/com/gitanalyzer/model/UserDetailsImpl.java
+1	1	src/main/java/br/com/gitanalyzer/model/{ => entity}/Contributor.java
+1	1	src/main/java/br/com/gitanalyzer/model/{ => entity}/Developer.java
+3	2	src/main/java/br/com/gitanalyzer/model/{ => entity}/Project.java
+3	1	src/main/java/br/com/gitanalyzer/model/{ => entity}/ProjectVersion.java
+38	0	src/main/java/br/com/gitanalyzer/model/entity/Role.java
+1	1	src/main/java/br/com/gitanalyzer/model/{ => entity}/TruckFactor.java
+1	1	src/main/java/br/com/gitanalyzer/model/{ => entity}/TruckFactorDevelopers.java
+49	0	src/main/java/br/com/gitanalyzer/model/entity/TruckFactorProcess.java
+59	0	src/main/java/br/com/gitanalyzer/model/entity/User.java
+7	0	src/main/java/br/com/gitanalyzer/model/enums/RoleEnum.java
+1	1	src/main/java/br/com/gitanalyzer/repository/ProjectRepository.java
+1	1	src/main/java/br/com/gitanalyzer/repository/ProjectVersionRepository.java
+16	0	src/main/java/br/com/gitanalyzer/repository/RoleRepository.java
+1	1	src/main/java/br/com/gitanalyzer/repository/TruckFactorDevelopersRepository.java
+13	0	src/main/java/br/com/gitanalyzer/repository/TruckFactorProcessRepository.java
+1	1	src/main/java/br/com/gitanalyzer/repository/TruckFactorRepository.java
+16	0	src/main/java/br/com/gitanalyzer/repository/UserRepository.java
+13	7	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+2	2	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+1	1	src/main/java/br/com/gitanalyzer/service/HistoryCommitsService.java
+39	24	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+25	0	src/main/java/br/com/gitanalyzer/service/RoleSeeder.java
+27	0	src/main/java/br/com/gitanalyzer/service/TruckFactorProcessService.java
+61	15	src/main/java/br/com/gitanalyzer/service/TruckFactorService.java
+30	0	src/main/java/br/com/gitanalyzer/service/UserDetailsServiceImpl.java
+1	1	src/main/java/br/com/gitanalyzer/utils/ContributorUtils.java
+87	0	src/main/java/br/com/gitanalyzer/utils/JwtUtils.java
+6	1	src/main/resources/application.properties
+1	0	tmp_projects/git-analyzer
+
+commit 2527e26f2569689d8348676f8f360b7da2701535
+20	20	src/main/java/br/com/gitanalyzer/combinatory/CombinatoryProblem.java
+53	53	src/main/java/br/com/gitanalyzer/combinatory/HillClimbing.java
+1	2	src/main/java/br/com/gitanalyzer/controllers/DownloaderController.java
+16	5	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+19	0	src/main/java/br/com/gitanalyzer/dto/ContributorDTO.java
+24	0	src/main/java/br/com/gitanalyzer/dto/ProjectDTO.java
+22	0	src/main/java/br/com/gitanalyzer/dto/ProjectVersionDTO.java
+17	0	src/main/java/br/com/gitanalyzer/dto/TruckFactorAnalysisDTO.java
+21	0	src/main/java/br/com/gitanalyzer/dto/TruckFactorDTO.java
+1	1	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+4	1	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+23	9	src/main/java/br/com/gitanalyzer/model/Contributor.java
+13	2	src/main/java/br/com/gitanalyzer/model/Project.java
+22	1	src/main/java/br/com/gitanalyzer/model/ProjectVersion.java
+23	0	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+4	3	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+14	16	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+37	15	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+63	16	src/main/java/br/com/gitanalyzer/{main/TruckFactorAnalyzer.java => service/TruckFactorService.java}
+31	0	src/main/java/br/com/gitanalyzer/utils/ContributorUtils.java
+
+commit 8cd97b83499366de02226f1c46fe31db6e67f65a
+14	2	src/main/java/br/com/gitanalyzer/controllers/DownloaderController.java
+29	7	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+13	2	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+23	0	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+26	16	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+19	13	src/main/java/br/com/gitanalyzer/extractors/HistoryCommitsExtractor.java
+9	24	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+28	2	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+14	0	src/main/java/br/com/gitanalyzer/main/dto/CloneRepoForm.java
+19	0	src/main/java/br/com/gitanalyzer/main/dto/HistoryReposTruckFactorDTO.java
+2	0	src/main/java/br/com/gitanalyzer/main/dto/RepositoryKnowledgeMetricDTO.java
+9	4	src/main/java/br/com/gitanalyzer/model/Project.java
+1	1	src/main/java/br/com/gitanalyzer/model/ProjectInfo.java
+2	0	src/main/java/br/com/gitanalyzer/model/ProjectVersion.java
+8	33	src/main/java/br/com/gitanalyzer/service/CommitService.java
+29	3	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+5	5	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+79	3	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+2	0	src/main/resources/application.properties
+7	0	src/main/resources/checkout_script.sh
+0	0	src/main/resources/linguist.rb
+
+commit 53063187e3d7b86045c79cee50b1b7d1dbf14808
+1	0	src/main/java/br/com/gitanalyzer/GitAnalyzerApplication.java
+9	3	src/main/java/br/com/gitanalyzer/controllers/HistoryCommits.java
+39	0	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+2	1	src/main/java/br/com/gitanalyzer/enums/FilteredEnum.java
+59	4	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+2	8	src/main/java/br/com/gitanalyzer/extractors/HistoryCommitsExtractor.java
+4	2	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+90	63	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+1	1	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+9	1	src/main/java/br/com/gitanalyzer/model/Project.java
+61	0	src/main/java/br/com/gitanalyzer/service/CommitService.java
+3	2	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+1	1	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+13	5	src/main/java/br/com/gitanalyzer/service/HistoryCommitsService.java
+1	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+2	0	src/main/resources/application.properties
+38	0	src/main/resources/cloc_script.sh
+32	0	src/main/resources/commit_log_script.sh
+10	0	src/main/resources/linguist.rb
+12	0	src/main/resources/linguist_script.sh
+5	0	src/main/resources/log.awk
+
+commit 035dc6f7db88f9650ce1781e901910e745ca37ef
+4	2	src/main/java/br/com/gitanalyzer/controllers/HistoryCommits.java
+8	2	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+14	0	src/main/java/br/com/gitanalyzer/enums/FilteredEnum.java
+9	0	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+7	11	src/main/java/br/com/gitanalyzer/extractors/HistoryCommitsExtractor.java
+10	3	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+8	1	src/main/java/br/com/gitanalyzer/model/Project.java
+3	3	src/main/java/br/com/gitanalyzer/model/ProjectVersion.java
+4	1	src/main/java/br/com/gitanalyzer/repository/ProjectVersionRepository.java
+2	1	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+54	14	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+21	3	src/main/java/br/com/gitanalyzer/service/HistoryCommitsService.java
+33	5	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+
+commit eddeee11e54fcd6e02b1b2294e7e923c88b41650
+1	1	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+37	0	src/main/java/br/com/gitanalyzer/service/FilterProjectService.java
+
+commit 6db2571c067881999723763f47e150887ddc7c67
+4	1	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+0	1	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+35	0	src/main/java/br/com/gitanalyzer/model/Developer.java
+4	4	src/main/java/br/com/gitanalyzer/service/DownloaderService.java
+1	0	src/main/resources/application.properties
+0	0	src/main/resources/filteredProjects.txt
+
+commit b1303cdf886cd2ec4c051b42f29b3d1f5187cf1b
+15	8	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+
+commit 652f2c8fdbf486ae5a9deae96241ae98b3fdd5ca
+2	2	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+
+commit 80e3a0e9dc91f5fa4685e88bad82b3f37e2d95a5
+12	1	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+2	2	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+5	3	src/main/java/br/com/gitanalyzer/{main/filter/FilterProjects.java => service/FilterProjectService.java}
+
+commit bb522784b0025f7eedf8219d48fb10da70817d51
+8	0	pom.xml
+9	9	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+51	4	src/main/java/br/com/gitanalyzer/main/filter/FilterProjects.java
+7	0	src/main/java/br/com/gitanalyzer/model/Project.java
+6	0	src/main/java/br/com/gitanalyzer/model/ProjectVersion.java
+
+commit 15929018d84c4825571a8f94663d0691520b2e4b
+27	0	src/main/java/br/com/gitanalyzer/controllers/DownloaderController.java
+10	6	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+3	4	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+158	0	src/main/java/br/com/gitanalyzer/extractors/ProjectVersionExtractor.java
+45	144	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+15	0	src/main/java/br/com/gitanalyzer/main/dto/DownloaderForm.java
+25	0	src/main/java/br/com/gitanalyzer/main/filter/FilterProjects.java
+3	3	src/main/java/br/com/gitanalyzer/model/Commit.java
+7	1	src/main/java/br/com/gitanalyzer/model/Project.java
+59	0	src/main/java/br/com/gitanalyzer/model/ProjectVersion.java
+5	23	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+12	0	src/main/java/br/com/gitanalyzer/repository/ProjectVersionRepository.java
+0	2	src/main/java/br/com/gitanalyzer/repository/TruckFactorRepository.java
+33	30	src/main/java/br/com/gitanalyzer/{main/downloader/GitDownloader.java => service/DownloaderService.java}
+0	0	src/main/resources/filteredProjects.txt
+
+commit 78a40e8786d0a1f0c36c9078b3c6ab8de4ece0b1
+12	0	pom.xml
+95	0	src/main/java/br/com/gitanalyzer/combinatory/CombinatoryProblem.java
+58	26	src/main/java/br/com/gitanalyzer/combinatory/GeneticAlgorithm.java
+6	77	src/main/java/br/com/gitanalyzer/combinatory/HillClimbing.java
+24	0	src/main/java/br/com/gitanalyzer/controllers/HistoryCommits.java
+14	9	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+67	0	src/main/java/br/com/gitanalyzer/extractors/HistoryCommitsExtractor.java
+0	43	src/main/java/br/com/gitanalyzer/main/ExtractHashesCommits.java
+8	8	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+113	0	src/main/java/br/com/gitanalyzer/main/downloader/GitDownloader.java
+18	0	src/main/java/br/com/gitanalyzer/main/dto/HashNumberYears.java
+3	1	src/main/java/br/com/gitanalyzer/main/dto/{PathKnowledgeMetricDTO.java => RepositoryKnowledgeMetricDTO.java}
+19	0	src/main/java/br/com/gitanalyzer/model/ProjectInfo.java
+16	0	src/main/java/br/com/gitanalyzer/service/HistoryCommitsService.java
+
+commit 444f815b30731d3e0e42751569092fde702f0292
+7	0	pom.xml
+26	0	src/main/java/br/com/gitanalyzer/combinatory/GeneticAlgorithm.java
+162	0	src/main/java/br/com/gitanalyzer/combinatory/HillClimbing.java
+6	13	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+16	22	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+1	1	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+74	87	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+8	0	src/main/java/br/com/gitanalyzer/model/Contributor.java
+1	0	src/main/java/br/com/gitanalyzer/model/File.java
+14	0	src/main/java/br/com/gitanalyzer/model/Solution.java
+3	1	src/main/resources/application.properties
+
+commit 630f014b74b5c1edde3f467d1abaa4e6508495b8
+13	7	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+2	2	src/main/java/br/com/gitanalyzer/{extractors/ProjectExtractor.java => utils/ProjectUtils.java}
+
+commit b2fc3ee4710d2f51d236d082911c0df601083b8d
+22	0	src/main/java/br/com/gitanalyzer/controllers/ProjectController.java
+18	3	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+21	5	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+11	11	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+15	14	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+1	0	src/main/java/br/com/gitanalyzer/model/Project.java
+51	0	src/main/java/br/com/gitanalyzer/service/ProjectService.java
+3	10	src/main/java/br/com/gitanalyzer/utils/Constants.java
+
+commit 8dd415f5c74e8847b655ab12a7b789b28aeb7339
+5	5	pom.xml
+0	33	src/main/java/br/com/gitanalyzer/controllers/TruckFactorHistoryController.java
+1	1	src/main/java/br/com/gitanalyzer/enums/KnowledgeMetric.java
+58	49	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+43	0	src/main/java/br/com/gitanalyzer/main/ExtractHashesCommits.java
+113	162	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+0	116	src/main/java/br/com/gitanalyzer/main/TruckFactorHistoryAnalyzer.java
+17	0	src/main/java/br/com/gitanalyzer/main/vo/MlOutput.java
+6	2	src/main/java/br/com/gitanalyzer/model/AuthorFile.java
+18	0	src/main/java/br/com/gitanalyzer/model/MetricsDoa.java
+19	0	src/main/java/br/com/gitanalyzer/model/MetricsDoe.java
+0	1	src/main/java/br/com/gitanalyzer/model/Project.java
+1	1	src/main/java/br/com/gitanalyzer/repository/ProjectRepository.java
+4	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+2	2	src/main/resources/application.properties
+
+commit 02f133494309ffb0a0a8b66673e9e96f5c4a5c78
+3	2	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+33	0	src/main/java/br/com/gitanalyzer/controllers/TruckFactorHistoryController.java
+29	0	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+267	105	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+42	44	src/main/java/br/com/gitanalyzer/main/TruckFactorHistoryAnalyzer.java
+18	0	src/main/java/br/com/gitanalyzer/main/dto/PathKnowledgeMetricDTO.java
+25	0	src/main/java/br/com/gitanalyzer/main/vo/CommitFiles.java
+7	0	src/main/java/br/com/gitanalyzer/model/Commit.java
+12	1	src/main/java/br/com/gitanalyzer/model/File.java
+1	0	src/main/java/br/com/gitanalyzer/model/Project.java
+1	0	src/main/java/br/com/gitanalyzer/repository/ProjectRepository.java
+9	3	src/main/java/br/com/gitanalyzer/utils/Constants.java
+
+commit d23c25a3d6d9127f0c0728efe4068fe8bde36930
+1	1	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+
+commit 322724ba3d234810dc394a778df0c34959ed737a
+1	1	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+3	1	src/main/java/br/com/gitanalyzer/model/TruckFactorDevelopers.java
+
+commit 161d35eec7d3657da1d0f04ba0a42d7d87b3424d
+50	19	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+1	1	src/main/java/br/com/gitanalyzer/main/{ => vo}/TruckFactorDevelopersVO.java
+1	1	src/main/java/br/com/gitanalyzer/main/{ => vo}/TruckFactorVO.java
+1	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+
+commit 05c2ba2d8bc744080124b10378e6af6474258cbe
+6	3	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+
+commit a658d6c33fb53aedcd661917f0fabb85875ce3d9
+7	1	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+9	8	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+3	2	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+
+commit af7602f8375565628b813bd9c930ac7082ae8d17
+13	2	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+64	21	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+1	1	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+8	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+
+commit 3542d7e453760d17e204b384cc0cab3f3c6435b5
+60	93	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+
+commit bda48052c1bc571e3bd2562ff58bf34deb41ba9e
+11	46	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+3	0	src/main/java/br/com/gitanalyzer/model/File.java
+
+commit bb2dbbaf4c355aac2bb728400d629fbc3a5a613d
+107	43	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+1	1	src/main/resources/application.properties
+
+commit 0f060761a43bbcfd4d6464a582b0a2b482f524ee
+27	16	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+2	2	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+28	18	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+9	4	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+5	8	src/main/java/br/com/gitanalyzer/model/TruckFactorDevelopers.java
+1	1	src/main/java/br/com/gitanalyzer/repository/TruckFactorRepository.java
+1	1	src/main/resources/application.properties
+
+commit 83a0f299d96980b1c0b16049e6220f37c9880350
+54	78	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+20	13	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+
+commit 7244c0bf54b7e6d8fc01138f3c8e5e15099a0dbb
+11	2	src/main/java/br/com/gitanalyzer/enums/OperationType.java
+146	171	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+49	26	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+22	20	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+3	7	src/main/java/br/com/gitanalyzer/model/Commit.java
+9	0	src/main/java/br/com/gitanalyzer/model/CommitFile.java
+0	3	src/main/java/br/com/gitanalyzer/model/Contributor.java
+11	0	src/main/java/br/com/gitanalyzer/model/File.java
+3	49	src/main/java/br/com/gitanalyzer/utils/Constants.java
+
+commit 810712f261bc357bd8cd21d6d24a68c62ee125e9
+18	0	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+1	2	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+1	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+0	32	src/main/java/br/com/gitanalyzer/utils/FileUtils.java
+
+commit cb0732342b02aa5c4157bebb91648302ceb8177a
+0	9	pom.xml
+38	0	src/main/java/br/com/gitanalyzer/controllers/TruckFactorController.java
+30	41	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+15	0	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+2	7	src/main/java/br/com/gitanalyzer/model/TruckFactorDevelopers.java
+1	3	src/main/java/br/com/gitanalyzer/repository/TruckFactorDevelopersRepository.java
+
+commit 65175b8b3b5fe19d6b7c87b73e389eb05e6d247f
+13	0	src/main/java/br/com/gitanalyzer/repository/ProjectRepository.java
+14	0	src/main/java/br/com/gitanalyzer/repository/TruckFactorDevelopersRepository.java
+13	0	src/main/java/br/com/gitanalyzer/repository/TruckFactorRepository.java
+
+commit a852868aeaf0fb1c18a7b974d111a3be1b5f9af6
+33	18	src/main/java/br/com/gitanalyzer/main/TruckFactorHistoryAnalyzer.java
+3	17	src/main/java/br/com/gitanalyzer/model/AuthorFile.java
+3	21	src/main/java/br/com/gitanalyzer/model/Commit.java
+0	15	src/main/java/br/com/gitanalyzer/model/CommitFile.java
+6	23	src/main/java/br/com/gitanalyzer/model/Contributor.java
+3	16	src/main/java/br/com/gitanalyzer/model/File.java
+0	7	src/main/java/br/com/gitanalyzer/model/Project.java
+34	0	src/main/java/br/com/gitanalyzer/model/TruckFactor.java
+41	0	src/main/java/br/com/gitanalyzer/model/TruckFactorDevelopers.java
+16	0	src/main/resources/application.properties
+
+commit 885d398db6cd52321a0d60cab7d006ab91727b56
+33	0	.gitignore
+-	-	.mvn/wrapper/maven-wrapper.jar
+2	0	.mvn/wrapper/maven-wrapper.properties
+316	0	mvnw
+188	0	mvnw.cmd
+102	0	pom.xml
+13	0	src/main/java/br/com/gitanalyzer/GitAnalyzerApplication.java
+13	0	src/main/java/br/com/gitanalyzer/enums/KnowledgeMetric.java
+13	0	src/main/java/br/com/gitanalyzer/enums/OperationType.java
+206	0	src/main/java/br/com/gitanalyzer/extractors/CommitExtractor.java
+78	0	src/main/java/br/com/gitanalyzer/extractors/FileExtractor.java
+14	0	src/main/java/br/com/gitanalyzer/extractors/ProjectExtractor.java
+50	0	src/main/java/br/com/gitanalyzer/main/GeneralAnalyses.java
+551	0	src/main/java/br/com/gitanalyzer/main/TruckFactorAnalyzer.java
+26	0	src/main/java/br/com/gitanalyzer/main/TruckFactorDevelopersVO.java
+103	0	src/main/java/br/com/gitanalyzer/main/TruckFactorHistoryAnalyzer.java
+40	0	src/main/java/br/com/gitanalyzer/main/TruckFactorVO.java
+52	0	src/main/java/br/com/gitanalyzer/model/AuthorFile.java
+52	0	src/main/java/br/com/gitanalyzer/model/Commit.java
+38	0	src/main/java/br/com/gitanalyzer/model/CommitFile.java
+69	0	src/main/java/br/com/gitanalyzer/model/Contributor.java
+49	0	src/main/java/br/com/gitanalyzer/model/File.java
+37	0	src/main/java/br/com/gitanalyzer/model/Project.java
+96	0	src/main/java/br/com/gitanalyzer/utils/Constants.java
+12	0	src/main/java/br/com/gitanalyzer/utils/DoaUtils.java
+14	0	src/main/java/br/com/gitanalyzer/utils/DoeUtils.java
+49	0	src/main/java/br/com/gitanalyzer/utils/FileUtils.java
+1	0	src/main/resources/application.properties
+13	0	src/test/java/br/com/gitanalyzer/GitAnalyzerApplicationTests.java

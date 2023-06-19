@@ -37,15 +37,13 @@ public class ProjectVersion {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
 	private String versionId;
-	@ManyToOne
+	@ManyToOne(optional = false)
 	private Project project;
 	@OneToMany(cascade = CascadeType.ALL)
-	private List<Contributor> activeContributors;
+	private List<Contributor> contributors;
 
 	@javax.persistence.Transient
 	private List<Commit> commits;
-	@javax.persistence.Transient
-	private List<Contributor> contributors;
 	@javax.persistence.Transient
 	private List<File> files;
 	@javax.persistence.Transient
@@ -55,7 +53,7 @@ public class ProjectVersion {
 
 	public ProjectVersion(int numberAllDevs, int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
-			String versionId, List<Contributor> activeContributors) {
+			String versionId, List<Contributor> contributors) {
 		super();
 		this.numberAllDevs = numberAllDevs;
 		this.numberAnalysedDevs = numberAnalysedDevs;
@@ -65,7 +63,7 @@ public class ProjectVersion {
 		this.numberAnalysedCommits = numberAnalysedCommits;
 		this.dateVersion = dateVersion;
 		this.versionId = versionId;
-		this.activeContributors = activeContributors;
+		this.contributors = contributors;
 	}
 
 	public String getProjectLanguage() {
@@ -75,7 +73,7 @@ public class ProjectVersion {
 	public ProjectVersionDTO toDto() {
 		return ProjectVersionDTO.builder()
 				.project(project.toDto())
-				.activeContributors(activeContributors.stream().map(a -> a.toDto()).toList())
+				.activeContributors(contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList())
 				.dateVersion(dateVersion)
 				.numberAllCommits(numberAllCommits)
 				.numberAllDevs(numberAllDevs)

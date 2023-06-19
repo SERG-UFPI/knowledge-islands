@@ -3,7 +3,9 @@ package br.com.gitanalyzer.service;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
@@ -38,14 +41,15 @@ public class FilterProjectService {
 	private ProjectService projectService;
 	
 
-	public void filter(String path) throws URISyntaxException, IOException, InterruptedException {
+	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
-		java.io.File dir = new java.io.File(path);
+		java.io.File dir = new java.io.File(form.getFolderPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				projectService.generateLogFilesFolderWithoutCloc(projectPath);
+				System.out.println();
+				projectService.generateLogFilesWithoutCloc(projectPath);
 				Project project = projectService.returnProjectByPath(projectPath);
 				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
@@ -70,6 +74,15 @@ public class FilterProjectService {
 //				}
 //			}
 //		}
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		c.add(Calendar.YEAR, -(form.getNumberOfYears()+1));
+		for (Project project : versions.stream().map(v -> v.getProject()).toList()) {
+			if(project.getFirstCommitDate().after(c.getTime())) {
+				projectsFiltered.add(project);
+				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
+			}
+		}
 		for (Project project : projectsFiltered) {
 			project.setFiltered(true);
 			projectRepository.save(project);

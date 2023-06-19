@@ -37,6 +37,7 @@ public class ProjectVersionExtractor {
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
+		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
 		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
@@ -45,16 +46,14 @@ public class ProjectVersionExtractor {
 		int numberAnalysedDevs = contributors.size();
 		//saveNumberFilesOfCommits(commits);
 		//commitsFilesFrequency(commits, files);
-		commits = filterCommitsByFilesTouched(projectName, commits);
-		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
+		//commits = filterCommitsByFilesTouched(projectName, commits);
 		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
-				dateVersion, versionId, contributorUtils.getActiveContributors(contributors, commits));
+				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits));
 		projectVersion.setCommits(commits);
-		projectVersion.setContributors(contributors);
 		projectVersion.setFiles(files);
 		return projectVersion;
 	}
@@ -108,18 +107,18 @@ public class ProjectVersionExtractor {
 					if(contributorAux.getEmail().equals(contributor.getEmail())) {
 						alias.add(contributorAux);
 					}
-					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
-							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
-									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
-									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
-									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
-											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
-						alias.add(contributorAux);
-					}
-					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
-							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
-						alias.add(contributorAux);
-					}
+//					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
+//							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
+//									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
+//									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
+//									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
+//											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
+//						alias.add(contributorAux);
+//					}
+//					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
+//							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
+//						alias.add(contributorAux);
+//					}
 					else{
 						String nome = contributorAux.getName().toUpperCase();
 						if(nome != null) {
@@ -143,7 +142,7 @@ public class ProjectVersionExtractor {
 
 	private List<Commit> filterCommitsByFilesTouched(String projectName, List<Commit> commits) {
 		if(projectName != null && projectName.toUpperCase().equals("IHEALTH")) {
-			return commits.stream().filter(c -> c.getNumberOfFilesTouched() < 90).collect(Collectors.toList());
+			return commits.stream().filter(c -> c.getCommitFiles().size() < 90).collect(Collectors.toList());
 		}
 		return commits;
 	}
