@@ -7,7 +7,7 @@ const TruckFactorProcess = () => {
     const { user } = useContext(AuthContext);
     const [processes, setProcesses] = useState([]);
     useEffect(() => {
-        axios.get(`http://localhost:3000/api/truck-factor-process/${user.id}`, { withCredentials: true})
+        axios.get(`http://localhost:8080/api/truck-factor-process/${user.id}`, { withCredentials: true})
         .then((response) => {
             setProcesses(response.data);
         });

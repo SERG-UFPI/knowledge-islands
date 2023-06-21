@@ -1,4 +1,4 @@
-import { Card } from "react-bootstrap";
+import {Card} from "react-bootstrap";
 import TruckFactorProcess from "../components/TruckFactorProcess";
 import CreateTruckFactorProcess from "../components/CreateTruckFactorProcess";
 

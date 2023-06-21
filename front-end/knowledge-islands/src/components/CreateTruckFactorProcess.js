@@ -10,7 +10,7 @@ const CreateTruckFactorProcess = () => {
     const { branch } = useRef(null);
     return (
         <>
-                <br/>
+            <br/>
             <br/>
             <Card >
                 <br/>
