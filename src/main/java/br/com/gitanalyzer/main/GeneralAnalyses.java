@@ -14,7 +14,8 @@ public class GeneralAnalyses {
 	public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
 
 		File directory = new File("/home/otavio/Desktop/GitAnalyzer/git-analyzer/tmp_projects");
-		org.apache.commons.io.FileUtils.deleteDirectory(directory); 
+		org.apache.commons.io.FileUtils.deleteDirectory(directory);
+		
 		//		List<DoaResultVO> doas = new ArrayList<DoaResultVO>();
 		//		List<DoeResultVO> does = new ArrayList<DoeResultVO>();
 		//		List<String[]> doaFile = null;
