@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Index from "./pages/Index";
 import { AuthContextProvider } from "./components/shared/AuthContext";
 import ProtectedRoute from './components/shared/ProtectedRoute';
+import SignUp from "./pages/SignUp";
 
 
 function App() {
@@ -22,6 +23,11 @@ function App() {
             <Route path="/login" element={
               <ProtectedRoute accessBy="non-authenticated">
                 <Login/>
+              </ProtectedRoute>
+            }></Route>
+            <Route path="/signup" element={
+              <ProtectedRoute accessBy="non-authenticated">
+                <SignUp/>
               </ProtectedRoute>
             }></Route>
             <Route path="/" element={

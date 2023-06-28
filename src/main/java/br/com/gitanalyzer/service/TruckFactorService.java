@@ -55,7 +55,6 @@ import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
-import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -64,7 +63,6 @@ public class TruckFactorService {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
-	private ProjectUtils projectUtils = new ProjectUtils();
 	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
@@ -146,9 +144,9 @@ public class TruckFactorService {
 
 	public TruckFactorDTO generateTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
 			throws IOException, NoHeadException, GitAPIException {
-		String projectPath = repo.getPath();
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
-		String projectName = projectUtils.extractProjectName(projectPath);
+		String projectPath = repo.getPath();
+		String projectName = projectService.extractProjectName(projectPath);
 		Project project = null;
 		ProjectVersion projectVersion = null;
 		TruckFactor truckFactor = null;
@@ -158,7 +156,7 @@ public class TruckFactorService {
 			project = new Project(projectName, repo.getPath());
 		}
 		//if (projectName.equals("rails") == true) {
-		filteringProjectsCommentsStudy(project);
+		//filteringProjectsCommentsStudy(project);
 		boolean versionAnalyzed = false;
 		if(project.getId() != null) {
 			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
@@ -560,7 +558,7 @@ public class TruckFactorService {
 			}
 		}
 	}
-	
+
 	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
 		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
 		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();

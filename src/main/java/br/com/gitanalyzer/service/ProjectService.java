@@ -28,7 +28,6 @@ import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.Constants;
-import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,14 +36,11 @@ public class ProjectService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
-	@Autowired
-	private CommitService commitService;
-	private ProjectUtils projectUtils = new ProjectUtils();
 	@Value("${configuration.project-logs.path}")
 	private String projectLogsFolder;
 
 	public Project returnProjectByPath(String projectPath) {
-		String projectName = projectUtils.extractProjectName(projectPath);
+		String projectName = extractProjectName(projectPath);
 		Project project = projectRepository.findByName(projectName);
 		return project;
 	}
@@ -97,26 +93,54 @@ public class ProjectService {
 	}
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {
-		String name = projectUtils.extractProjectName(projectPath);
+		String name = extractProjectName(projectPath);
 		log.info("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
-		commitService.generateCommitFile(projectPath);
-		commitService.generateCommitFileFile(projectPath);
+		generateCommitFile(projectPath);
+		generateCommitFileFile(projectPath);
 		generateClocFile(projectPath);
 	}
 
 	public void generateLogFilesWithoutCloc(String projectPath) throws URISyntaxException, IOException, InterruptedException {
-		String name = projectUtils.extractProjectName(projectPath);
+		String name = extractProjectName(projectPath);
 		log.info("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
-		commitService.generateCommitFile(projectPath);
-		commitService.generateCommitFileFile(projectPath);
+		generateCommitFile(projectPath);
+		generateCommitFileFile(projectPath);
+	}
+
+	public void generateCommitFile(String path) throws URISyntaxException, IOException, InterruptedException {
+		String name = extractProjectName(path);
+		log.info("Generating commit file of "+name);
+		String pathCommitScript = ProjectService.class.getResource("/commit_log_script.sh").toURI().getPath();
+		String command = "sh "+pathCommitScript+" "+path;
+		Process process = Runtime.getRuntime().exec(command);
+		process.waitFor();
+		log.info("End generation commit file");
+	}
+
+	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+		java.io.File dir = new java.io.File(folderPath);
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				generateCommitFile(projectPath);
+			}
+		}
+	}
+
+	public void generateCommitFileFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
+		String name = extractProjectName(projectPath);
+		log.info("Generating commitFile file of "+name);
+		CommitExtractor commitExtractor = new CommitExtractor();
+		commitExtractor.generateCommitFileFile(projectPath);
+		log.info("End generation commitFile file");
 	}
 
 	public void generateClocFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
-		String name = projectUtils.extractProjectName(projectPath);
+		String name = extractProjectName(projectPath);
 		log.info("Generating cloc file of "+name);
-		String pathClocScript = CommitService.class.getResource("/cloc_script.sh").toURI().getPath();
+		String pathClocScript = ProjectService.class.getResource("/cloc_script.sh").toURI().getPath();
 		String command = "sh "+pathClocScript+" "+projectPath;
 		Process process = Runtime.getRuntime().exec(command);
 		process.waitFor();
@@ -124,9 +148,9 @@ public class ProjectService {
 	}
 
 	public void generateFileLists(String path) throws URISyntaxException, IOException, InterruptedException {
-		String name = projectUtils.extractProjectName(path);
+		String name = extractProjectName(path);
 		log.info("Generating linguist file of "+name);
-		String pathRubyScript = CommitService.class.getResource("/linguist.rb").toURI().getPath();
+		String pathRubyScript = ProjectService.class.getResource("/linguist.rb").toURI().getPath();
 		String command = "ruby "+pathRubyScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
@@ -218,12 +242,31 @@ public class ProjectService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				String projectName = projectUtils.extractProjectName(projectPath);
+				String projectName = extractProjectName(projectPath);
 				Project project = projectRepository.findByName(projectName);
 				project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
 				projectRepository.save(project);
 			}
 		}
+	}
+
+	public String extractProjectName(String path) {
+		String fileSeparator = File.separator;
+		String[] splitedPath = path.split("\\"+fileSeparator);
+		String projectName = splitedPath[splitedPath.length - 1];
+		return projectName;
+	}
+	
+	public String extractProjectFullName(String path) throws IOException {
+		String command = "cd "+path+" && git config --get remote.origin.url";
+		ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String fullName = reader.readLine();
+		fullName = fullName.replace("https://github.com/", "");
+		fullName = fullName.replace(".git", "");
+		return fullName;
 	}
 
 }

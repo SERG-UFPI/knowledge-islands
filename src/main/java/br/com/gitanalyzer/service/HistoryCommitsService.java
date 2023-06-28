@@ -7,14 +7,14 @@ import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.main.dto.HashNumberYears;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.utils.ProjectUtils;
 
 @Service
 public class HistoryCommitsService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
-	private ProjectUtils projectUtils = new ProjectUtils();
+	@Autowired
+	private ProjectService projectService;
 	private HistoryCommitsExtractor extractor = new HistoryCommitsExtractor();
 
 	public void commitsHashsFolder(HashNumberYears form) {
@@ -22,7 +22,7 @@ public class HistoryCommitsService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				String projectName = projectUtils.extractProjectName(projectPath);
+				String projectName = projectService.extractProjectName(projectPath);
 				Project project = projectRepository.findByName(projectName);
 				if(project.isFiltered() == false) {
 					extractor.saveCommitsHashs(projectPath, form.getNumberYears());
@@ -32,7 +32,7 @@ public class HistoryCommitsService {
 	}
 
 	public void commitsHashsProject(HashNumberYears form) {
-		String projectName = projectUtils.extractProjectName(form.getPath());
+		String projectName = projectService.extractProjectName(form.getPath());
 		Project project = projectRepository.findByName(projectName);
 		if(project.isFiltered() == false) {
 			extractor.saveCommitsHashs(form.getPath(), form.getNumberYears());

@@ -37,7 +37,7 @@ import br.com.gitanalyzer.utils.JwtUtils;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
-public class LoginController {
+public class AuthController {
 
 	@Autowired
 	private AuthenticationManager authenticationManager;

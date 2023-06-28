@@ -35,6 +35,8 @@ public class ProjectVersionExtractor {
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
+		Date dateVersion = commits.get(0).getDate();
+		String versionId = commits.get(0).getExternalId();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
 		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
@@ -48,8 +50,6 @@ public class ProjectVersionExtractor {
 		//commitsFilesFrequency(commits, files);
 		//commits = filterCommitsByFilesTouched(projectName, commits);
 		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
-		Date dateVersion = commits.get(0).getDate();
-		String versionId = commits.get(0).getExternalId();
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits));

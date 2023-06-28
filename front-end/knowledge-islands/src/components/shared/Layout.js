@@ -21,6 +21,11 @@ const Layout = ({ children }) => {
                             Login
                         </Nav.Link>
                     )}
+                    {!user &&(
+                        <Nav.Link as={Link} to="/signup">
+                            Sign up
+                        </Nav.Link>
+                    )}
                 </Nav>
                 {user && (
                     <Button style={{marginRight: "1%"}} variant="outline-success" type="button" onClick={() => {logout()}}>

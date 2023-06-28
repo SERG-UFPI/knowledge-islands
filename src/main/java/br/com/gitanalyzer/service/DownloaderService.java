@@ -28,7 +28,6 @@ import br.com.gitanalyzer.main.dto.DownloaderForm;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.utils.ProjectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -40,25 +39,22 @@ public class DownloaderService {
 	@Autowired
 	private ProjectRepository projectRepository;
 	@Autowired
-	private CommitService commitService;
-	@Autowired
 	private ProjectService projectService;
-	private ProjectUtils projectUtils = new ProjectUtils();
 
 	public void download(DownloaderForm form) throws URISyntaxException, InterruptedException {
 		try {
 			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
 			downloader("language:javascript stars:>500", form);
-			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
-			downloader("language:python stars:>500", form);
-			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
-			downloader("language:java stars:>500", form);
-			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
-			downloader("language:typescript stars:>500", form);
-			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
-			downloader("language:c++ stars:>500", form);
-			log.info("=========== DOWNLOADS FINISHED==================");
-			commitService.generateCommitFileFolder(form.getPath());
+			//			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
+			//			downloader("language:python stars:>500", form);
+			//			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
+			//			downloader("language:java stars:>500", form);
+			//			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
+			//			downloader("language:typescript stars:>500", form);
+			//			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
+			//			downloader("language:c++ stars:>500", form);
+			//			log.info("=========== DOWNLOADS FINISHED==================");
+			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setFirstDateFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -138,7 +134,7 @@ public class DownloaderService {
 	}
 
 	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
-		String projectName = projectUtils.extractProjectName(form.getUrl());
+		String projectName = projectService.extractProjectName(form.getUrl());
 		projectName = projectName.replace(".git", "");
 		File file = new File(cloneFolder+projectName);
 		if(form.getBranch() != null) {

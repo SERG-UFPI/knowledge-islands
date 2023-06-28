@@ -1,8 +1,11 @@
 import { useRef, useContext } from "react";
-import { Button, Col, Container, Row, Form } from "react-bootstrap";
+import { Button, Col, Container, Row, Form, Alert } from "react-bootstrap";
 import AuthContext from "../components/shared/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const Login = () => {
+    const location = useLocation();
+    console.log(location?.state?.message);
     const username = useRef("");
     const password = useRef("");
     const { login } = useContext(AuthContext);
@@ -20,6 +23,8 @@ const Login = () => {
             <br/>
             <br/>
             <Container >
+            {location?.state?.message?<Alert variant="success" >{location.state.message}</Alert>:
+        null}
                 <Row>
                     <Col className="col-md-8 offset-md-2">
                         <Form.Group className="mb-3" controlId="formBasicsUsername">
@@ -37,7 +42,6 @@ const Login = () => {
                         </div>
                     </Col>
                 </Row>
-                <br/>
             </Container>
         </>
     );

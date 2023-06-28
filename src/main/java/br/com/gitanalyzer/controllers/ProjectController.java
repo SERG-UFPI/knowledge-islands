@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
-import br.com.gitanalyzer.service.CommitService;
 import br.com.gitanalyzer.service.FilterProjectService;
 import br.com.gitanalyzer.service.ProjectService;
 
@@ -25,8 +24,6 @@ public class ProjectController {
 	private ProjectService projectService;
 	@Autowired
 	private FilterProjectService filterProjectService;
-	@Autowired
-	private CommitService commitService;
 
 	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
@@ -64,7 +61,7 @@ public class ProjectController {
 	@PostMapping("/generate-commit-file")
 	public ResponseEntity<?> generateCommitFile(@RequestBody String projectPath){
 		try {
-			commitService.generateCommitFile(projectPath);
+			projectService.generateCommitFile(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -75,7 +72,7 @@ public class ProjectController {
 	@PostMapping("/generate-commitFile-file")
 	public ResponseEntity<?> generateCommitFileFile(@RequestBody String projectPath){
 		try {
-			commitService.generateCommitFileFile(projectPath);
+			projectService.generateCommitFileFile(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -104,4 +101,5 @@ public class ProjectController {
 		}
 		return null;
 	}
+	
 }
