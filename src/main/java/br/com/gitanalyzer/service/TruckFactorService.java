@@ -47,11 +47,13 @@ import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.model.entity.TruckFactorDevelopers;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
+import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
+import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
@@ -81,6 +83,8 @@ public class TruckFactorService {
 	private DownloaderService downloaderService;
 	@Autowired
 	private TruckFactorProcessRepository truckFactorProcessRepository; 
+	@Autowired
+	private UserRepository userRepository;
 
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
@@ -120,8 +124,12 @@ public class TruckFactorService {
 		truckFactorProcessRepository.save(process);
 	}
 
-	public TruckFactorProcess cloneAndCalculateTruckFactor(CloneRepoForm form) {
-		TruckFactorProcess process = new TruckFactorProcess(StageEnum.DOWNLOAD);
+	public TruckFactorProcess cloneAndCalculateTruckFactor(CloneRepoForm form) throws Exception{
+		User user = userRepository.findById(form.getIdUser()).orElse(null);
+		if(user == null) {
+			throw new Exception("User not found");
+		}
+		TruckFactorProcess process = new TruckFactorProcess(StageEnum.DOWNLOAD, user, form.getUrl());
 		truckFactorProcessRepository.save(process);
 		Thread t = new Thread(new CloneTruckFactorTask(form, process));
 		t.start();
@@ -172,7 +180,7 @@ public class TruckFactorService {
 				List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
 				for (File file : projectVersion.getFiles()) {
 					for (File fileContributor : filesContributor) {
-						if(fileContributor.getPath().equals(file.getPath())) {
+						if(file.isFile(fileContributor.getPath())) {
 							if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, projectVersion.getCommits());
 								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
@@ -317,11 +325,11 @@ public class TruckFactorService {
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributor);
 		contributors.addAll(contributor.getAlias());
-		for (Commit commit : commits) {
+		forCommit: for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
 					for (CommitFile commitFile: commit.getCommitFiles()) {
-						if (commitFile.getFile().getPath().equals(file.getPath())) {
+						if (file.isFile(commitFile.getFile().getPath())) {
 							adds = commitFile.getAdds() + adds;
 							if (dateLastCommit == null) {
 								dateLastCommit = commit.getDate();
@@ -329,10 +337,9 @@ public class TruckFactorService {
 							if(commitFile.getOperation().equals(OperationType.ADD)) {
 								fa = 1;
 							}
-							break;
+							continue forCommit;
 						}
 					}
-					break;
 				}
 			}
 		}
@@ -387,22 +394,18 @@ public class TruckFactorService {
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributor);
 		contributors.addAll(contributor.getAlias());
-		for (Commit commit : commits) {
+		forCommit:for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
-					for (CommitFile commitFile: commit.getCommitFiles()) {
-						boolean filePresent = false;
+					forCommitFile: for (CommitFile commitFile: commit.getCommitFiles()) {
 						for (File file : files) {
-							if (file.getPath().equals(commitFile.getFile().getPath())) {
-								filePresent = true;
-								break;
+							if (file.isFile(commitFile.getFile().getPath())) {
+								continue forCommitFile;
 							}
 						}
-						if (filePresent == false) {
-							files.add(commitFile.getFile());
-						}
+						files.add(commitFile.getFile());
 					}
-					break;
+					continue forCommit;
 				}
 			}
 		}
@@ -527,6 +530,41 @@ public class TruckFactorService {
 		}
 	}
 
+	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
+		java.io.File dir = new java.io.File(form.getPath());
+		for (java.io.File fileDir: dir.listFiles()) {
+			if (fileDir.isDirectory()) {
+				String projectPath = fileDir.getAbsolutePath()+"/";
+				Project project = projectService.returnProjectByPath(form.getPath());
+				if(project.isFiltered() == false) {
+					historyRepoTruckFactor(HistoryReposTruckFactorForm.builder().knowledgeMetric(KnowledgeMetric.DOE).numberYears(form.getNumberYears()).path(projectPath).build());
+				}
+			}
+		}
+	}
+
+	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
+		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
+		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
+		String[] hashes = historyCommitsExtractor.getCommitHashes(form.getPath(), form.getNumberYears());
+		try {
+			for (String hash : hashes) {
+				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;
+				Process process = Runtime.getRuntime().exec(command);
+				process.waitFor();
+				projectService.generateLogFiles(form.getPath());
+				generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
+			}
+		}catch(Exception e) {
+			log.error(e.getMessage());
+		}finally {
+			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes[0];
+			Process process = Runtime.getRuntime().exec(command);
+			process.waitFor();
+		}
+	}
+
 	class DoeContributorFile{
 		int numberAdds, fa, numDays;
 
@@ -546,36 +584,6 @@ public class TruckFactorService {
 			this.numberCommits = numberCommits;
 			this.fa = fa;
 			this.ac = ac;
-		}
-	}
-
-	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
-		java.io.File dir = new java.io.File(form.getPath());
-		for (java.io.File fileDir: dir.listFiles()) {
-			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
-				historyRepoTruckFactor(HistoryReposTruckFactorForm.builder().knowledgeMetric(KnowledgeMetric.DOE).numberYears(form.getNumberYears()).path(projectPath).build());
-			}
-		}
-	}
-
-	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
-		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
-		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
-		Project project = projectService.returnProjectByPath(form.getPath());
-		if(project.isFiltered() == false) {
-			String[] hashes = historyCommitsExtractor.getCommitHashes(form.getPath(), form.getNumberYears());
-			for (String hash : hashes) {
-				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;
-				Process process = Runtime.getRuntime().exec(command);
-				process.waitFor();
-				projectService.generateLogFiles(form.getPath());
-				generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
-						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
-			}
-			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes[0];
-			Process process = Runtime.getRuntime().exec(command);
-			process.waitFor();
 		}
 	}
 }

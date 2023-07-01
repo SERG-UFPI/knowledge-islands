@@ -15,6 +15,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
 import br.com.gitanalyzer.enums.StageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,10 +41,24 @@ public class TruckFactorProcess {
 	private TruckFactor truckFactor;
 	@ManyToOne(targetEntity = br.com.gitanalyzer.model.entity.User.class)
 	private User user;
+	private String repositoryUrl;
 
-	public TruckFactorProcess(StageEnum stage) {
+	public TruckFactorProcess(StageEnum stage, User user, 
+			String repositoryUrl) {
 		super();
 		this.stage = stage;
+		this.user = user;
+		this.repositoryUrl = repositoryUrl;
+	}
+
+	public TruckFactorProcessDTO toDTO() {
+		return TruckFactorProcessDTO.builder()
+				.endDate(endDate)
+				.id(id)
+				.stage(stage)
+				.startDate(startDate)
+				.truckFactor(truckFactor!=null?truckFactor.toDto():null)
+				.user(user.toDTO()).build();
 	}
 
 }

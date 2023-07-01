@@ -1,5 +1,5 @@
 import { useRef, useContext } from "react";
-import { Button, Col, Container, Row, Form, Alert } from "react-bootstrap";
+import { Button, Col, Container, Row, Form, Alert, Nav } from "react-bootstrap";
 import AuthContext from "../components/shared/AuthContext";
 import { useLocation } from "react-router-dom";
 
@@ -39,6 +39,8 @@ const Login = () => {
                         <Button variant="primary" type="button" onClick={loginSubmit}>
                             Sign in
                         </Button>
+                        <Nav>
+                        <Nav.Link href="/signup">Not registered? Create an account</Nav.Link></Nav>
                         </div>
                     </Col>
                 </Row>

@@ -114,7 +114,9 @@ public class ProjectService {
 		log.info("Generating commit file of "+name);
 		String pathCommitScript = ProjectService.class.getResource("/commit_log_script.sh").toURI().getPath();
 		String command = "sh "+pathCommitScript+" "+path;
-		Process process = Runtime.getRuntime().exec(command);
+		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
 		process.waitFor();
 		log.info("End generation commit file");
 	}
@@ -142,7 +144,9 @@ public class ProjectService {
 		log.info("Generating cloc file of "+name);
 		String pathClocScript = ProjectService.class.getResource("/cloc_script.sh").toURI().getPath();
 		String command = "sh "+pathClocScript+" "+projectPath;
-		Process process = Runtime.getRuntime().exec(command);
+		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
 		process.waitFor();
 		log.info("End generation cloc file");
 	}

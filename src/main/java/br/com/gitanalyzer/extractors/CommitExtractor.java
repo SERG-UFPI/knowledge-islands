@@ -130,18 +130,17 @@ public class CommitExtractor {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
-			while ((strLine = br.readLine()) != null) {
+			whileFile: while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				String id = splited[0];
-				commitFor:for (Commit commit : commits) {
+				for (Commit commit : commits) {
 					if (id.equals(commit.getExternalId())) {
 						String operation = splited[1];
 						String filePath = splited[3];
 						for (File fileCommitFile : files) {
 							if (fileCommitFile.isFile(filePath)) {
-								CommitFile commitFile = new CommitFile(fileCommitFile, OperationType.getEnumByType(operation));
-								commit.getCommitFiles().add(commitFile);
-								break commitFor;
+								commit.getCommitFiles().add(new CommitFile(fileCommitFile, OperationType.getEnumByType(operation)));
+								continue whileFile;
 							}
 						}
 					}

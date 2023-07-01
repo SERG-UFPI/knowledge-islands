@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import br.com.gitanalyzer.service.TruckFactorService;
 
 @RestController
 @RequestMapping("/api/truck-factor")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class TruckFactorController {
 
 	@Autowired
@@ -37,7 +39,7 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("clone-and-truck-factor")
-	public ResponseEntity<TruckFactorProcess> cloneAndTruckFactor(@RequestBody CloneRepoForm form){
+	public ResponseEntity<TruckFactorProcess> cloneAndTruckFactor(@RequestBody CloneRepoForm form) throws Exception{
 		return ResponseEntity.ok(service.cloneAndCalculateTruckFactor(form));
 	}
 
@@ -55,6 +57,16 @@ public class TruckFactorController {
 	public ResponseEntity<?> historyReposTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
 		try {
 			service.historyReposTruckFactor(form);
+		} catch (IOException | GitAPIException e) {
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
+	}
+	
+	@PostMapping("history-repo-truck-factor")
+	public ResponseEntity<?> historyRepoTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
+		try {
+			service.historyRepoTruckFactor(form);
 		} catch (IOException | GitAPIException e) {
 			e.printStackTrace();
 		}

@@ -112,28 +112,29 @@ public class FileExtractor {
 					}
 				}
 				brCloc.close();
-
-				Git git = null;
-				Repository repository;
-				try {
-					git = Git.open(new java.io.File(path));
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				repository = git.getRepository();
-				for (File file : files) {
-					if (file.getFileSize() == 0) {
-						BlameCommand blameCommand = new BlameCommand(repository);
-						blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
-						blameCommand.setFilePath(file.getPath());
-						BlameResult blameResult = blameCommand.call();
-						RawText rawText = blameResult.getResultContents();
-						file.setFileSize(rawText.size());
-					}
-				}
+//
+//				Git git = null;
+//				Repository repository;
+//				try {
+//					git = Git.open(new java.io.File(path));
+//				} catch (IOException e1) {
+//					e1.printStackTrace();
+//				}
+//				repository = git.getRepository();
+//				for (File file : files) {
+//					if (file.getFileSize() == 0) {
+//						BlameCommand blameCommand = new BlameCommand(repository);
+//						blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
+//						blameCommand.setFilePath(file.getPath());
+//						BlameResult blameResult = blameCommand.call();
+//						RawText rawText = blameResult.getResultContents();
+//						file.setFileSize(rawText.size());
+//					}
+//				}
 			}
+			files = files.stream().filter(f -> f.getFileSize() > 0).toList();
 			return files;
-		} catch (IOException | GitAPIException e) {
+		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
 		return null;

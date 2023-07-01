@@ -72,18 +72,14 @@ public class ProjectVersionExtractor {
 
 	private List<Contributor> extractContributorFromCommits(List<Commit> commits){
 		List<Contributor> contributors = new ArrayList<Contributor>();
-		for (Commit commit : commits) {
+		forCommit: for (Commit commit : commits) {
 			Contributor contributor = commit.getAuthor();
-			boolean present = false;
 			for (Contributor contributor2 : contributors) {
 				if (contributor2.equals(contributor)) {
-					present = true;
-					break;
+					continue forCommit;
 				}
 			}
-			if (present == false) {
-				contributors.add(contributor);
-			}
+			contributors.add(contributor);
 		}
 		return contributors;
 	}

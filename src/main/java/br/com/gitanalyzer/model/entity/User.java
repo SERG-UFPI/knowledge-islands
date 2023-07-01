@@ -16,6 +16,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import br.com.gitanalyzer.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -55,5 +56,14 @@ public class User {
 		this.email = email;
 		this.password = password;
 	}
-
+	
+	public UserDTO toDTO() {
+		return UserDTO.builder()
+				.id(id)
+				.email(email)
+				.password(password)
+				.name(name)
+				.build();
+	}
+	
 }	

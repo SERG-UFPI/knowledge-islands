@@ -102,4 +102,15 @@ public class ProjectController {
 		return null;
 	}
 	
+	@PostMapping("/generate-logs-project")
+	public ResponseEntity<?> generateLogFiles(@RequestBody String projectPath){
+		try {
+			projectService.generateLogFiles(projectPath);
+			return ResponseEntity.status(HttpStatus.OK).body("");
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 }

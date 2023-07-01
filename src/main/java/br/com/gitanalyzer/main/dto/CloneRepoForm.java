@@ -16,6 +16,6 @@ public class CloneRepoForm {
 	@NotNull
 	public String url;
 	@NotNull
-	public Long id;
+	public Long idUser;
 	public String branch;
 }

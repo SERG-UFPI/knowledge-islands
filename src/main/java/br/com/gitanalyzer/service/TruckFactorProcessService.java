@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.UserRepository;
@@ -17,11 +18,12 @@ public class TruckFactorProcessService {
 	@Autowired
 	private UserRepository userRepository;
 
-	public List<TruckFactorProcess> getByUserId(Long id) throws Exception{
+	public List<TruckFactorProcessDTO> getByUserId(Long id) throws Exception{
 		if(userRepository.existsById(id) == false) {
 			throw new Exception("Usuário com id {"+id+"} não encontrado");
 		}else {
-			return repository.findByUserId(id);
+			List<TruckFactorProcess> processes = repository.findByUserId(id); 
+			return processes.stream().map(p -> p.toDTO()).toList();
 		}
 	}
 }
