@@ -24,15 +24,16 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
 import br.com.gitanalyzer.dto.TruckFactorDTO;
+import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
+import br.com.gitanalyzer.dto.form.CloneRepoForm;
 import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
+import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.enums.StageEnum;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
-import br.com.gitanalyzer.main.dto.CloneRepoForm;
-import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
 import br.com.gitanalyzer.main.vo.CommitFiles;
 import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
@@ -86,12 +87,10 @@ public class TruckFactorService {
 	@Autowired
 	private UserRepository userRepository;
 
-
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
 
 	class CloneTruckFactorTask implements Runnable {
-
 		private CloneRepoForm form;
 		private TruckFactorProcess process;
 
@@ -103,11 +102,12 @@ public class TruckFactorService {
 		@Override
 		public void run() {
 			try {
+				setProcessStage(process, StageEnum.DOWNLOADING);
 				String projectPath = downloaderService.cloneProject(form);
-				setProcessStage(process, StageEnum.EXTRACT_DATA);
+				setProcessStage(process, StageEnum.EXTRACTING_DATA);
 				projectService.generateLogFiles(projectPath);
 				setProcessStage(process, StageEnum.CALCULATING);
-				TruckFactorDTO truckFactor = generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+				TruckFactorDTO truckFactor = generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()
 						.path(projectPath).knowledgeMetric(KnowledgeMetric.DOE).build());
 				process.setTruckFactor(truckFactorRepository.findById(truckFactor.getId()).get());
 				process.setEndDate(new Date());
@@ -124,16 +124,16 @@ public class TruckFactorService {
 		truckFactorProcessRepository.save(process);
 	}
 
-	public TruckFactorProcess cloneAndCalculateTruckFactor(CloneRepoForm form) throws Exception{
+	public TruckFactorProcessDTO cloneAndCalculateTruckFactor(CloneRepoForm form) throws Exception{
 		User user = userRepository.findById(form.getIdUser()).orElse(null);
 		if(user == null) {
 			throw new Exception("User not found");
 		}
-		TruckFactorProcess process = new TruckFactorProcess(StageEnum.DOWNLOAD, user, form.getUrl());
+		TruckFactorProcess process = new TruckFactorProcess(StageEnum.INITIALIZED, user, form.getUrl());
 		truckFactorProcessRepository.save(process);
 		Thread t = new Thread(new CloneTruckFactorTask(form, process));
 		t.start();
-		return process;
+		return process.toDTO();
 	}
 
 	private List<Commit> getCommitsFromAHash(List<Commit> commits, String hash){
@@ -150,14 +150,12 @@ public class TruckFactorService {
 		return commitsReturn;
 	}
 
-	public TruckFactorDTO generateTruckFactorProject(RepositoryKnowledgeMetricDTO repo)
+	public TruckFactorDTO generateTruckFactorProject(RepositoryKnowledgeMetricForm repo)
 			throws IOException, NoHeadException, GitAPIException {
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		String projectPath = repo.getPath();
 		String projectName = projectService.extractProjectName(projectPath);
 		Project project = null;
-		ProjectVersion projectVersion = null;
-		TruckFactor truckFactor = null;
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
@@ -165,36 +163,22 @@ public class TruckFactorService {
 		}
 		//if (projectName.equals("rails") == true) {
 		//filteringProjectsCommentsStudy(project);
-		boolean versionAnalyzed = false;
-		if(project.getId() != null) {
-			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
-			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
-		}
-		if(project.isFiltered() == false && versionAnalyzed == false) {
-			log.info("EXTRACTING DATA FROM "+projectPath);
-			projectVersion = projectVersionExtractor.extractProjectVersion(projectPath, projectName);
-			projectService.createFolderLogsAndCopyFiles(projectPath, projectName, projectVersion.getVersionId());
-			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+projectName);
+		//		boolean versionAnalyzed = false;
+		//		if(project.getId() != null) {
+		//			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
+		//			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
+		//		}
+		if(project.isFiltered() == false) {
+			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project.getCurrentPath(), project.getName());
+			projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
+			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
 				List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
 				for (File file : projectVersion.getFiles()) {
 					for (File fileContributor : filesContributor) {
 						if(file.isFile(fileContributor.getPath())) {
-							if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
-								DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, projectVersion.getCommits());
-								double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
-										doeContributorFile.numDays, file.getFileSize());
-								MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
-										doeContributorFile.numDays, file.getFileSize());
-								authorFiles.add(new AuthorFile(contributor, file, doe, metricsDoe));
-							}else {
-								DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, projectVersion.getCommits());
-								double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
-										doaContributorFile.ac);
-								MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
-								authorFiles.add(new AuthorFile(contributor, doa, file, metricsDoa));
-							}
+							authorFiles.add(getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file));
 							break;
 						}
 					}
@@ -210,11 +194,11 @@ public class TruckFactorService {
 				}
 			});
 			List<Contributor> topContributors = new ArrayList<Contributor>();
-			log.info("CALCULATING TF OF "+projectName);
-			int tf = 0;
+			log.info("CALCULATING TF OF "+project.getName());
 			List<File> coveredFiles = null;
+			int tf = 0;
+			double fileSize = projectVersion.getFiles().size();
 			while(projectVersion.getContributors().isEmpty() == false) {
-				double fileSize = projectVersion.getFiles().size();
 				coveredFiles = getCoverageFiles(projectVersion.getContributors(), projectVersion.getFiles(), knowledgeMetric);
 				double numberFilesCovarage = coveredFiles.size(); 
 				double coverage = numberFilesCovarage/fileSize;
@@ -224,14 +208,14 @@ public class TruckFactorService {
 				projectVersion.getContributors().remove(0);
 				tf = tf+1;
 			}
-			log.info("SAVING TF DATA OF "+projectName);
+			log.info("SAVING TF DATA OF "+project.getName());
 			if(project.getId() == null) {
 				projectRepository.save(project);
 			}
 			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
 				projectVersion.setProject(project);
 				projectVersionRepository.save(projectVersion);
-				truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric, getImplicatedFiles(coveredFiles, projectVersion.getFiles()));
+				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric, getImplicatedFiles(coveredFiles, projectVersion.getFiles()));
 				//TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric);
 				truckFactorRepository.save(truckFactor);
 				for (Contributor contributor : topContributors) {
@@ -247,9 +231,28 @@ public class TruckFactorService {
 						truckFactor.getTruckFactorDevelopers().add(truckFactorDevelopers);
 					}
 				}
+				return truckFactor.toDto();
 			}
 		}
-		return truckFactor.toDto();
+		return null;
+	}
+
+	private AuthorFile getAuthorFileByKnowledgeMetric(KnowledgeMetric knowledgeMetric, List<Commit> commits, 
+			Contributor contributor, File file) {
+		if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
+			DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
+			double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
+					doeContributorFile.numDays, file.getFileSize());
+			MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
+					doeContributorFile.numDays, file.getFileSize());
+			return new AuthorFile(contributor, file, doe, metricsDoe);
+		}else {
+			DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
+			double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
+					doaContributorFile.ac);
+			MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
+			return new AuthorFile(contributor, doa, file, metricsDoa);
+		}
 	}
 
 	private List<String> getImplicatedFiles(List<File> coveredFiles, List<File> files) {
@@ -412,13 +415,13 @@ public class TruckFactorService {
 		return files;
 	}
 
-	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricDTO request) throws IOException, 
+	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricForm request) throws IOException, 
 	NoHeadException, GitAPIException{
 		java.io.File dir = new java.io.File(request.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				RepositoryKnowledgeMetricDTO repo = new RepositoryKnowledgeMetricDTO(projectPath, request.getKnowledgeMetric());
+				RepositoryKnowledgeMetricForm repo = new RepositoryKnowledgeMetricForm(projectPath, request.getKnowledgeMetric());
 				generateTruckFactorProject(repo);
 			}
 		}
@@ -553,7 +556,7 @@ public class TruckFactorService {
 				Process process = Runtime.getRuntime().exec(command);
 				process.waitFor();
 				projectService.generateLogFiles(form.getPath());
-				generateTruckFactorProject(RepositoryKnowledgeMetricDTO.builder()
+				generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()
 						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
 			}
 		}catch(Exception e) {

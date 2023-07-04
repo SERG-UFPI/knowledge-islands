@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.main.dto.CloneRepoForm;
-import br.com.gitanalyzer.main.dto.DownloaderForm;
+import br.com.gitanalyzer.dto.form.CloneRepoForm;
+import br.com.gitanalyzer.dto.form.DownloaderForm;
 import br.com.gitanalyzer.service.DownloaderService;
 
 @RestController

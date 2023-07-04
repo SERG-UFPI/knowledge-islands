@@ -1,21 +1,18 @@
-package br.com.gitanalyzer.main.dto;
+package br.com.gitanalyzer.dto.form;
 
 import javax.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CloneRepoForm {
-
+public class HashNumberYearsForm {
+	
 	@NotNull
-	public String url;
+	private String path;
 	@NotNull
-	public Long idUser;
-	public String branch;
+	private int numberYears;
 }

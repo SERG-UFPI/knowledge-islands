@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.persistence.Entity;
@@ -52,11 +53,13 @@ public class TruckFactorProcess {
 	}
 
 	public TruckFactorProcessDTO toDTO() {
+		SimpleDateFormat fmt = new SimpleDateFormat("YYYY-MM-DD HH:mm");
 		return TruckFactorProcessDTO.builder()
-				.endDate(endDate)
+				.repositoryUrl(repositoryUrl)
+				.endDate(fmt.format(endDate))
 				.id(id)
-				.stage(stage)
-				.startDate(startDate)
+				.stage(stage.getName())
+				.startDate(fmt.format(startDate))
 				.truckFactor(truckFactor!=null?truckFactor.toDto():null)
 				.user(user.toDTO()).build();
 	}

@@ -13,12 +13,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class TruckFactorProcessDTO {
-	
+
 	private Long id;
-	private Date startDate;
-	private Date endDate;
-	private StageEnum stage;
+	private String startDate;
+	private String endDate;
+	private String stage;
 	private TruckFactorDTO truckFactor;
 	private UserDTO user;
+	private String repositoryUrl;
 
 }

@@ -23,8 +23,8 @@ import com.jcabi.github.RtGithub;
 import com.jcabi.http.Request;
 import com.jcabi.http.response.JsonResponse;
 
-import br.com.gitanalyzer.main.dto.CloneRepoForm;
-import br.com.gitanalyzer.main.dto.DownloaderForm;
+import br.com.gitanalyzer.dto.form.CloneRepoForm;
+import br.com.gitanalyzer.dto.form.DownloaderForm;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
@@ -45,15 +45,15 @@ public class DownloaderService {
 		try {
 			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
 			downloader("language:javascript stars:>500", form);
-			//			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
-			//			downloader("language:python stars:>500", form);
-			//			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
-			//			downloader("language:java stars:>500", form);
-			//			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
-			//			downloader("language:typescript stars:>500", form);
-			//			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
-			//			downloader("language:c++ stars:>500", form);
-			//			log.info("=========== DOWNLOADS FINISHED==================");
+			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
+			downloader("language:python stars:>500", form);
+			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
+			downloader("language:java stars:>500", form);
+			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
+			downloader("language:typescript stars:>500", form);
+			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
+			downloader("language:c++ stars:>500", form);
+			log.info("=========== DOWNLOADS FINISHED==================");
 			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setFirstDateFolder(form.getPath());
 		} catch (IOException e) {

@@ -1,18 +1,22 @@
-package br.com.gitanalyzer.main.dto;
+package br.com.gitanalyzer.dto.form;
 
 import javax.validation.constraints.NotNull;
 
+import br.com.gitanalyzer.enums.KnowledgeMetric;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HashNumberYears {
-	
+public class RepositoryKnowledgeMetricForm {
+
 	@NotNull
 	private String path;
 	@NotNull
-	private int numberYears;
+	private KnowledgeMetric knowledgeMetric;
+
 }

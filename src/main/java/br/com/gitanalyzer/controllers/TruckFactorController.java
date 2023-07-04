@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.TruckFactorDTO;
+import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
+import br.com.gitanalyzer.dto.form.CloneRepoForm;
 import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
-import br.com.gitanalyzer.main.dto.CloneRepoForm;
-import br.com.gitanalyzer.main.dto.RepositoryKnowledgeMetricDTO;
-import br.com.gitanalyzer.model.entity.TruckFactorProcess;
+import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
 import br.com.gitanalyzer.service.TruckFactorService;
 
 @RestController
@@ -29,7 +29,7 @@ public class TruckFactorController {
 	private TruckFactorService service;
 
 	@PostMapping("repos-truck-factor")
-	public ResponseEntity<?> directoriesTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricDTO form){
+	public ResponseEntity<?> directoriesTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
 			service.directoriesTruckFactorAnalyzes(form);
 		} catch (IOException | GitAPIException e) {
@@ -39,12 +39,12 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("clone-and-truck-factor")
-	public ResponseEntity<TruckFactorProcess> cloneAndTruckFactor(@RequestBody CloneRepoForm form) throws Exception{
+	public ResponseEntity<TruckFactorProcessDTO> cloneAndTruckFactor(@RequestBody CloneRepoForm form) throws Exception{
 		return ResponseEntity.ok(service.cloneAndCalculateTruckFactor(form));
 	}
 
 	@PostMapping("repo-truck-factor")
-	public ResponseEntity<TruckFactorDTO> directoryTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricDTO form){
+	public ResponseEntity<TruckFactorDTO> directoryTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
 			return ResponseEntity.ok(service.generateTruckFactorProject(form));
 		} catch (IOException | GitAPIException e) {
@@ -62,7 +62,7 @@ public class TruckFactorController {
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
-	
+
 	@PostMapping("history-repo-truck-factor")
 	public ResponseEntity<?> historyRepoTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
 		try {

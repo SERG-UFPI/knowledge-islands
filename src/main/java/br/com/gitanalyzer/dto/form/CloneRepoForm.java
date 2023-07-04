@@ -1,8 +1,7 @@
-package br.com.gitanalyzer.main.dto;
+package br.com.gitanalyzer.dto.form;
 
 import javax.validation.constraints.NotNull;
 
-import br.com.gitanalyzer.enums.KnowledgeMetric;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,11 +11,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RepositoryKnowledgeMetricDTO {
+public class CloneRepoForm {
 
 	@NotNull
-	private String path;
+	public String url;
 	@NotNull
-	private KnowledgeMetric knowledgeMetric;
-
+	public Long idUser;
+	public String branch;
 }

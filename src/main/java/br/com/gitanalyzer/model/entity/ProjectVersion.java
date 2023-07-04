@@ -41,11 +41,13 @@ public class ProjectVersion {
 	private Project project;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Contributor> contributors;
+	//	@OneToMany(cascade = CascadeType.ALL)
+	//	private List<File> files;
 
 	@javax.persistence.Transient
-	private List<Commit> commits;
-	@javax.persistence.Transient
 	private List<File> files;
+	@javax.persistence.Transient
+	private List<Commit> commits;
 	@javax.persistence.Transient
 	private String projectName;
 	@javax.persistence.Transient

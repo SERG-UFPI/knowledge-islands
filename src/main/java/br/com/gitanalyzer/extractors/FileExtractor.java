@@ -9,14 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jgit.api.BlameCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.blame.BlameResult;
-import org.eclipse.jgit.diff.RawText;
-import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.lib.Repository;
-
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.utils.Constants;
@@ -132,7 +124,7 @@ public class FileExtractor {
 //					}
 //				}
 			}
-			files = files.stream().filter(f -> f.getFileSize() > 0).toList();
+			files.removeIf(f -> f.getFileSize() == 0);
 			return files;
 		} catch (IOException e) {
 			log.error(e.getMessage());

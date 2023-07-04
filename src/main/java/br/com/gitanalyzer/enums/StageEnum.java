@@ -7,7 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum StageEnum {
 
-	DOWNLOAD("Downloading"), EXTRACT_DATA("Extracting Data"), CALCULATING("Calculating Truck Factor"), 
+	INITIALIZED("Process initialized"), DOWNLOADING("Downloading repository"), 
+	EXTRACTING_DATA("Extracting history data"), CALCULATING("Calculating Truck Factor"), 
 	ANALYSIS_FINISHED("Analysis finished");
 
 	private String name;

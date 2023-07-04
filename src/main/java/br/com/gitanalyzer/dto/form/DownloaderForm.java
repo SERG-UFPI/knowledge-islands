@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.main.dto;
+package br.com.gitanalyzer.dto.form;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

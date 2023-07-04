@@ -39,7 +39,7 @@ public class ProjectVersionExtractor {
 		String versionId = commits.get(0).getExternalId();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
-		commits = commits.stream().filter(c -> c.getCommitFiles().size() > 0).collect(Collectors.toList());
+		commits.removeIf(c -> c.getCommitFiles().size() == 0);
 		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
