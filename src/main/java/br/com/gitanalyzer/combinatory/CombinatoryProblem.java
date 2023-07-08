@@ -37,13 +37,14 @@ public class CombinatoryProblem {
 	}
 
 	protected void indexFiles() {
-		for(int i = 0; i < files.size(); i++) {
-			files.get(i).setId(i);
-		}
+//		for(int i = 0; i < files.size(); i++) {
+//			files.get(i).setId(i);
+//		}
 	}
 	
 	protected List<Integer> getFilesIndexes(){
-		return files.stream().map(f -> f.getId()).toList();
+//		return files.stream().map(f -> f.getId()).toList();
+		return null;
 	}
 	
 //	protected int checkSolution(int[] abandonedFilesIds) {

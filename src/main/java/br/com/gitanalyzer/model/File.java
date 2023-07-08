@@ -5,21 +5,36 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
 import br.com.gitanalyzer.model.entity.Contributor;
-import br.com.gitanalyzer.model.entity.Project;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class File implements Comparable<File>{
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+public class File{
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	@Column(nullable=false)
 	private String path;
-	private Project project;
-	private String extension;
 	private int fileSize;
-	private Set<Contributor> mantainers = new HashSet<Contributor>();
+	private double totalKnowledge = 0;
+	@ElementCollection
 	private List<String> renamePaths = new ArrayList<String>();
-	private int numberCommits = 0;
-	private int id;
+
+	@javax.persistence.Transient
+	private Set<Contributor> mantainers = new HashSet<Contributor>();
 
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<String>();
@@ -28,37 +43,9 @@ public class File implements Comparable<File>{
 		return paths.contains(path);
 	}
 
-	public File(String path, Project project, String extension) {
-		super();
-		this.path = path;
-		this.project = project;
-		this.extension = extension;
-	}
-
-	public File(String path, Project project, String extension, int fileSize) {
-		super();
-		this.path = path;
-		this.project = project;
-		this.extension = extension;
-		this.fileSize = fileSize;
-	}
-
 	public File(String path) {
 		super();
 		this.path = path;
-	}
-
-	public File() {
-	}
-
-	@Override
-	public int compareTo(File o) {
-		return this.numberCommits - o.getNumberCommits();
-	}
-
-	public String[] toStringArray() {
-		String[] toS = {path, String.valueOf(numberCommits)};
-		return toS;
 	}
 
 }

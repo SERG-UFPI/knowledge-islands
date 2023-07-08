@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -41,17 +42,10 @@ public class ProjectVersion {
 	private Project project;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Contributor> contributors;
-	//	@OneToMany(cascade = CascadeType.ALL)
-	//	private List<File> files;
-
-	@javax.persistence.Transient
+	@OneToMany(cascade = CascadeType.ALL)
 	private List<File> files;
 	@javax.persistence.Transient
 	private List<Commit> commits;
-	@javax.persistence.Transient
-	private String projectName;
-	@javax.persistence.Transient
-	private Date firstCommitDate;
 
 	public ProjectVersion(int numberAllDevs, int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
@@ -73,10 +67,11 @@ public class ProjectVersion {
 	}
 
 	public ProjectVersionDTO toDto() {
+		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		return ProjectVersionDTO.builder()
 				.project(project.toDto())
 				.activeContributors(contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList())
-				.dateVersion(dateVersion)
+				.dateVersion(dateVersion!=null?fmt.format(dateVersion):null)
 				.numberAllCommits(numberAllCommits)
 				.numberAllDevs(numberAllDevs)
 				.numberAllFiles(numberAllFiles)

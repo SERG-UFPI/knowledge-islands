@@ -137,7 +137,7 @@ public class DownloaderService {
 		String projectName = projectService.extractProjectName(form.getUrl());
 		projectName = projectName.replace(".git", "");
 		File file = new File(cloneFolder+projectName);
-		if(form.getBranch() != null) {
+		if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
 			Git.cloneRepository().setURI(form.getUrl()).setDirectory(file)
 			.setBranch(form.getBranch()) 
 			.call();

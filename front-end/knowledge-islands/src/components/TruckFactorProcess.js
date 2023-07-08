@@ -4,10 +4,12 @@ import { useContext } from "react";
 import AuthContext from "./shared/AuthContext";
 import { Table, Button } from "react-bootstrap";
 import { EyeFill } from "react-bootstrap-icons";
+import { useNavigate } from "react-router-dom";
 
 const TruckFactorProcess = () => {
     const { user } = useContext(AuthContext);
     const [processes, setProcesses] = useState([]);
+    const navigate = useNavigate();
     useEffect(() => {
         axios.get(`http://localhost:8080/api/truck-factor-process/${user.id}`, { withCredentials: true})
             .then((response) => {
@@ -18,34 +20,41 @@ const TruckFactorProcess = () => {
             .then((response) => {
                 setProcesses(response.data);
             });
-        }, 10000)
+        }, 5000)
         return () => clearInterval(interval);
     }, []);
+
+    const detailsTruckFactor = event => {
+        navigate("/truck-factor", {state: {id: event}});
+    };
     return (
         <>
         <br/>
         <br/>
             <Table>
                 <thead>
-                        <tr>
+                        <tr style={{textAlign:"center"}}>
                             <th>Repository URL</th>
                             <th>Start Date</th>
                             <th>Stage</th>
                             <th>Details</th>
                         </tr>
+                </thead>
+                <tbody>
                         {processes.map((process, id) => (
-                            <tr>
-                                <th>{process.repositoryUrl}</th>
-                                <th>{process.startDate}</th>
-                                <th>{process.stage}</th>
-                                <th>
-                                    <Button disabled={process.stage==='Analysis finished'?false:true}>
+                            <tr style={{textAlign:"center"}}>
+                                <td>{process.repositoryUrl}</td>
+                                <td>{process.startDate}</td>
+                                <td>{process.stage}</td>
+                                <td>
+                                    <Button disabled={process.stage==='Analysis finished'?false:true}
+                                    onClick={()=>detailsTruckFactor(process.truckFactor.id)} type="button">
                                         <EyeFill/>
                                     </Button>
-                                </th>
+                                </td>
                             </tr>
                         ))}
-                </thead>            
+                </tbody>
             </Table>
         </>
     );

@@ -113,6 +113,7 @@ public class TruckFactorService {
 				process.setEndDate(new Date());
 				setProcessStage(process, StageEnum.ANALYSIS_FINISHED);
 			} catch (Exception e) {
+				e.printStackTrace();
 				log.error(e.getMessage());
 			}
 		}
@@ -160,6 +161,7 @@ public class TruckFactorService {
 			project = projectRepository.findByName(projectName);
 		}else {
 			project = new Project(projectName, repo.getPath());
+			project.setFullName(projectService.extractProjectFullName(projectPath));
 		}
 		//if (projectName.equals("rails") == true) {
 		//filteringProjectsCommentsStudy(project);
@@ -178,7 +180,9 @@ public class TruckFactorService {
 				for (File file : projectVersion.getFiles()) {
 					for (File fileContributor : filesContributor) {
 						if(file.isFile(fileContributor.getPath())) {
-							authorFiles.add(getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file));
+							AuthorFile authorFile = getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file);
+							setFileKnowledgeOfAuthor(knowledgeMetric, file, authorFile);
+							authorFiles.add(authorFile);
 							break;
 						}
 					}
@@ -195,19 +199,19 @@ public class TruckFactorService {
 			});
 			List<Contributor> topContributors = new ArrayList<Contributor>();
 			log.info("CALCULATING TF OF "+project.getName());
-			List<File> coveredFiles = null;
+			List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
 			int tf = 0;
 			double fileSize = projectVersion.getFiles().size();
 			while(projectVersion.getContributors().isEmpty() == false) {
-				coveredFiles = getCoverageFiles(projectVersion.getContributors(), projectVersion.getFiles(), knowledgeMetric);
-				double numberFilesCovarage = coveredFiles.size(); 
+				double numberFilesCovarage = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric).size();
 				double coverage = numberFilesCovarage/fileSize;
 				if(coverage < 0.5) 
 					break;
-				topContributors.add(projectVersion.getContributors().get(0));
-				projectVersion.getContributors().remove(0);
+				topContributors.add(contributors.get(0));
+				contributors.remove(0);
 				tf = tf+1;
 			}
+			List<File> coveredFiles = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric);
 			log.info("SAVING TF DATA OF "+project.getName());
 			if(project.getId() == null) {
 				projectRepository.save(project);
@@ -236,10 +240,20 @@ public class TruckFactorService {
 		}
 		return null;
 	}
+	
+	private void setFileKnowledgeOfAuthor(KnowledgeMetric knowledgeMetric, File file, AuthorFile authorFile) {
+		if (knowledgeMetric.equals(KnowledgeMetric.DOE) 
+				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
+			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoe());
+		}else {
+			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoa());
+		}
+	}
 
 	private AuthorFile getAuthorFileByKnowledgeMetric(KnowledgeMetric knowledgeMetric, List<Commit> commits, 
 			Contributor contributor, File file) {
-		if (knowledgeMetric.equals(KnowledgeMetric.DOE) || knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
+		if (knowledgeMetric.equals(KnowledgeMetric.DOE) 
+				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 			DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
 			double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
 					doeContributorFile.numDays, file.getFileSize());
@@ -271,30 +285,6 @@ public class TruckFactorService {
 	private void filteringProjectsCommentsStudy(Project project) {
 		if(invalidsProjects.contains(project.getName())) {
 			project.setFiltered(true);
-		}
-	}
-
-	private void commitsFilesFrequency(List<Commit> commits, List<File> files) {
-		for(Commit commit: commits) {
-			for(CommitFile commitFile: commit.getCommitFiles()) {
-				for (File file : files) {
-					if(file.getPath().equals(commitFile.getFile().getPath())) {
-						file.setNumberCommits(file.getNumberCommits()+1);
-						break;
-					}
-				}
-			}
-		}
-		files = files.stream().sorted().collect(Collectors.toList());
-		try {
-			FileWriter fw = new FileWriter(Constants.pathCommitFilesFrequencyLog);
-			CSVWriter writer = new CSVWriter(fw);
-			for (File file : files) {
-				writer.writeNext(file.toStringArray());
-			}
-			writer.close();
-		}catch (IOException e) {
-			log.error(e.getMessage());
 		}
 	}
 
@@ -588,5 +578,13 @@ public class TruckFactorService {
 			this.fa = fa;
 			this.ac = ac;
 		}
+	}
+
+	public TruckFactorDTO getTruckFactorById(Long id) throws Exception {
+		TruckFactor truckFactor = truckFactorRepository.findById(id).orElse(null);
+		if(truckFactor == null) {
+			throw new Exception("Truck Factor not found with id "+id);
+		}
+		return truckFactor.toDto();
 	}
 }

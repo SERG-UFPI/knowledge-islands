@@ -5,7 +5,6 @@ import { useLocation } from "react-router-dom";
 
 const Login = () => {
     const location = useLocation();
-    console.log(location?.state?.message);
     const username = useRef("");
     const password = useRef("");
     const { login } = useContext(AuthContext);

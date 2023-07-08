@@ -3,6 +3,7 @@ import Layout from "./components/shared/Layout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
+import TruckFactor from "./pages/TruckFactor"
 import { AuthContextProvider } from "./components/shared/AuthContext";
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import SignUp from "./pages/SignUp";
@@ -20,6 +21,12 @@ function App() {
                 <Home/>
               </ProtectedRoute>
             }></Route>
+            <Route path="/truck-factor" element={
+              <ProtectedRoute accessBy="authenticated">
+                <TruckFactor/>
+              </ProtectedRoute>
+            }>
+            </Route>
             <Route path="/login" element={
               <ProtectedRoute accessBy="non-authenticated">
                 <Login/>

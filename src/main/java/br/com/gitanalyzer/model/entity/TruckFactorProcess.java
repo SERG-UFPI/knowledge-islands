@@ -53,13 +53,13 @@ public class TruckFactorProcess {
 	}
 
 	public TruckFactorProcessDTO toDTO() {
-		SimpleDateFormat fmt = new SimpleDateFormat("YYYY-MM-DD HH:mm");
+		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		return TruckFactorProcessDTO.builder()
 				.repositoryUrl(repositoryUrl)
-				.endDate(fmt.format(endDate))
+				.endDate(endDate!=null?fmt.format(endDate):null)
 				.id(id)
 				.stage(stage.getName())
-				.startDate(fmt.format(startDate))
+				.startDate(startDate!=null?fmt.format(startDate):null)
 				.truckFactor(truckFactor!=null?truckFactor.toDto():null)
 				.user(user.toDTO()).build();
 	}
