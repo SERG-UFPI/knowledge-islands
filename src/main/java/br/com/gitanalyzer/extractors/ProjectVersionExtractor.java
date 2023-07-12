@@ -1,6 +1,8 @@
 package br.com.gitanalyzer.extractors;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -10,8 +12,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 
 import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ContributorUtils;
@@ -46,10 +48,12 @@ public class ProjectVersionExtractor {
 		int numberAllDevs = contributors.size();
 		contributors = setAlias(contributors, projectName);
 		int numberAnalysedDevs = contributors.size();
-		//saveNumberFilesOfCommits(commits);
-		//commitsFilesFrequency(commits, files);
-		//commits = filterCommitsByFilesTouched(projectName, commits);
-		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
+		Collections.sort(commits, new Comparator<Commit>() {
+			@Override
+			public int compare(Commit c1, Commit c2) {
+				return c2.getDate().compareTo(c1.getDate());
+			}
+		});
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits));
@@ -103,18 +107,18 @@ public class ProjectVersionExtractor {
 					if(contributorAux.getEmail().equals(contributor.getEmail())) {
 						alias.add(contributorAux);
 					}
-//					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
-//							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
-//									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
-//									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
-//									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
-//											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
-//						alias.add(contributorAux);
-//					}
-//					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
-//							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
-//						alias.add(contributorAux);
-//					}
+					//					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
+					//							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
+					//									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
+					//									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
+					//									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
+					//											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
+					//						alias.add(contributorAux);
+					//					}
+					//					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
+					//							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
+					//						alias.add(contributorAux);
+					//					}
 					else{
 						String nome = contributorAux.getName().toUpperCase();
 						if(nome != null) {

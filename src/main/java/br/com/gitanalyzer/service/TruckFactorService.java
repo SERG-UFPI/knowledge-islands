@@ -39,19 +39,18 @@ import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
-import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.MetricsDoa;
 import br.com.gitanalyzer.model.MetricsDoe;
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.TruckFactor;
-import br.com.gitanalyzer.model.entity.TruckFactorDevelopers;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.model.entity.User;
+import br.com.gitanalyzer.repository.ContributorRepository;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
-import br.com.gitanalyzer.repository.TruckFactorDevelopersRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.repository.UserRepository;
@@ -75,8 +74,6 @@ public class TruckFactorService {
 	@Autowired
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
-	private TruckFactorDevelopersRepository truckFactorDevelopersRepository;
-	@Autowired
 	private ProjectVersionRepository projectVersionRepository;
 	@Autowired
 	private ProjectService projectService;
@@ -86,6 +83,8 @@ public class TruckFactorService {
 	private TruckFactorProcessRepository truckFactorProcessRepository; 
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private ContributorRepository contributorRepository;
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
@@ -160,8 +159,7 @@ public class TruckFactorService {
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
-			project = new Project(projectName, repo.getPath());
-			project.setFullName(projectService.extractProjectFullName(projectPath));
+			project = new Project(projectName, repo.getPath(), projectService.extractProjectFullName(projectPath));
 		}
 		//if (projectName.equals("rails") == true) {
 		//filteringProjectsCommentsStudy(project);
@@ -181,7 +179,7 @@ public class TruckFactorService {
 					for (File fileContributor : filesContributor) {
 						if(file.isFile(fileContributor.getPath())) {
 							AuthorFile authorFile = getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file);
-							setFileKnowledgeOfAuthor(knowledgeMetric, file, authorFile);
+							addFileKnowledgeOfAuthor(knowledgeMetric, file, authorFile);
 							authorFiles.add(authorFile);
 							break;
 						}
@@ -189,20 +187,21 @@ public class TruckFactorService {
 				}
 			}
 			setContributorNumberAuthorAndFileMaintainers(projectVersion.getContributors(), authorFiles, projectVersion.getFiles(), knowledgeMetric);
-			projectVersion.getContributors().removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
-			projectVersion.setNumberAuthors(projectVersion.getContributors().size());
-			Collections.sort(projectVersion.getContributors(), new Comparator<Contributor>() {
+
+			log.info("CALCULATING TF OF "+project.getName());
+			List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
+			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
+			projectVersion.setNumberAuthors(contributors.size());
+			Collections.sort(contributors, new Comparator<Contributor>() {
 				@Override
 				public int compare(Contributor c1, Contributor c2) {
 					return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
 				}
 			});
 			List<Contributor> topContributors = new ArrayList<Contributor>();
-			log.info("CALCULATING TF OF "+project.getName());
-			List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
-			int tf = 0;
 			double fileSize = projectVersion.getFiles().size();
-			while(projectVersion.getContributors().isEmpty() == false) {
+			int tf = 0;
+			while(contributors.isEmpty() == false) {
 				double numberFilesCovarage = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric).size();
 				double coverage = numberFilesCovarage/fileSize;
 				if(coverage < 0.5) 
@@ -219,20 +218,33 @@ public class TruckFactorService {
 			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
 				projectVersion.setProject(project);
 				projectVersionRepository.save(projectVersion);
-				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric, getImplicatedFiles(coveredFiles, projectVersion.getFiles()));
-				//TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric);
-				truckFactorRepository.save(truckFactor);
-				for (Contributor contributor : topContributors) {
-					TruckFactorDevelopers truckFactorDevelopers = new TruckFactorDevelopers(contributor.getName(), contributor.getEmail(),
-							truckFactor, (double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles());
-					if (truckFactorDevelopersRepository.
-							existsByTruckFactorIdAndNameAndEmail(truckFactor.getId(), contributor.getName(),
-									contributor.getEmail()) == false) {
-						truckFactorDevelopersRepository.save(truckFactorDevelopers);
-						if(truckFactor.getTruckFactorDevelopers() == null) {
-							truckFactor.setTruckFactorDevelopers(new ArrayList<>());
+				List<Contributor> truckFactorDevelopers = new ArrayList<>();
+				for (Contributor topContributor : topContributors) {
+					for (Contributor contributor : projectVersion.getContributors()) {
+						if(topContributor.equals(contributor)) {
+							contributor.setPercentOfFilesAuthored(
+									(double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles()); 
+							truckFactorDevelopers.add(contributor);
 						}
-						truckFactor.getTruckFactorDevelopers().add(truckFactorDevelopers);
+					}
+				}
+				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
+						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
+				truckFactorRepository.save(truckFactor);
+				for(File file: projectVersion.getFiles()) {
+					if(file.getMaintainers() != null && file.getMaintainers().size() > 0){
+						for(Contributor maintainer: file.getMaintainers()) {
+							for(Contributor contributor: projectVersion.getContributors()) {
+								if(maintainer.equals(contributor)) {
+									if(contributor.getFilesAuthor() == null) {
+										contributor.setFilesAuthor(new ArrayList<>());
+									}
+									contributor.getFilesAuthor().add(file);
+									contributorRepository.save(contributor);
+									break;
+								}
+							}
+						}
 					}
 				}
 				return truckFactor.toDto();
@@ -240,8 +252,8 @@ public class TruckFactorService {
 		}
 		return null;
 	}
-	
-	private void setFileKnowledgeOfAuthor(KnowledgeMetric knowledgeMetric, File file, AuthorFile authorFile) {
+
+	private void addFileKnowledgeOfAuthor(KnowledgeMetric knowledgeMetric, File file, AuthorFile authorFile) {
 		if (knowledgeMetric.equals(KnowledgeMetric.DOE) 
 				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoe());
@@ -420,8 +432,8 @@ public class TruckFactorService {
 	protected List<File> getCoverageFiles(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {
 		List<File> coveredFiles = new ArrayList<File>();
 		forFiles:for(File file: files) {
-			if (file.getMantainers().size() > 0) {
-				for (Contributor maintainer : file.getMantainers()) {
+			if (file.getMaintainers().size() > 0) {
+				for (Contributor maintainer : file.getMaintainers()) {
 					for (Contributor contributor : contributors) {
 						if (maintainer.equals(contributor)) {
 							coveredFiles.add(file);
@@ -459,7 +471,7 @@ public class TruckFactorService {
 							}
 						}
 						if(maintainer == true) {
-							file.getMantainers().add(authorFile.getAuthor());
+							file.getMaintainers().add(authorFile.getAuthor());
 							for (Contributor contributor: contributors) {
 								if (authorFile.getAuthor().equals(contributor)) {
 									contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
@@ -512,7 +524,7 @@ public class TruckFactorService {
 					if(file.isFile(mlOutput.getFile()) && mlOutput.getDecision().equals("MANTENEDOR")) {
 						for (Contributor contributor : contributors) {
 							if (contributor.getEmail().equals(mlOutput.getAuthor())) {
-								file.getMantainers().add(contributor);
+								file.getMaintainers().add(contributor);
 								contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
 								break;
 							}
@@ -539,7 +551,7 @@ public class TruckFactorService {
 	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
 		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
 		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
-		String[] hashes = historyCommitsExtractor.getCommitHashes(form.getPath(), form.getNumberYears());
+		List<String> hashes = historyCommitsExtractor.getCommitHashesByMonthInterval(form.getPath(), form.getMonthInterval());
 		try {
 			for (String hash : hashes) {
 				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;
@@ -552,7 +564,7 @@ public class TruckFactorService {
 		}catch(Exception e) {
 			log.error(e.getMessage());
 		}finally {
-			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes[0];
+			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes.get(hashes.size()-1);
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 		}

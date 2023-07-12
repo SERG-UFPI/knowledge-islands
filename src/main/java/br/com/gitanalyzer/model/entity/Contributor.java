@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -7,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.Transient;
 
 import br.com.gitanalyzer.dto.ContributorDTO;
@@ -25,12 +27,20 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
-
+	private double percentOfFilesAuthored;
 	private int numberFilesAuthor;
-	private double sumFileImportance;
 	private boolean active;
+	@ManyToMany
+	private List<File> filesAuthor;
 	@Transient
 	private Set<Contributor> alias;
+
+	public Contributor(String name, String email, double percentOfFilesAuthored) {
+		super();
+		this.name = name;
+		this.email = email;
+		this.percentOfFilesAuthored = percentOfFilesAuthored;
+	}
 
 	public Contributor(String name, String email, Project project) {
 		super();
@@ -50,7 +60,8 @@ public class Contributor {
 				.email(email)
 				.name(name)
 				.numberFilesAuthor(numberFilesAuthor)
-				.sumFileImportance(sumFileImportance)
+				.percentOfFilesAuthored(percentOfFilesAuthored)
+				.active(active)
 				.build();
 	}
 
@@ -70,4 +81,5 @@ public class Contributor {
 		Contributor other = (Contributor) obj;
 		return Objects.equals(email, other.email) && Objects.equals(name, other.name);
 	}
+
 }

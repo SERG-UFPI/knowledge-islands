@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.model;
 
 import br.com.gitanalyzer.enums.OperationType;
+import br.com.gitanalyzer.model.entity.File;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

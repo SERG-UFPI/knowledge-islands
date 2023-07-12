@@ -46,9 +46,10 @@ public class Project {
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
-	public Project(String name, String currentPath) {
+	public Project(String name, String currentPath, String fullName) {
 		this.name = name;
 		this.currentPath = currentPath;
+		this.fullName = fullName;
 	}
 
 	public Project(String name, String fullName, String mainLanguage, 

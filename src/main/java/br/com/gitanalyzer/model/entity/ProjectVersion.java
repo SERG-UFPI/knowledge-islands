@@ -16,7 +16,6 @@ import javax.persistence.TemporalType;
 
 import br.com.gitanalyzer.dto.ProjectVersionDTO;
 import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.File;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -44,6 +43,7 @@ public class ProjectVersion {
 	private List<Contributor> contributors;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<File> files;
+	
 	@javax.persistence.Transient
 	private List<Commit> commits;
 

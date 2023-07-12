@@ -19,6 +19,6 @@ public class TruckFactorDTO {
 	private KnowledgeMetric knowledgeMetric;
 	private ProjectVersionDTO projectVersion;
 	private List<String> implicatedFiles;
-	private List<TruckFactorDevelopersDTO> truckFactorDevelopers;
+	private List<ContributorDTO> truckFactorDevelopers;
 
 }

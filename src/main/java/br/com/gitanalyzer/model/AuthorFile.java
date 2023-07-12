@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.model;
 
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.File;
 import lombok.Data;
 
 @Data

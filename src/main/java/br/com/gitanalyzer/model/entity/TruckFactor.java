@@ -2,6 +2,7 @@ package br.com.gitanalyzer.model.entity;
 
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -32,17 +33,19 @@ public class TruckFactor {
 	private KnowledgeMetric knowledgeMetric;
 	@ManyToOne
 	private ProjectVersion projectVersion;
-	@OneToMany(mappedBy="truckFactor", orphanRemoval = true)
-	private List<TruckFactorDevelopers> truckFactorDevelopers;
+	@OneToMany(cascade = CascadeType.ALL)
+	private List<Contributor> contributors;
 	@ElementCollection
 	private List<String> implicatedFiles;
 
 	public TruckFactor(int truckfactor,
-			ProjectVersion projectVersion, KnowledgeMetric knowledgeMetric, List<String> implicatedFiles) {
+			ProjectVersion projectVersion, KnowledgeMetric knowledgeMetric,
+			List<String> implicatedFiles, List<Contributor> contributors) {
 		this.truckfactor = truckfactor;
 		this.projectVersion = projectVersion;
 		this.knowledgeMetric = knowledgeMetric;
 		this.implicatedFiles = implicatedFiles;
+		this.contributors = contributors;
 	}
 
 	public TruckFactor(int truckfactor,
@@ -60,8 +63,8 @@ public class TruckFactor {
 				.implicatedFiles(implicatedFiles)
 				.knowledgeMetric(knowledgeMetric)
 				.truckfactor(truckfactor)
-				.truckFactorDevelopers(truckFactorDevelopers!=null?
-						truckFactorDevelopers.stream().map(t -> t.toDto()).toList():null)
+				.truckFactorDevelopers(contributors!=null?
+						contributors.stream().map(t -> t.toDto()).toList():null)
 				.build();
 	}
 }

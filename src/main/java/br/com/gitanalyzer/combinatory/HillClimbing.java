@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import br.com.gitanalyzer.model.File;
 import br.com.gitanalyzer.model.Solution;
+import br.com.gitanalyzer.model.entity.File;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

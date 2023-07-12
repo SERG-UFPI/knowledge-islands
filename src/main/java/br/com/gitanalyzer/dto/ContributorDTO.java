@@ -14,7 +14,8 @@ public class ContributorDTO {
 	private Long id;
 	private String name;
 	private String email;
+	private boolean active;
 	private int numberFilesAuthor;
-	private double sumFileImportance;
+	private double percentOfFilesAuthored;
 
 }

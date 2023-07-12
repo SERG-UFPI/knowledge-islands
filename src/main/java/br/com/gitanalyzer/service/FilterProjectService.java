@@ -24,7 +24,7 @@ import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
-import br.com.gitanalyzer.model.File;
+import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;

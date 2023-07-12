@@ -3,7 +3,10 @@ package br.com.gitanalyzer.extractors;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -14,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HistoryCommitsExtractor {
 
 	public String[] saveCommitsHashs(String path, int numberYears) {
-		String[] hashes = getCommitHashes(path, numberYears);
+		String[] hashes = getCommitHashesYears(path, numberYears);
 		String fullPath = path+"commitsHistory.log";
 		FileWriter writer = null;
 		try {
@@ -30,10 +33,15 @@ public class HistoryCommitsExtractor {
 		return hashes;
 	}
 
-	public String[] getCommitHashes(String path, int numberYears) {
+	public String[] getCommitHashesYears(String path, int numberYears) {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(path);
-		commits = commits.stream().sorted((c1,c2)->c2.getDate().compareTo(c1.getDate())).toList();
+		Collections.sort(commits, new Comparator<Commit>() {
+			@Override
+			public int compare(Commit c1, Commit c2) {
+				return c2.getDate().compareTo(c1.getDate());
+			}
+		});
 		String[] hashes = new String[numberYears];
 		int index = 0;
 		Date date = commits.get(0).getDate();
@@ -60,8 +68,38 @@ public class HistoryCommitsExtractor {
 		return hashes;
 	}
 
+	public List<String> getCommitHashesByMonthInterval(String path, int monthInterval) {
+		CommitExtractor commitExtractor = new CommitExtractor();
+		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(path);
+		Collections.sort(commits, new Comparator<Commit>() {
+			@Override
+			public int compare(Commit c1, Commit c2) {
+				return c2.getDate().compareTo(c1.getDate());
+			}
+		});
+		Collections.reverse(commits);
+		List<String> hashes = new ArrayList<String>();
+		Date date = commits.get(0).getDate();
+		hashes.add(commits.get(0).getExternalId());
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		calendar.add(Calendar.MONTH, monthInterval);
+		date = calendar.getTime();
+		for (Commit commit: commits) {
+			if (commit.getDate().after(date)) {
+				hashes.add(commit.getExternalId());
+				date = commit.getDate();
+				calendar = Calendar.getInstance();
+				calendar.setTime(date);
+				calendar.add(Calendar.MONTH, monthInterval);
+				date = calendar.getTime();
+			}
+		}
+		return hashes;
+	}
+
 	public int getNumberOfYearsFromFolderProjects() {
-		
+
 		return 0;
 	}
 
