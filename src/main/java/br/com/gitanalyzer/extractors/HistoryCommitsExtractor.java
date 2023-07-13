@@ -80,7 +80,6 @@ public class HistoryCommitsExtractor {
 		Collections.reverse(commits);
 		List<String> hashes = new ArrayList<String>();
 		Date date = commits.get(0).getDate();
-		hashes.add(commits.get(0).getExternalId());
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 		calendar.add(Calendar.MONTH, monthInterval);

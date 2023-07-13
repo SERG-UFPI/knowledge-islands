@@ -231,6 +231,7 @@ public class TruckFactorService {
 				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
 						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
 				truckFactorRepository.save(truckFactor);
+				List<Contributor> contributorFiles = new ArrayList<Contributor>();
 				for(File file: projectVersion.getFiles()) {
 					if(file.getMaintainers() != null && file.getMaintainers().size() > 0){
 						for(Contributor maintainer: file.getMaintainers()) {
@@ -240,13 +241,14 @@ public class TruckFactorService {
 										contributor.setFilesAuthor(new ArrayList<>());
 									}
 									contributor.getFilesAuthor().add(file);
-									contributorRepository.save(contributor);
+									contributorFiles.add(contributor);
 									break;
 								}
 							}
 						}
 					}
 				}
+				contributorRepository.saveAll(contributorFiles);
 				return truckFactor.toDto();
 			}
 		}
@@ -555,7 +557,9 @@ public class TruckFactorService {
 		try {
 			for (String hash : hashes) {
 				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;
-				Process process = Runtime.getRuntime().exec(command);
+				ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
+				pb.redirectErrorStream(true);
+				Process process = pb.start();
 				process.waitFor();
 				projectService.generateLogFiles(form.getPath());
 				generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()

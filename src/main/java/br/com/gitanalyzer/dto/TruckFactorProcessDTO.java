@@ -1,8 +1,8 @@
 package br.com.gitanalyzer.dto;
 
-import java.util.Date;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
-import br.com.gitanalyzer.enums.StageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +20,8 @@ public class TruckFactorProcessDTO {
 	private String stage;
 	private TruckFactorDTO truckFactor;
 	private UserDTO user;
+	@NotBlank
+	@Pattern(regexp="^(https:\\/\\/)?(www\\.)?(github\\.com|gitlab\\.com|bitbucket\\.org)\\/([a-zA-Z0-9-_]+\\/[a-zA-Z0-9-_]+)(\\.git)?$")
 	private String repositoryUrl;
 
 }
