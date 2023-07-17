@@ -126,7 +126,10 @@ public class ProjectService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				generateCommitFile(projectPath);
+				File commitFile = new File(projectPath+Constants.commitFileName);
+				if(commitFile.exists() == false) {
+					generateCommitFile(projectPath);
+				}
 			}
 		}
 	}
@@ -241,16 +244,22 @@ public class ProjectService {
 	}
 
 	public void setFirstDateFolder(String folderPath) throws IOException {
-		CommitExtractor commitExtractor = new CommitExtractor();
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				String projectName = extractProjectName(projectPath);
-				Project project = projectRepository.findByName(projectName);
-				project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
-				projectRepository.save(project);
+				setFirstDateProject(projectPath);
 			}
+		}
+	}
+	
+	public void setFirstDateProject(String projectPath) throws IOException {
+		CommitExtractor commitExtractor = new CommitExtractor();
+		String projectName = extractProjectName(projectPath);
+		Project project = projectRepository.findByName(projectName);
+		if(project.getFirstCommitDate() == null) {
+			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
+			projectRepository.save(project);
 		}
 	}
 

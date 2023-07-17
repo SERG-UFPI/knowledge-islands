@@ -7,6 +7,7 @@ import TruckFactor from "./pages/TruckFactor"
 import { AuthContextProvider } from "./components/shared/AuthContext";
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import SignUp from "./pages/SignUp";
+import VerifyRegistration from "./pages/VerifyRegistration";
 
 
 function App() {
@@ -16,6 +17,12 @@ function App() {
         <AuthContextProvider>
         <Layout>
           <Routes>
+            <Route path="/verify" element={
+              <ProtectedRoute accessBy="non-authenticated">
+                <VerifyRegistration/>
+              </ProtectedRoute>  
+            }>
+            </Route>
             <Route path="/home" element={
               <ProtectedRoute accessBy="authenticated">
                 <Home/>

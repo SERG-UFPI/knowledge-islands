@@ -1,8 +1,6 @@
 package br.com.gitanalyzer.controllers;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -15,7 +13,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,11 +24,7 @@ import br.com.gitanalyzer.dto.MessageResponseDTO;
 import br.com.gitanalyzer.dto.SignupRequestDTO;
 import br.com.gitanalyzer.dto.UserInfoResponseDTO;
 import br.com.gitanalyzer.model.UserDetailsImpl;
-import br.com.gitanalyzer.model.entity.Role;
-import br.com.gitanalyzer.model.entity.User;
-import br.com.gitanalyzer.model.enums.RoleEnum;
-import br.com.gitanalyzer.repository.RoleRepository;
-import br.com.gitanalyzer.repository.UserRepository;
+import br.com.gitanalyzer.service.UserService;
 import br.com.gitanalyzer.utils.JwtUtils;
 
 @RestController
@@ -44,11 +37,7 @@ public class AuthController {
 	@Autowired
 	private JwtUtils jwtuUtils;
 	@Autowired
-	private UserRepository userRepository;
-	@Autowired
-	private PasswordEncoder encoder;
-	@Autowired
-	private RoleRepository roleRepository;
+	private UserService userService;
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
@@ -68,31 +57,8 @@ public class AuthController {
 	}
 
 	@PostMapping("/signup")
-	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequestDTO signUpRequest){
-		if(userRepository.existsByUsername(signUpRequest.getUsername())) {
-			return ResponseEntity.badRequest().body(new MessageResponseDTO("Error: Username is already taken!"));
-		}
-		if(userRepository.existsByEmail(signUpRequest.getEmail())) {
-			return ResponseEntity.badRequest().body(new MessageResponseDTO("Error: Email is already taken!"));
-		}
-		User user = new User(signUpRequest.getUsername(),
-				signUpRequest.getEmail(),
-				encoder.encode(signUpRequest.getPassword()));
-
-		Set<String> strRoles = signUpRequest.getRole();
-		Set<Role> roles = new HashSet<>();
-
-		if (strRoles == null) {
-			Role userRole = roleRepository.findByName(RoleEnum.ROLE_USER);
-			if(userRole == null) {
-				throw new RuntimeException("Error: Role is not found.");
-			}
-			roles.add(userRole);
-		}
-
-		user.setRoles(roles);
-		userRepository.save(user);
-
+	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequestDTO signUpRequest) throws Exception{
+		userService.registerUser(signUpRequest);
 		return ResponseEntity.ok(new MessageResponseDTO("User registered successfully!"));
 	}
 

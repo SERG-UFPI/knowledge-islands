@@ -42,6 +42,9 @@ public class User {
 	private String password;
 	@CreationTimestamp
 	private LocalDateTime creationDate;
+	@Column(length=64)
+	private String verificationCode;
+	private boolean enabled;
 	@ManyToMany(fetch = FetchType.EAGER) 
 	@JoinTable( 
 			name = "users_roles", 
@@ -51,10 +54,12 @@ public class User {
 					name = "role_id", referencedColumnName = "id"))
 	private Set<Role> roles;
 
-	public User(String username, String email, String password) {
+	public User(String name, String username, String email, String password, String verificationCode) {
+		this.name = name;
 		this.username = username;
 		this.email = email;
 		this.password = password;
+		this.verificationCode = verificationCode;
 	}
 	
 	public UserDTO toDTO() {

@@ -101,7 +101,7 @@ public class ProjectController {
 		}
 		return null;
 	}
-	
+
 	@PostMapping("/generate-logs-project")
 	public ResponseEntity<?> generateLogFiles(@RequestBody String projectPath){
 		try {
@@ -112,5 +112,16 @@ public class ProjectController {
 		}
 		return null;
 	}
-	
+
+	@PostMapping("/saveFirstDateCommit")
+	public ResponseEntity<?> setFirstDateFolder(@RequestBody String projectPath){
+		try {
+			projectService.setFirstDateProject(projectPath);
+			return ResponseEntity.status(HttpStatus.OK).body("");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }

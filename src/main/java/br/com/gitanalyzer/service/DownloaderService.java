@@ -43,16 +43,16 @@ public class DownloaderService {
 
 	public void download(DownloaderForm form) throws URISyntaxException, InterruptedException {
 		try {
-			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
-			downloader("language:javascript stars:>500", form);
+//			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
+//			downloader("language:javascript stars:>500", form);
 //			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
 //			downloader("language:python stars:>500", form);
 //			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
 //			downloader("language:java stars:>500", form);
 //			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
 //			downloader("language:typescript stars:>500", form);
-//			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
-//			downloader("language:c++ stars:>500", form);
+			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
+			downloader("language:c++ stars:>500", form);
 //			log.info("=========== DOWNLOADS FINISHED==================");
 			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setFirstDateFolder(form.getPath());

@@ -33,11 +33,13 @@ public class CommitExtractor {
 		while ((strLine = br.readLine()) != null) {
 			try {
 				String[] commitSplited = strLine.split(";");
-				String time = commitSplited[3];
-				Integer timeInt = Integer.parseInt(time);
-				Instant instant = Instant.ofEpochSecond(timeInt);
-				Date commitDate = Date.from(instant);
-				dates.add(commitDate);
+				if(commitSplited.length == 4) {
+					String time = commitSplited[3];
+					Integer timeInt = Integer.parseInt(time);
+					Instant instant = Instant.ofEpochSecond(timeInt);
+					Date commitDate = Date.from(instant);
+					dates.add(commitDate);
+				}
 			} catch (Exception e) {
 				log.error(e.getMessage());
 			}
@@ -92,27 +94,29 @@ public class CommitExtractor {
 			while ((strLine = br.readLine()) != null) {
 				try {
 					String[] commitSplited = strLine.split(";");
-					String idCommit = commitSplited[0];
-					String authorName = commitSplited[1];
-					String authorEmail = commitSplited[2];
-					String time = commitSplited[3];
-					Contributor contributorCommit = null;
-					for (Contributor contributor : contributors) {
-						if(contributor.getName().equals(authorName)
-								&& contributor.getEmail().equals(authorEmail)) {
-							contributorCommit = contributor;
-							break;
+					if(commitSplited.length == 4) {
+						String idCommit = commitSplited[0];
+						String authorName = commitSplited[1];
+						String authorEmail = commitSplited[2];
+						String time = commitSplited[3];
+						Contributor contributorCommit = null;
+						for (Contributor contributor : contributors) {
+							if(contributor.getName().equals(authorName)
+									&& contributor.getEmail().equals(authorEmail)) {
+								contributorCommit = contributor;
+								break;
+							}
 						}
+						if(contributorCommit == null) {
+							contributorCommit = new Contributor(authorName, authorEmail);
+							contributors.add(contributorCommit);
+						}
+						Integer timeInt = Integer.parseInt(time);
+						Instant instant = Instant.ofEpochSecond(timeInt);
+						Date commitDate = Date.from(instant);
+						Commit commit = new Commit(contributorCommit, commitDate, idCommit);
+						commits.add(commit);
 					}
-					if(contributorCommit == null) {
-						contributorCommit = new Contributor(authorName, authorEmail);
-						contributors.add(contributorCommit);
-					}
-					Integer timeInt = Integer.parseInt(time);
-					Instant instant = Instant.ofEpochSecond(timeInt);
-					Date commitDate = Date.from(instant);
-					Commit commit = new Commit(contributorCommit, commitDate, idCommit);
-					commits.add(commit);
 				} catch (Exception e) {
 					log.error(e.getMessage());
 				}
