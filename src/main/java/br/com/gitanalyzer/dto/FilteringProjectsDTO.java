@@ -12,8 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FilteringProjectsDTO {
-	
+
 	@NotBlank
 	private String folderPath;
 	private Integer numberOfYears;
+	private Integer numberOfMonths;
 }

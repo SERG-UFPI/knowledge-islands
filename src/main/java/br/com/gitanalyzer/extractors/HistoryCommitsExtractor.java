@@ -11,9 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.com.gitanalyzer.model.Commit;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class HistoryCommitsExtractor {
 
 	public String[] saveCommitsHashs(String path, int numberYears) {
@@ -28,7 +26,7 @@ public class HistoryCommitsExtractor {
 			}
 			printWriter.close();
 		} catch (IOException e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return hashes;
 	}
@@ -94,7 +92,8 @@ public class HistoryCommitsExtractor {
 				date = calendar.getTime();
 			}
 		}
-		return hashes;
+		hashes.add(commits.get(commits.size()-1).getExternalId());
+		return hashes.stream().distinct().toList();
 	}
 
 	public int getNumberOfYearsFromFolderProjects() {

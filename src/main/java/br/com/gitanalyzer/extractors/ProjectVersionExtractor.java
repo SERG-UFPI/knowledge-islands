@@ -94,47 +94,62 @@ public class ProjectVersionExtractor {
 			for (Contributor contributorAlias : contributorsAliases) {
 				List<Contributor> contributorsAliasesAux = new ArrayList<Contributor>();
 				contributorsAliasesAux.add(contributorAlias);
-				contributorsAliasesAux.addAll(contributorAlias.getAlias());
+				if(contributorAlias.getAlias() != null && contributorAlias.getAlias().size() > 0) {
+					contributorsAliasesAux.addAll(contributorAlias.getAlias());
+				}
 				for (Contributor contributorAliasAux : contributorsAliasesAux) {
 					if (contributor.equals(contributorAliasAux)) {
 						continue forContributors;
 					}
 				}
 			}
-			Set<Contributor> alias = new HashSet<Contributor>();
 			for(Contributor contributorAux: contributors) {
-				if(contributorAux.equals(contributor) == false) {
-					if(contributorAux.getEmail().equals(contributor.getEmail())) {
-						alias.add(contributorAux);
-					}
-					//					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
-					//							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
-					//									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
-					//									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
-					//									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
-					//											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
-					//						alias.add(contributorAux);
-					//					}
-					//					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
-					//							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
-					//						alias.add(contributorAux);
-					//					}
-					else{
-						String nome = contributorAux.getName().toUpperCase();
-						if(nome != null) {
-							int distance = StringUtils.getLevenshteinDistance(contributor.getName().toUpperCase(), nome);
-							//								if (nome.equals(contributor.getName().toUpperCase()) || 
-							//										(distance/(double)contributor.getName().length() < 0.1)) {
-							//									alias.add(contributorAux);
-							//								}
-							if (distance <= 1) {
-								alias.add(contributorAux);
+				List<Contributor> contributorsAliasesAux = new ArrayList<Contributor>();
+				contributorsAliasesAux.add(contributor);
+				if(contributor.getAlias() != null && contributor.getAlias().size() > 0) {
+					contributorsAliasesAux.addAll(contributor.getAlias());
+				}
+				for(Contributor contributorAliasAux: contributorsAliasesAux) {
+					if(contributorAux.equals(contributorAliasAux) == false) {
+						if(contributorAux.getEmail().equals(contributorAliasAux.getEmail())) {
+							if(contributor.getAlias() == null) {
+								contributor.setAlias(new HashSet<Contributor>());
+							}
+							contributor.getAlias().add(contributorAux);
+							break;
+						}
+						//					else if(projectName != null && projectName.toUpperCase().equals("IHEALTH") && 
+						//							((contributorAux.getName().toUpperCase().contains("CLEITON") && contributor.getName().toUpperCase().contains("CLEITON")) 
+						//									|| (contributorAux.getName().toUpperCase().contains("JARDIEL") && contributor.getName().toUpperCase().contains("JARDIEL"))
+						//									|| (contributorAux.getName().toUpperCase().contains("THASCIANO") && contributor.getName().toUpperCase().contains("THASCIANO"))
+						//									|| ((contributorAux.getEmail().equals("lucas@infoway-pi.com.br") && contributor.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064")) || 
+						//											(contributor.getEmail().equals("lucas@infoway-pi.com.br") && contributorAux.getEmail().equals("lucas@91d758c7-b022-4e42-997a-adfec6647064"))))) {
+						//						alias.add(contributorAux);
+						//					}
+						//					else if(projectName != null && projectName.toUpperCase().equals("CONSULTA-CADASTRO-API")
+						//							&& (contributorAux.getName().toUpperCase().contains("MAYKON") && contributor.getName().toUpperCase().contains("MAYKON"))) {
+						//						alias.add(contributorAux);
+						//					}
+						else{
+							String nome = contributorAux.getName().toUpperCase();
+							if(nome != null) {
+								int distance = StringUtils.getLevenshteinDistance(contributorAliasAux.getName().toUpperCase(), nome);
+								//								if (nome.equals(contributor.getName().toUpperCase()) || 
+								//										(distance/(double)contributor.getName().length() < 0.1)) {
+								//									alias.add(contributorAux);
+								//								}
+								if (distance <= 1) {
+									if(contributor.getAlias() == null) {
+										contributor.setAlias(new HashSet<Contributor>());
+									}
+									contributor.getAlias().add(contributorAux);
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
-			contributor.setAlias(alias);
 			contributorsAliases.add(contributor);
 		}
 		return contributorsAliases;

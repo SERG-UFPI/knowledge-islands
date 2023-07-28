@@ -18,6 +18,7 @@ public class HistoryReposTruckFactorForm {
 	private String path;
 	private int numberYears;
 	private int monthInterval;
+	private String language;
 	@NotNull
 	private KnowledgeMetric knowledgeMetric;
 

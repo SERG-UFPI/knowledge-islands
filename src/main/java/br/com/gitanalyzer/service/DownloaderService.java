@@ -1,4 +1,4 @@
- package br.com.gitanalyzer.service;
+package br.com.gitanalyzer.service;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,9 @@ import com.jcabi.http.Request;
 import com.jcabi.http.response.JsonResponse;
 
 import br.com.gitanalyzer.dto.form.CloneRepoForm;
-import br.com.gitanalyzer.dto.form.DownloaderForm;
+import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
+import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
+import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
@@ -36,24 +38,24 @@ public class DownloaderService {
 
 	@Value("${configuration.clone.path}")
 	private String cloneFolder;
+	@Value("${configuration.github.token}")
+	private String token;
 	@Autowired
 	private ProjectRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
 
-	public void download(DownloaderForm form) throws URISyntaxException, InterruptedException {
+	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		try {
-//			log.info("=========== DOWNLOAD JAVASCRIPT PROJECTS ==================");
-//			downloader("language:javascript stars:>500", form);
-//			log.info("=========== DOWNLOAD PYTHON PROJECTS ==================");
-//			downloader("language:python stars:>500", form);
-//			log.info("=========== DOWNLOAD JAVA PROJECTS ==================");
-//			downloader("language:java stars:>500", form);
-//			log.info("=========== DOWNLOAD TYPESCRIPT PROJECTS ==================");
-//			downloader("language:typescript stars:>500", form);
-			log.info("=========== DOWNLOAD C++ PROJECTS ==================");
-			downloader("language:c++ stars:>500", form);
-//			log.info("=========== DOWNLOADS FINISHED==================");
+			if(form.getLanguage().equals(LanguageEnum.ALL)) {
+				for (LanguageEnum language : LanguageEnum.values()) {
+					log.info("=========== download "+language.getName()+" project ==================");
+					downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
+				}
+			}else {
+				log.info("=========== download "+form.getLanguage().getName()+" project ==================");
+				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
+			}
 			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setFirstDateFolder(form.getPath());
 		} catch (IOException e) {
@@ -61,17 +63,39 @@ public class DownloaderService {
 		}
 	}
 
-	public void downloader(String query, DownloaderForm form) throws IOException {
-		Github github = new RtGithub(form.getToken());
+	public void downloadPerOrg(DownloaderPerOrgForm form) throws URISyntaxException, InterruptedException {
+		try {
+			log.info("=========== download from "+form.getOrg()+" org ==================");
+			downloaderPerOrg("org:"+form.getOrg(), form);
+			projectService.generateCommitFileFolder(form.getPath());
+			projectService.setFirstDateFolder(form.getPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void downloaderPerOrg(String query, DownloaderPerOrgForm form) throws IOException {
+		Github github = new RtGithub(token);
 		List<ProjectInfo> projectsInfo = null;
-		projectsInfo = searchRepositories(github, form.getNumRepository(), query);
+		projectsInfo = searchRepositoriesPerOrganization(github, query);
+		cloneAndSaveRepos(projectsInfo, form.getPath());
+	}
+
+	public void downloaderPerLanguage(String query, DownloaderPerLanguageForm form) throws IOException {
+		Github github = new RtGithub(token);
+		List<ProjectInfo> projectsInfo = null;
+		projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
+		cloneAndSaveRepos(projectsInfo, form.getPath());
+	}
+
+	private void cloneAndSaveRepos(List<ProjectInfo> projectsInfo, String path) {
 		for (ProjectInfo projectInfo : projectsInfo) {
 			try {
 				System.out.println("Cloning " + projectInfo.getFullName());
-				boolean flag = cloneIfNotExists(projectInfo, form.getPath());
+				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
 					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
-							projectInfo.getLanguage(), form.getPath()+projectInfo.getName()+"/", projectInfo.getDefault_branch(), 
+							projectInfo.getLanguage(), path+projectInfo.getName()+"/", projectInfo.getDefault_branch(), 
 							projectInfo.getStargazers_count());
 					projectRepository.save(project);
 				}
@@ -95,7 +119,7 @@ public class DownloaderService {
 		return false;
 	}
 
-	public List<ProjectInfo> searchRepositories(Github github, int numRepository, String query) throws IOException {
+	public List<ProjectInfo> searchRepositoriesPerLanguage(Github github, int numRepository, String query) throws IOException {
 		Request request = github.entry()
 				.uri().path("/search/repositories")
 				.queryParam("q", query )
@@ -104,6 +128,21 @@ public class DownloaderService {
 				.queryParam("per_page", String.valueOf(numRepository))
 				.back()
 				.method(Request.GET);
+		return getProjectsInfo(request, query);
+	}
+
+	public List<ProjectInfo> searchRepositoriesPerOrganization(Github github, String query) throws IOException {
+		Request request = github.entry()
+				.uri().path("/search/repositories")
+				.queryParam("q", query )
+				.queryParam("sort", "stars")
+				.queryParam("order", "desc")
+				.back()
+				.method(Request.GET);
+		return getProjectsInfo(request, query);
+	}
+
+	private List<ProjectInfo> getProjectsInfo(Request request, String query) throws IOException{
 		List<ProjectInfo> projectsInfo = new ArrayList<ProjectInfo>();
 		projectsInfo.addAll(findRepos(request, query));
 		return projectsInfo;

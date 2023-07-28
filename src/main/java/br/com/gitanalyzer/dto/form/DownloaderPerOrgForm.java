@@ -1,5 +1,7 @@
 package br.com.gitanalyzer.dto.form;
 
+import javax.validation.constraints.NotBlank;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,9 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DownloaderForm {
-	
-	private String path, token;
-	private int numRepository;
+public class DownloaderPerOrgForm {
+
+	@NotBlank
+	private String path;
+	@NotBlank
+	private String org;
 
 }

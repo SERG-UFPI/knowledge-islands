@@ -39,7 +39,7 @@ public class FilterProjectService {
 	private ProjectRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
-	
+
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
@@ -49,7 +49,6 @@ public class FilterProjectService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				System.out.println();
-				projectService.generateLogFilesWithoutCloc(projectPath);
 				Project project = projectService.returnProjectByPath(projectPath);
 				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
@@ -64,20 +63,21 @@ public class FilterProjectService {
 		for(var entry: versionMap.entrySet()) {
 			projectsFiltered.addAll(filterProjectBySize(entry.getValue()));
 		}
-//		for(ProjectVersion version: versions) {
-//			if(projectsFiltered.stream()
-//					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
-//				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
-//				if(filterProjectByCommits(version)) {
-//					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-//					projectsFiltered.add(version.getProject());
-//				}
-//			}
-//		}
+		//		for(ProjectVersion version: versions) {
+		//			if(projectsFiltered.stream()
+		//					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
+		//				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
+		//				if(filterProjectByCommits(version)) {
+		//					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+		//					projectsFiltered.add(version.getProject());
+		//				}
+		//			}
+		//		}
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
-		c.add(Calendar.YEAR, -(form.getNumberOfYears()+1));
-		for (Project project : versions.stream().map(v -> v.getProject()).toList()) {
+		c.add(Calendar.MONTH, -form.getNumberOfMonths());
+		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
+		for (Project project : projects) {
 			if(project.getFirstCommitDate().after(c.getTime())) {
 				projectsFiltered.add(project);
 				project.setFilteredReason(FilteredEnum.PROJECT_AGE);

@@ -1,9 +1,7 @@
 package br.com.gitanalyzer.model.entity;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -31,9 +29,6 @@ public class File{
 	private double totalKnowledge = 0;
 	@ElementCollection
 	private List<String> renamePaths = new ArrayList<String>();
-
-	@javax.persistence.Transient
-	private Set<Contributor> maintainers = new HashSet<Contributor>();
 
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<String>();

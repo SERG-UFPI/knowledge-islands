@@ -20,9 +20,7 @@ import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.utils.Constants;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class CommitExtractor {
 
 	public Date getFirstCommitDate(String projectPath) throws IOException {
@@ -41,7 +39,7 @@ public class CommitExtractor {
 					dates.add(commitDate);
 				}
 			} catch (Exception e) {
-				log.error(e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		br.close();
@@ -73,13 +71,13 @@ public class CommitExtractor {
 					Commit commit = new Commit(commitDate, idCommit);
 					commits.add(commit);
 				} catch (Exception e) {
-					log.error(e.getMessage());
+					e.printStackTrace();
 				}
 			}
 			br.close();
 			return commits;
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -118,13 +116,13 @@ public class CommitExtractor {
 						commits.add(commit);
 					}
 				} catch (Exception e) {
-					log.error(e.getMessage());
+					e.printStackTrace();
 				}
 			}
 			br.close();
 			return commits;
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -152,7 +150,7 @@ public class CommitExtractor {
 			}
 			br.close();
 		}catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return commits;
 	}
@@ -206,7 +204,7 @@ public class CommitExtractor {
 			bw.close();
 			br.close();
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -264,7 +262,7 @@ public class CommitExtractor {
 									int linesAdded = Integer.parseInt(splited2[0]);
 									commitFile.setAdds(linesAdded);
 								} catch (Exception e) {
-									log.error("Error reading lines added on file "+commitFile.getFile()+" on commit "+commitAnalyzed.getExternalId());
+									e.printStackTrace();
 								}
 								continue whileFile;
 							}
@@ -276,7 +274,7 @@ public class CommitExtractor {
 									int linesAdded = Integer.parseInt(splited2[0]);
 									commitFile.setAdds(linesAdded);
 								} catch (Exception e) {
-									log.error("Error reading lines added on file "+commitFile.getFile()+" on commit "+commitAnalyzed.getExternalId());
+									e.printStackTrace();
 								}
 								continue whileFile;
 							}
@@ -286,7 +284,7 @@ public class CommitExtractor {
 			}
 			br.close();
 		}catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return commits;
 	}

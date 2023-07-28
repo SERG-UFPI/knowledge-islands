@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.form.CloneRepoForm;
-import br.com.gitanalyzer.dto.form.DownloaderForm;
+import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
+import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.service.DownloaderService;
 
 @RestController
@@ -24,9 +25,15 @@ public class DownloaderController {
 	@Autowired
 	private DownloaderService service;
 
-	@PostMapping
-	public ResponseEntity<?> download(@RequestBody DownloaderForm form) throws URISyntaxException, InterruptedException{
-		service.download(form);
+	@PostMapping("/donwload-per-language")
+	public ResponseEntity<?> downloadPerLanguage(@RequestBody DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException{
+		service.downloadPerLanguage(form);
+		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
+	}
+	
+	@PostMapping("/donwload-per-org")
+	public ResponseEntity<?> downloadPerorg(@RequestBody DownloaderPerOrgForm form) throws URISyntaxException, InterruptedException{
+		service.downloadPerOrg(form);
 		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
 	}
 

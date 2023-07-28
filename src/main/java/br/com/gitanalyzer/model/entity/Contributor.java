@@ -1,15 +1,16 @@
 package br.com.gitanalyzer.model.entity;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-import javax.persistence.Transient;
+import javax.persistence.OneToMany;
 
 import br.com.gitanalyzer.dto.ContributorDTO;
 import lombok.AllArgsConstructor;
@@ -31,8 +32,8 @@ public class Contributor {
 	private int numberFilesAuthor;
 	private boolean active;
 	@ManyToMany
-	private List<File> filesAuthor;
-	@Transient
+	private Set<File> filesAuthor = new HashSet<>();
+	@OneToMany(cascade = CascadeType.PERSIST)
 	private Set<Contributor> alias;
 
 	public Contributor(String name, String email, double percentOfFilesAuthored) {

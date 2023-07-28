@@ -113,7 +113,6 @@ public class TruckFactorService {
 				setProcessStage(process, StageEnum.ANALYSIS_FINISHED);
 			} catch (Exception e) {
 				e.printStackTrace();
-				log.error(e.getMessage());
 			}
 		}
 
@@ -231,24 +230,6 @@ public class TruckFactorService {
 				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
 						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
 				truckFactorRepository.save(truckFactor);
-				List<Contributor> contributorFiles = new ArrayList<Contributor>();
-				for(File file: projectVersion.getFiles()) {
-					if(file.getMaintainers() != null && file.getMaintainers().size() > 0){
-						for(Contributor maintainer: file.getMaintainers()) {
-							for(Contributor contributor: projectVersion.getContributors()) {
-								if(maintainer.equals(contributor)) {
-									if(contributor.getFilesAuthor() == null) {
-										contributor.setFilesAuthor(new ArrayList<>());
-									}
-									contributor.getFilesAuthor().add(file);
-									contributorFiles.add(contributor);
-									break;
-								}
-							}
-						}
-					}
-				}
-				contributorRepository.saveAll(contributorFiles);
 				return truckFactor.toDto();
 			}
 		}
@@ -318,7 +299,7 @@ public class TruckFactorService {
 			writer.close();
 		}
 		catch (IOException e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -331,7 +312,9 @@ public class TruckFactorService {
 		Date dateLastCommit = null;
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
+		if(contributor.getAlias() != null) {
+			contributors.addAll(contributor.getAlias());
+		}
 		forCommit: for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
@@ -364,7 +347,9 @@ public class TruckFactorService {
 		int fa = 0;
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
+		if(contributor.getAlias() != null) {
+			contributors.addAll(contributor.getAlias());
+		}
 		for (Commit commit : commits) {
 			boolean present = false;
 			for (Contributor contributorAux : contributors) {
@@ -400,7 +385,9 @@ public class TruckFactorService {
 		List<File> files = new ArrayList<File>();
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributor);
-		contributors.addAll(contributor.getAlias());
+		if(contributor.getAlias() != null) {
+			contributors.addAll(contributor.getAlias());
+		}
 		forCommit:for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
@@ -434,10 +421,10 @@ public class TruckFactorService {
 	protected List<File> getCoverageFiles(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {
 		List<File> coveredFiles = new ArrayList<File>();
 		forFiles:for(File file: files) {
-			if (file.getMaintainers().size() > 0) {
-				for (Contributor maintainer : file.getMaintainers()) {
-					for (Contributor contributor : contributors) {
-						if (maintainer.equals(contributor)) {
+			for (Contributor contributor : contributors) {
+				if(contributor.getNumberFilesAuthor() > 0) {
+					for(File fileContributor: contributor.getFilesAuthor()) {
+						if (file.isFile(fileContributor.getPath())) {
 							coveredFiles.add(file);
 							continue forFiles;
 						}
@@ -473,9 +460,9 @@ public class TruckFactorService {
 							}
 						}
 						if(maintainer == true) {
-							file.getMaintainers().add(authorFile.getAuthor());
 							for (Contributor contributor: contributors) {
 								if (authorFile.getAuthor().equals(contributor)) {
+									contributor.getFilesAuthor().add(file);
 									contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
 									break;
 								}
@@ -526,7 +513,7 @@ public class TruckFactorService {
 					if(file.isFile(mlOutput.getFile()) && mlOutput.getDecision().equals("MANTENEDOR")) {
 						for (Contributor contributor : contributors) {
 							if (contributor.getEmail().equals(mlOutput.getAuthor())) {
-								file.getMaintainers().add(contributor);
+								contributor.getFilesAuthor().add(file);
 								contributor.setNumberFilesAuthor(contributor.getNumberFilesAuthor()+1);
 								break;
 							}
@@ -542,8 +529,9 @@ public class TruckFactorService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				Project project = projectService.returnProjectByPath(form.getPath());
-				if(project.isFiltered() == false) {
+				Project project = projectService.returnProjectByPath(projectPath);
+				if(project.isFiltered() == false || (project.isFiltered() == false && 
+						project.getMainLanguage()!=null && project.getMainLanguage().equals(form.getLanguage()) )) {
 					historyRepoTruckFactor(HistoryReposTruckFactorForm.builder().knowledgeMetric(KnowledgeMetric.DOE).numberYears(form.getNumberYears()).path(projectPath).build());
 				}
 			}
@@ -566,7 +554,7 @@ public class TruckFactorService {
 						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
 			}
 		}catch(Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}finally {
 			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes.get(hashes.size()-1);
 			Process process = Runtime.getRuntime().exec(command);

@@ -12,9 +12,7 @@ import java.util.Map;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.utils.Constants;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class FileExtractor {
 
 	public int extractSizeAllFiles(String path, String fileList) {
@@ -30,7 +28,7 @@ public class FileExtractor {
 			}
 			br.close();
 		} catch (IOException e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return lines;
 	}
@@ -75,7 +73,7 @@ public class FileExtractor {
 			br.close();
 			return files;
 		} catch (IOException e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -108,7 +106,7 @@ public class FileExtractor {
 			files.removeIf(f -> f.getFileSize() == 0);
 			return files;
 		} catch (IOException e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -138,7 +136,7 @@ public class FileExtractor {
 				}
 			}
 		}catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
