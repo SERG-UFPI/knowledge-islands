@@ -33,7 +33,7 @@ public class TruckFactor {
 	private KnowledgeMetric knowledgeMetric;
 	@ManyToOne
 	private ProjectVersion projectVersion;
-	@OneToMany(cascade = CascadeType.MERGE)
+	@OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
 	private List<Contributor> contributors;
 	@ElementCollection
 	private List<String> implicatedFiles;

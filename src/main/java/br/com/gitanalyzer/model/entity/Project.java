@@ -3,6 +3,7 @@ package br.com.gitanalyzer.model.entity;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -36,7 +37,7 @@ public class Project {
 	private boolean filtered;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date firstCommitDate;
-	@OneToMany(mappedBy="project", fetch=FetchType.LAZY)
+	@OneToMany(mappedBy="project", fetch=FetchType.LAZY, cascade = CascadeType.REMOVE)
 	private List<ProjectVersion> versions;
 	@Enumerated(EnumType.STRING)
 	private FilteredEnum filteredReason;

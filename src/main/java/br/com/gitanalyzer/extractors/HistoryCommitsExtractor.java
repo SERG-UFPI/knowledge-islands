@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
+import br.com.gitanalyzer.enums.TimeIntervalTypeEnum;
 import br.com.gitanalyzer.model.Commit;
 
 public class HistoryCommitsExtractor {
@@ -66,9 +68,9 @@ public class HistoryCommitsExtractor {
 		return hashes;
 	}
 
-	public List<String> getCommitHashesByMonthInterval(String path, int monthInterval) {
+	public List<String> getCommitHashesByInterval(HistoryReposTruckFactorForm form) {
 		CommitExtractor commitExtractor = new CommitExtractor();
-		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(path);
+		List<Commit> commits = commitExtractor.getCommitsDatesAndHashes(form.getPath());
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override
 			public int compare(Commit c1, Commit c2) {
@@ -80,7 +82,8 @@ public class HistoryCommitsExtractor {
 		Date date = commits.get(0).getDate();
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
-		calendar.add(Calendar.MONTH, monthInterval);
+		int calendarType = form.getIntervalType().equals(TimeIntervalTypeEnum.MONTH)?Calendar.MONTH:Calendar.YEAR;
+		calendar.add(calendarType, form.getInterval());
 		date = calendar.getTime();
 		for (Commit commit: commits) {
 			if (commit.getDate().after(date)) {
@@ -88,7 +91,7 @@ public class HistoryCommitsExtractor {
 				date = commit.getDate();
 				calendar = Calendar.getInstance();
 				calendar.setTime(date);
-				calendar.add(Calendar.MONTH, monthInterval);
+				calendar.add(calendarType, form.getInterval());
 				date = calendar.getTime();
 			}
 		}

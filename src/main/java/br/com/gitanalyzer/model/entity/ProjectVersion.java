@@ -43,7 +43,9 @@ public class ProjectVersion {
 	private List<Contributor> contributors;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<File> files;
-	
+	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "projectVersion")
+	private List<TruckFactor> truckFactors;
+
 	@javax.persistence.Transient
 	private List<Commit> commits;
 

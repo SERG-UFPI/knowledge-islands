@@ -18,6 +18,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -149,6 +150,7 @@ public class TruckFactorService {
 		return commitsReturn;
 	}
 
+	@Transactional
 	public TruckFactorDTO generateTruckFactorProject(RepositoryKnowledgeMetricForm repo)
 			throws IOException, NoHeadException, GitAPIException {
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
@@ -169,7 +171,7 @@ public class TruckFactorService {
 		//		}
 		if(project.isFiltered() == false) {
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project.getCurrentPath(), project.getName());
-			projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
+			//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
@@ -231,7 +233,7 @@ public class TruckFactorService {
 						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
 				truckFactorRepository.save(truckFactor);
 				return truckFactor.toDto();
-			}
+			}	
 		}
 		return null;
 	}
@@ -530,9 +532,12 @@ public class TruckFactorService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				Project project = projectService.returnProjectByPath(projectPath);
-				if(project.isFiltered() == false || (project.isFiltered() == false && 
-						project.getMainLanguage()!=null && project.getMainLanguage().equals(form.getLanguage()) )) {
-					historyRepoTruckFactor(HistoryReposTruckFactorForm.builder().knowledgeMetric(KnowledgeMetric.DOE).numberYears(form.getNumberYears()).path(projectPath).build());
+				if((project != null && project.isFiltered() == false) || project == null) {
+					historyRepoTruckFactor(HistoryReposTruckFactorForm.builder()
+							.knowledgeMetric(KnowledgeMetric.DOE)
+							.interval(form.getInterval())
+							.intervalType( form.getIntervalType())
+							.path(projectPath).build());
 				}
 			}
 		}
@@ -541,7 +546,7 @@ public class TruckFactorService {
 	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
 		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
 		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
-		List<String> hashes = historyCommitsExtractor.getCommitHashesByMonthInterval(form.getPath(), form.getMonthInterval());
+		List<String> hashes = historyCommitsExtractor.getCommitHashesByInterval(form);
 		try {
 			for (String hash : hashes) {
 				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;

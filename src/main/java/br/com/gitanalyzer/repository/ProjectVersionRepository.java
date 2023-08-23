@@ -12,4 +12,6 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
 	
 	ProjectVersion findFirstByProjectIdOrderByDateVersionDesc(Long id);
 	
+	Long deleteByProjectId(Long id);
+	
 }

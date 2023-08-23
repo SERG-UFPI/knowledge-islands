@@ -68,6 +68,17 @@ public class ProjectController {
 		}
 		return null;
 	}
+	
+	@PostMapping("/generate-commit-file-folder")
+	public ResponseEntity<?> generateCommitFileFolder(@RequestBody String projectPath){
+		try {
+			projectService.generateCommitFileFolder(projectPath);
+			return ResponseEntity.status(HttpStatus.OK).body("");
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	@PostMapping("/generate-commitFile-file")
 	public ResponseEntity<?> generateCommitFileFile(@RequestBody String projectPath){

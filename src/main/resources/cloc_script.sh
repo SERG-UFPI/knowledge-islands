@@ -14,7 +14,7 @@ then
   echo "linguistfiles.log ok"
   while IFS=";" read language path
   	do	
-  		linesinfo=$(cloc --sum-one $path | awk '$1 == "SUM:" {printf "%d;%d\n", $4,$5 }  
+  		linesinfo=$(cloc --skip-uniqueness --sum-one $path | awk '$1 == "SUM:" {printf "%d;%d\n", $4,$5 }  
                                               $1 == "1" && $3 == "ignored." {printf ";\n"}') 
   		#linesinfo=$(cloc --sum-one $path | awk '{if($1 == "SUM:"){printf "%d;%d\n", $4,$5 }  
       #                                         if($3 == "ignored.") {printf "-;\n"}}')
@@ -24,7 +24,7 @@ else
   echo "linguistfiles.log not exist. Processing by using filelist.log"
   while IFS=";" read path
   	do	
-  		linesinfo=$(cloc --sum-one $path | awk '$1 == "SUM:" {printf "%d;%d\n", $4,$5 }  
+  		linesinfo=$(cloc --skip-uniqueness --sum-one $path | awk '$1 == "SUM:" {printf "%d;%d\n", $4,$5 }  
                                               $1 == "1" && $3 == "ignored." {printf ";\n"}') 
   		#linesinfo=$(cloc --sum-one $path | awk '{if($1 == "SUM:"){printf "%d;%d\n", $4,$5 }  
       #                                         if($3 == "ignored.") {printf "-;\n"}}')

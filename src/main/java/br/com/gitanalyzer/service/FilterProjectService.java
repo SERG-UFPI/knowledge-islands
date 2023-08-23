@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
+import br.com.gitanalyzer.enums.TimeIntervalTypeEnum;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
@@ -75,7 +76,8 @@ public class FilterProjectService {
 		//		}
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
-		c.add(Calendar.MONTH, -form.getNumberOfMonths());
+		int calendarType = form.getIntervalType().equals(TimeIntervalTypeEnum.MONTH)?Calendar.MONTH:Calendar.YEAR;
+		c.add(calendarType, -form.getInterval());
 		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
 		for (Project project : projects) {
 			if(project.getFirstCommitDate().after(c.getTime())) {

@@ -31,9 +31,9 @@ public class Contributor {
 	private double percentOfFilesAuthored;
 	private int numberFilesAuthor;
 	private boolean active;
-	@ManyToMany
+	@ManyToMany(cascade = CascadeType.REMOVE)
 	private Set<File> filesAuthor = new HashSet<>();
-	@OneToMany(cascade = CascadeType.PERSIST)
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
 
 	public Contributor(String name, String email, double percentOfFilesAuthored) {

@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
     }
     return (
         <>
-            <Navbar bg="primary" variant="dark">
+            <Navbar bg="dark" variant="dark">
                 <Navbar.Brand as={Link} style={{marginLeft: "3%"}} to={path} width="40" height="30" className="d-inline-block align-top">
                     Knowledge Islands</Navbar.Brand>
                 <Nav className="ms-auto">

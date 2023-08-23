@@ -81,7 +81,7 @@ public class ProjectService {
 			Path targetDiff = Paths.get(folderPath+Constants.diffFileName);
 			Files.copy(sourceDiff, targetDiff);
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
