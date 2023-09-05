@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GeneralAnalyses {
 
 	public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
@@ -77,7 +79,7 @@ public class GeneralAnalyses {
 		BufferedReader in = new BufferedReader(new InputStreamReader(stream));
 		String inputLine;
 		while ((inputLine = in.readLine()) != null)
-			System.out.println(inputLine);
+			log.info(inputLine);
 		in.close();
 	}
 

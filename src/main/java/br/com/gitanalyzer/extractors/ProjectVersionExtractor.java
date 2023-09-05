@@ -46,13 +46,7 @@ public class ProjectVersionExtractor {
 		List<Contributor> contributors = extractContributorFromCommits(commits);
 		int numberAllDevs = contributors.size();
 		contributors = setAlias(contributors, projectName);
-		for(Contributor contributor: contributors) {
-			if(contributor.getEmail().equals("tmaki@pivotal.io")) {
-				System.out.println();
-			}else if(contributor.getEmail().equals("makingx@gmail.com")) {
-				System.out.println();
-			}
-		}
+		contributors = contributors.stream().filter(c -> c.getEmail() == null || c.getName() == null).toList();
 		int numberAnalysedDevs = contributors.size();
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override

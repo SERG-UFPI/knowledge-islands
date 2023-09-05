@@ -91,7 +91,7 @@ public class DownloaderService {
 	private void cloneAndSaveRepos(List<ProjectInfo> projectsInfo, String path) {
 		for (ProjectInfo projectInfo : projectsInfo) {
 			try {
-				System.out.println("Cloning " + projectInfo.getFullName());
+				log.info("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
 					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 

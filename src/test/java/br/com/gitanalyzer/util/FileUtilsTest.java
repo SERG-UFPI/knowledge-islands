@@ -12,13 +12,13 @@ public class FileUtilsTest {
 	public void givenFilePath_returnFileName() {
 		String filePath = "/path/to/the/fileName.txt";
 		String fileName = "fileName";
-		assertEquals(FileUtils.returnFileName(filePath), fileName);
+		assertEquals(fileName, FileUtils.returnFileName(filePath));
 	}
 
 	@Test
 	public void givenFilePath_returnExtension() {
 		String filePath = "/path/to/the/fileName.txt";
 		String extension = "txt";
-		assertEquals(FileUtils.returnFileExtension(filePath), extension);
+		assertEquals(extension, FileUtils.returnFileExtension(filePath));
 	}
 }

@@ -49,7 +49,6 @@ public class FilterProjectService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				System.out.println();
 				Project project = projectService.returnProjectByPath(projectPath);
 				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
