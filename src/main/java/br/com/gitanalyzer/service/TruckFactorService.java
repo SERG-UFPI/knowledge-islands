@@ -32,7 +32,6 @@ import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
 import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.enums.StageEnum;
-import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
 import br.com.gitanalyzer.main.vo.CommitFiles;
@@ -49,7 +48,6 @@ import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.model.entity.User;
-import br.com.gitanalyzer.repository.ContributorRepository;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
@@ -58,16 +56,13 @@ import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class TruckFactorService {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
 	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
-	private CommitExtractor commitExtractor = new CommitExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	@Autowired
@@ -84,8 +79,6 @@ public class TruckFactorService {
 	private TruckFactorProcessRepository truckFactorProcessRepository; 
 	@Autowired
 	private UserRepository userRepository;
-	@Autowired
-	private ContributorRepository contributorRepository;
 
 	private static List<String> invalidsProjects = new ArrayList<String>(Arrays.asList("sass", 
 			"ionic", "cucumber"));
@@ -160,7 +153,8 @@ public class TruckFactorService {
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
-			project = new Project(projectName, repo.getPath(), projectService.extractProjectFullName(projectPath));
+			project = new Project(projectName, repo.getPath(), 
+					projectService.extractProjectFullName(projectPath), projectService.getCurrentRevisionHash(projectPath));
 		}
 		//if (projectName.equals("rails") == true) {
 		//filteringProjectsCommentsStudy(project);
@@ -172,7 +166,7 @@ public class TruckFactorService {
 		if(project.isFiltered() == false) {
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project.getCurrentPath(), project.getName());
 			//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
-			log.info("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
+			System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			for(Contributor contributor: projectVersion.getContributors()) {
 				List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
@@ -188,8 +182,7 @@ public class TruckFactorService {
 				}
 			}
 			setContributorNumberAuthorAndFileMaintainers(projectVersion.getContributors(), authorFiles, projectVersion.getFiles(), knowledgeMetric);
-
-			log.info("CALCULATING TF OF "+project.getName());
+			System.out.println("CALCULATING TF OF "+project.getName());
 			List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
 			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
 			projectVersion.setNumberAuthors(contributors.size());
@@ -212,7 +205,7 @@ public class TruckFactorService {
 				tf = tf+1;
 			}
 			List<File> coveredFiles = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric);
-			log.info("SAVING TF DATA OF "+project.getName());
+			System.out.println("SAVING TF DATA OF "+project.getName());
 			if(project.getId() == null) {
 				projectRepository.save(project);
 			}

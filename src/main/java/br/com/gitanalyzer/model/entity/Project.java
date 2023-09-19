@@ -43,18 +43,20 @@ public class Project {
 	private FilteredEnum filteredReason;
 	private String defaultBranch;
 	private Integer numberStars;
+	private String downloadVersionHash;
 
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
-	public Project(String name, String currentPath, String fullName) {
+	public Project(String name, String currentPath, String fullName, String downloadVersionHash) {
 		this.name = name;
 		this.currentPath = currentPath;
 		this.fullName = fullName;
+		this.downloadVersionHash = downloadVersionHash;
 	}
 
 	public Project(String name, String fullName, String mainLanguage, 
-			String currentPath, String defaultBranch, Integer numberStars) {
+			String currentPath, String defaultBranch, Integer numberStars, String downloadVersionHash) {
 		super();
 		this.name = name;
 		this.fullName = fullName;
@@ -62,6 +64,7 @@ public class Project {
 		this.currentPath = currentPath;
 		this.defaultBranch = defaultBranch;
 		this.numberStars = numberStars;
+		this.downloadVersionHash = downloadVersionHash;
 	}
 
 	public ProjectDTO toDto() {

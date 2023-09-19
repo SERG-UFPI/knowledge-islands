@@ -40,7 +40,27 @@ public class FilterProjectService {
 	private ProjectRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
-
+	
+	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
+		List<Project> projects = projectRepository.findAll();
+		List<Project> projectFilteredLanguage = projects.stream().filter(p -> p.getMainLanguage() == null ||
+				p.getMainLanguage().equals("Java") == false).toList();
+		for (Project project : projectFilteredLanguage) {
+			project.setFiltered(true);
+			project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
+		}
+		List<String> notProjectSoftwareNames = new ArrayList<>();
+		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-integration-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-security-samples");
+		List<Project> projectFilteredNames = projects.stream().filter(p -> notProjectSoftwareNames.contains(p.getFullName())).toList();
+		for (Project project : projectFilteredNames) {
+			project.setFiltered(true);
+			project.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
+		}
+		projectRepository.saveAll(projectFilteredNames);
+		projectRepository.saveAll(projectFilteredLanguage);
+	}
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
 		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();

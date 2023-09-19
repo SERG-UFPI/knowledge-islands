@@ -28,9 +28,7 @@ import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.Constants;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class ProjectService {
 
@@ -94,7 +92,7 @@ public class ProjectService {
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		log.info("======= Generating logs from "+name+" =======");
+		System.out.println("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
 		generateCommitFile(projectPath);
 		generateCommitFileFile(projectPath);
@@ -103,7 +101,7 @@ public class ProjectService {
 
 	public void generateLogFilesWithoutCloc(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		log.info("======= Generating logs from "+name+" =======");
+		System.out.println("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
 		generateCommitFile(projectPath);
 		generateCommitFileFile(projectPath);
@@ -111,14 +109,14 @@ public class ProjectService {
 
 	public void generateCommitFile(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
-		log.info("Generating commit file of "+name);
+		System.out.println("Generating commit file of "+name);
 		String pathCommitScript = ProjectService.class.getResource("/commit_log_script.sh").toURI().getPath();
 		String command = "sh "+pathCommitScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
 		Process process = pb.start();
 		process.waitFor();
-		log.info("End generation commit file");
+		System.out.println("End generation commit file");
 	}
 
 	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -136,27 +134,37 @@ public class ProjectService {
 
 	public void generateCommitFileFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		log.info("Generating commitFile file of "+name);
+		System.out.println("Generating commitFile file of "+name);
 		CommitExtractor commitExtractor = new CommitExtractor();
 		commitExtractor.generateCommitFileFile(projectPath);
-		log.info("End generation commitFile file");
+		System.out.println("End generation commitFile file");
 	}
 
 	public void generateClocFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		log.info("Generating cloc file of "+name);
+		System.out.println("Generating cloc file of "+name);
 		String pathClocScript = ProjectService.class.getResource("/cloc_script.sh").toURI().getPath();
 		String command = "sh "+pathClocScript+" "+projectPath;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
 		Process process = pb.start();
 		process.waitFor();
-		log.info("End generation cloc file");
+		System.out.println("End generation cloc file");
+	}
+	
+	public String getCurrentRevisionHash(String projectPath) throws IOException {
+		String command = "cd "+projectPath+" && git rev-parse HEAD";
+		ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String hash = reader.readLine();
+		return hash;
 	}
 
 	public void generateFileLists(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
-		log.info("Generating linguist file of "+name);
+		System.out.println("Generating linguist file of "+name);
 		String pathRubyScript = ProjectService.class.getResource("/linguist.rb").toURI().getPath();
 		String command = "ruby "+pathRubyScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
@@ -175,7 +183,7 @@ public class ProjectService {
 		bw.close();
 		reader.close();
 		fos.close();
-		log.info("End generation linguist file");
+		System.out.println("End generation linguist file");
 	}
 
 	public Object setProjectsMainLanguage() {
@@ -212,13 +220,13 @@ public class ProjectService {
 		//				String projectPath = fileDir.getAbsolutePath()+"/";
 		//				String projectName = projectUtils.extractProjectName(projectPath);
 		//				Project project = projectRepository.findByName(projectName);
-		//				log.info("EXTRACTING DATA FROM "+projectName);
+		//				System.out.println("EXTRACTING DATA FROM "+projectName);
 		//				ProjectVersion version = projectVersionExtractor
 		//						.extractProjectVersionOnlyNumbers(projectPath);
 		//				project.setFirstCommitDate(version.getFirstCommitDate());
 		//				version.setProject(project);
 		//				projectVersionRepository.save(version);
-		//				log.info("EXTRACTION FINISHED");
+		//				System.out.println("EXTRACTION FINISHED");
 		//			}
 		//		}
 	}
@@ -252,11 +260,10 @@ public class ProjectService {
 			}
 		}
 	}
-	
+
 	public void setFirstDateProject(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
-		String projectName = extractProjectName(projectPath);
-		Project project = projectRepository.findByName(projectName);
+		Project project = returnProjectByPath(projectPath);
 		if(project.getFirstCommitDate() == null) {
 			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
 			projectRepository.save(project);
@@ -269,7 +276,7 @@ public class ProjectService {
 		String projectName = splitedPath[splitedPath.length - 1];
 		return projectName;
 	}
-	
+
 	public String extractProjectFullName(String path) throws IOException {
 		String command = "cd "+path+" && git config --get remote.origin.url";
 		ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});

@@ -41,6 +41,12 @@ public class ProjectController {
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 
+	@PostMapping("/filtering-eco-spring")
+	public ResponseEntity<?> filteringProjectsEcoSpring() throws URISyntaxException, IOException, InterruptedException{
+		filterProjectService.filterEcoSpring();
+		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
+	}
+
 	@PostMapping("/extract-version")
 	public ResponseEntity<?> extractVersion(@RequestBody String folderPath){
 		projectService.extractVersion(folderPath);
@@ -68,7 +74,7 @@ public class ProjectController {
 		}
 		return null;
 	}
-	
+
 	@PostMapping("/generate-commit-file-folder")
 	public ResponseEntity<?> generateCommitFileFolder(@RequestBody String projectPath){
 		try {

@@ -11,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -48,10 +49,13 @@ public class ProjectVersion {
 
 	@javax.persistence.Transient
 	private List<Commit> commits;
+	
+	@OneToOne(cascade = CascadeType.PERSIST)
+	private QualityMeasures meanClassQualityMeasures;
 
 	public ProjectVersion(int numberAllDevs, int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
-			String versionId, List<Contributor> contributors) {
+			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures) {
 		super();
 		this.numberAllDevs = numberAllDevs;
 		this.numberAnalysedDevs = numberAnalysedDevs;
@@ -62,6 +66,7 @@ public class ProjectVersion {
 		this.dateVersion = dateVersion;
 		this.versionId = versionId;
 		this.contributors = contributors;
+		this.meanClassQualityMeasures = qualityMeasures;
 	}
 
 	public String getProjectLanguage() {

@@ -94,9 +94,10 @@ public class DownloaderService {
 				log.info("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
+					String projectPath = path+projectInfo.getName()+"/";
 					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
-							projectInfo.getLanguage(), path+projectInfo.getName()+"/", projectInfo.getDefault_branch(), 
-							projectInfo.getStargazers_count());
+							projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
+							projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
 					projectRepository.save(project);
 				}
 			} catch (Exception e) {

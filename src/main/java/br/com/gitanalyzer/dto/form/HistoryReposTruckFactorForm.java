@@ -20,7 +20,6 @@ public class HistoryReposTruckFactorForm {
 	private int interval;
 	@NotNull
 	private TimeIntervalTypeEnum intervalType;
-	private String language;
 	@NotNull
 	private KnowledgeMetric knowledgeMetric;
 

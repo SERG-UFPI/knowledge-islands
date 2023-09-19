@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.extractors;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,6 +15,7 @@ import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
+import br.com.gitanalyzer.model.entity.QualityMeasures;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ContributorUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +26,11 @@ public class ProjectVersionExtractor {
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private ContributorUtils contributorUtils = new ContributorUtils();
+	private CkMeasuresExtractor ckMeasuresExtractor = new CkMeasuresExtractor();
 
-	public ProjectVersion extractProjectVersion(String projectPath, String projectName) {
+	public ProjectVersion extractProjectVersion(String projectPath, String projectName) throws IOException {
 		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
+		QualityMeasures qualityMeasures = ckMeasuresExtractor.extract(projectPath);
 		if(projectPath.substring(projectPath.length() -1).equals("/") == false) {
 			projectPath = projectPath+"/";
 		}
@@ -46,7 +50,7 @@ public class ProjectVersionExtractor {
 		List<Contributor> contributors = extractContributorFromCommits(commits);
 		int numberAllDevs = contributors.size();
 		contributors = setAlias(contributors, projectName);
-		contributors = contributors.stream().filter(c -> c.getEmail() == null || c.getName() == null).toList();
+		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 		int numberAnalysedDevs = contributors.size();
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override
@@ -56,7 +60,7 @@ public class ProjectVersionExtractor {
 		});
 		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
-				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits));
+				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits), qualityMeasures);
 		projectVersion.setCommits(commits);
 		projectVersion.setFiles(files);
 		return projectVersion;
