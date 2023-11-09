@@ -82,33 +82,80 @@ public class FileExtractor {
 			String clocFileName, String projectName){
 		try {
 			List<File> files = extractFileList(path, fileListName, projectName);
-			if (clocFileName.equals(Constants.clocFileName)) {
-				String strLineCloc;
-				String clocListfullPath = path+clocFileName;
-				FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
-				BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
-				while ((strLineCloc = brCloc.readLine()) != null) {
-					String filePathCloc = strLineCloc.split(";")[0];
-					for (File file : files) {
-						if (filePathCloc.equals(file.getPath())) {
-							if (strLineCloc.split(";").length > 1) {
-								String fileSizeString = strLineCloc.split(";")[2];
-								if (fileSizeString != null && fileSizeString.equals("") == false) {
-									file.setFileSize(Integer.parseInt(fileSizeString));
-									break;
-								}
+			String strLineCloc;
+			String clocListfullPath = path+clocFileName;
+			FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
+			BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
+			while ((strLineCloc = brCloc.readLine()) != null) {
+				String filePathCloc = strLineCloc.split(";")[0];
+				for (File file : files) {
+					if (filePathCloc.equals(file.getPath())) {
+						if (strLineCloc.split(";").length > 1) {
+							String fileSizeString = strLineCloc.split(";")[2];
+							if (fileSizeString != null && fileSizeString.equals("") == false) {
+								file.setFileSize(Integer.parseInt(fileSizeString));
+								break;
 							}
 						}
 					}
 				}
-				brCloc.close();
 			}
+			brCloc.close();
 			files.removeIf(f -> f.getFileSize() == 0);
 			return files;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+
+	public List<File> extractFilesFromClocFile(String path, String clocFileName, String projectName) {
+
+		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
+		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
+		String arrayHomebrewCask[]  = new String[] {"Casks/"};
+		Constants.projectPatterns.put("linux", arrayLinux);
+		Constants.projectPatterns.put("homebrew", arrayHomebrew);
+		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
+		String patterns[] = null;
+		if (Constants.projectPatterns.containsKey(projectName)) {
+			patterns = Constants.projectPatterns.get(projectName);
+		}
+
+		List<File> files = new ArrayList<File>();
+		String strLineCloc;
+		String clocListfullPath = path+clocFileName;
+		try {
+			FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
+			BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
+			whileFile: while ((strLineCloc = brCloc.readLine()) != null) {
+				String[] splitedLine = strLineCloc.split(";");
+				String filePath = splitedLine[0];
+				File file = null;
+				if (patterns != null) {
+					for (String startPattern : patterns) {
+						if (filePath.startsWith(startPattern) == true) {
+							continue whileFile;
+						}
+					}
+				}
+				file = new File(filePath);
+				if (splitedLine.length > 1) {
+					String fileSizeString = splitedLine[2];
+					if (fileSizeString != null && fileSizeString.equals("") == false) {
+						file.setFileSize(Integer.parseInt(fileSizeString));
+					}
+				}
+				if(file.getFileSize() != 0) {
+					files.add(file);
+				}
+			}
+			brCloc.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return files;
 	}
 
 	public void getRenamesFiles(String projectPath, List<File> files) {

@@ -24,6 +24,12 @@ public class ProjectController {
 	private ProjectService projectService;
 	@Autowired
 	private FilterProjectService filterProjectService;
+	
+	@PostMapping("set-download-version-date")
+	public ResponseEntity<?> setDownloadVersionDate(@RequestBody String folderPath) throws IOException{
+		projectService.setProjectDatesFolder(folderPath);
+		return ResponseEntity.ok("");
+	}
 
 	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
@@ -136,6 +142,17 @@ public class ProjectController {
 			projectService.setFirstDateProject(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@PostMapping("/return-version-downloaded")
+	public ResponseEntity<?> returnVersionDownloaded(){
+		try {
+			projectService.returnVersionDownloaded();
+			return ResponseEntity.ok("");
+		}catch(Exception e) {
 			e.printStackTrace();
 		}
 		return null;

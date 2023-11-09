@@ -33,7 +33,7 @@ public class ProjectVersion {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private int numberAllDevs, numberAuthors, numberAnalysedDevs, 
+	private int numberAuthors, numberAnalysedDevs, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
@@ -50,14 +50,13 @@ public class ProjectVersion {
 	@javax.persistence.Transient
 	private List<Commit> commits;
 	
-	@OneToOne(cascade = CascadeType.PERSIST)
+	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private QualityMeasures meanClassQualityMeasures;
 
-	public ProjectVersion(int numberAllDevs, int numberAnalysedDevs, int numberAllFiles,
+	public ProjectVersion(int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
 			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures) {
 		super();
-		this.numberAllDevs = numberAllDevs;
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAllFiles = numberAllFiles;
 		this.numberAnalysedFiles = numberAnalysedFiles;
@@ -77,10 +76,9 @@ public class ProjectVersion {
 		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		return ProjectVersionDTO.builder()
 				.project(project.toDto())
-				.activeContributors(contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList())
+				.activeContributors(contributors!=null?contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList():null)
 				.dateVersion(dateVersion!=null?fmt.format(dateVersion):null)
 				.numberAllCommits(numberAllCommits)
-				.numberAllDevs(numberAllDevs)
 				.numberAllFiles(numberAllFiles)
 				.numberAnalysedCommits(numberAnalysedCommits)
 				.numberAnalysedDevs(numberAnalysedDevs)

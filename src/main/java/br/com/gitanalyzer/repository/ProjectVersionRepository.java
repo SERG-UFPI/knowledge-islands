@@ -1,5 +1,7 @@
 package br.com.gitanalyzer.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +15,7 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
 	ProjectVersion findFirstByProjectIdOrderByDateVersionDesc(Long id);
 	
 	Long deleteByProjectId(Long id);
+	
+	void deleteByProjectIdIn(List<Long> ids);
 	
 }

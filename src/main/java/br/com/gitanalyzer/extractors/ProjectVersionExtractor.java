@@ -35,8 +35,7 @@ public class ProjectVersionExtractor {
 			projectPath = projectPath+"/";
 		}
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-		List<File> files = fileExtractor.extractFileSizeList(projectPath, Constants.linguistFileName, 
-				Constants.clocFileName, projectName);
+		List<File> files = fileExtractor.extractFilesFromClocFile(projectPath, Constants.clocFileName, projectName);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
@@ -48,7 +47,6 @@ public class ProjectVersionExtractor {
 		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
-		int numberAllDevs = contributors.size();
 		contributors = setAlias(contributors, projectName);
 		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 		int numberAnalysedDevs = contributors.size();
@@ -58,7 +56,7 @@ public class ProjectVersionExtractor {
 				return c2.getDate().compareTo(c1.getDate());
 			}
 		});
-		ProjectVersion projectVersion = new ProjectVersion(numberAllDevs, numberAnalysedDevs, 
+		ProjectVersion projectVersion = new ProjectVersion(numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits), qualityMeasures);
 		projectVersion.setCommits(commits);

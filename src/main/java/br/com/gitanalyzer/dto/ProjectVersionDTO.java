@@ -1,6 +1,5 @@
 package br.com.gitanalyzer.dto;
 
-import java.util.Date;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProjectVersionDTO {
 
-	private int numberAllDevs, numberAuthors, numberAnalysedDevs, 
+	private int numberAuthors, numberAnalysedDevs, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits;
 	private String dateVersion; 
 	private String versionId;

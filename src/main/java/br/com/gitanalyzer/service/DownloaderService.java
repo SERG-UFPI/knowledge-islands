@@ -57,7 +57,7 @@ public class DownloaderService {
 				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
 			}
 			projectService.generateCommitFileFolder(form.getPath());
-			projectService.setFirstDateFolder(form.getPath());
+			projectService.setProjectDatesFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -68,7 +68,7 @@ public class DownloaderService {
 			log.info("=========== download from "+form.getOrg()+" org ==================");
 			downloaderPerOrg("org:"+form.getOrg(), form);
 			projectService.generateCommitFileFolder(form.getPath());
-			projectService.setFirstDateFolder(form.getPath());
+			projectService.setProjectDatesFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -138,6 +138,7 @@ public class DownloaderService {
 				.queryParam("q", query )
 				.queryParam("sort", "stars")
 				.queryParam("order", "desc")
+				.queryParam("per_page", 100)
 				.back()
 				.method(Request.GET);
 		return getProjectsInfo(request, query);

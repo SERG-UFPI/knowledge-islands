@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +28,13 @@ public class ProjectVersionController {
 		service.removeFromProject(id);
 		return ResponseEntity.ok("ok");
 	}
-
+	
+	@PostMapping("/remove-from-projects-filtered")
+	public ResponseEntity<?> removeFromProjectsFiltered(){
+		service.removeFromProjectsFiltered();
+		return ResponseEntity.ok("ok");
+	}
+	
 	@DeleteMapping("/all")
 	public ResponseEntity<?> removeAll(){
 		service.removeAll();

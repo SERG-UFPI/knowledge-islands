@@ -22,8 +22,8 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.utils.Constants;
 
 public class CommitExtractor {
-
-	public Date getFirstCommitDate(String projectPath) throws IOException {
+	
+	private List<Date> getDatesOfProject(String projectPath) throws IOException{
 		List<Date> dates = new ArrayList<Date>();
 		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -43,8 +43,27 @@ public class CommitExtractor {
 			}
 		}
 		br.close();
-		Collections.sort(dates);
-		return dates.get(0);
+		return dates;
+	}
+	
+	public Date getLastCommitDate(String projectPath) throws IOException {
+		List<Date> dates = getDatesOfProject(projectPath);
+		if(dates != null && dates.size() > 0) {
+			Collections.sort(dates);
+			return dates.get(dates.size()-1);
+		}else {
+			return null;
+		}
+	}
+
+	public Date getFirstCommitDate(String projectPath) throws IOException {
+		List<Date> dates = getDatesOfProject(projectPath);
+		if(dates != null && dates.size() > 0) {
+			Collections.sort(dates);
+			return dates.get(0);
+		}else {
+			return null;
+		}
 	}
 
 	public String getLastCommitHash(String projectPath) throws IOException{
@@ -112,8 +131,7 @@ public class CommitExtractor {
 						Integer timeInt = Integer.parseInt(time);
 						Instant instant = Instant.ofEpochSecond(timeInt);
 						Date commitDate = Date.from(instant);
-						Commit commit = new Commit(contributorCommit, commitDate, idCommit);
-						commits.add(commit);
+						commits.add(new Commit(contributorCommit, commitDate, idCommit));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

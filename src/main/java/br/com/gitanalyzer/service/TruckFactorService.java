@@ -168,65 +168,69 @@ public class TruckFactorService {
 			//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 			System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
-			for(Contributor contributor: projectVersion.getContributors()) {
-				List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
-				for (File file : projectVersion.getFiles()) {
-					for (File fileContributor : filesContributor) {
-						if(file.isFile(fileContributor.getPath())) {
-							AuthorFile authorFile = getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file);
-							addFileKnowledgeOfAuthor(knowledgeMetric, file, authorFile);
-							authorFiles.add(authorFile);
-							break;
+			if(projectVersion.getContributors() != null && projectVersion.getCommits() != null && 
+					projectVersion.getFiles() != null && projectVersion.getContributors().size() > 0 && 
+					projectVersion.getCommits().size() > 0 && projectVersion.getFiles().size() > 0) {
+				for(Contributor contributor: projectVersion.getContributors()) {
+					List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
+					for (File file : projectVersion.getFiles()) {
+						for (File fileContributor : filesContributor) {
+							if(file.isFile(fileContributor.getPath())) {
+								AuthorFile authorFile = getAuthorFileByKnowledgeMetric(knowledgeMetric, projectVersion.getCommits(), contributor, file);
+								addFileKnowledgeOfAuthor(knowledgeMetric, file, authorFile);
+								authorFiles.add(authorFile);
+								break;
+							}
 						}
 					}
 				}
-			}
-			setContributorNumberAuthorAndFileMaintainers(projectVersion.getContributors(), authorFiles, projectVersion.getFiles(), knowledgeMetric);
-			System.out.println("CALCULATING TF OF "+project.getName());
-			List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
-			contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
-			projectVersion.setNumberAuthors(contributors.size());
-			Collections.sort(contributors, new Comparator<Contributor>() {
-				@Override
-				public int compare(Contributor c1, Contributor c2) {
-					return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
+				setContributorNumberAuthorAndFileMaintainers(projectVersion.getContributors(), authorFiles, projectVersion.getFiles(), knowledgeMetric);
+				System.out.println("CALCULATING TF OF "+project.getName());
+				List<Contributor> contributors = new ArrayList<>(projectVersion.getContributors());
+				contributors.removeIf(contributor -> contributor.getNumberFilesAuthor() == 0);
+				projectVersion.setNumberAuthors(contributors.size());
+				Collections.sort(contributors, new Comparator<Contributor>() {
+					@Override
+					public int compare(Contributor c1, Contributor c2) {
+						return Integer.compare(c2.getNumberFilesAuthor(), c1.getNumberFilesAuthor());
+					}
+				});
+				List<Contributor> topContributors = new ArrayList<Contributor>();
+				double fileSize = projectVersion.getFiles().size();
+				int tf = 0;
+				while(contributors.isEmpty() == false) {
+					double numberFilesCovarage = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric).size();
+					double coverage = numberFilesCovarage/fileSize;
+					if(coverage < 0.5) 
+						break;
+					topContributors.add(contributors.get(0));
+					contributors.remove(0);
+					tf = tf+1;
 				}
-			});
-			List<Contributor> topContributors = new ArrayList<Contributor>();
-			double fileSize = projectVersion.getFiles().size();
-			int tf = 0;
-			while(contributors.isEmpty() == false) {
-				double numberFilesCovarage = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric).size();
-				double coverage = numberFilesCovarage/fileSize;
-				if(coverage < 0.5) 
-					break;
-				topContributors.add(contributors.get(0));
-				contributors.remove(0);
-				tf = tf+1;
-			}
-			List<File> coveredFiles = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric);
-			System.out.println("SAVING TF DATA OF "+project.getName());
-			if(project.getId() == null) {
-				projectRepository.save(project);
-			}
-			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
-				projectVersion.setProject(project);
-				projectVersionRepository.save(projectVersion);
-				List<Contributor> truckFactorDevelopers = new ArrayList<>();
-				for (Contributor topContributor : topContributors) {
-					for (Contributor contributor : projectVersion.getContributors()) {
-						if(topContributor.equals(contributor)) {
-							contributor.setPercentOfFilesAuthored(
-									(double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles()); 
-							truckFactorDevelopers.add(contributor);
+				List<File> coveredFiles = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric);
+				System.out.println("SAVING TF DATA OF "+project.getName());
+				if(project.getId() == null) {
+					projectRepository.save(project);
+				}
+				if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
+					projectVersion.setProject(project);
+					projectVersionRepository.save(projectVersion);
+					List<Contributor> truckFactorDevelopers = new ArrayList<>();
+					for (Contributor topContributor : topContributors) {
+						for (Contributor contributor : projectVersion.getContributors()) {
+							if(topContributor.equals(contributor)) {
+								contributor.setPercentOfFilesAuthored(
+										(double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles()); 
+								truckFactorDevelopers.add(contributor);
+							}
 						}
 					}
+					TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
+							getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
+					truckFactorRepository.save(truckFactor);
+					return truckFactor.toDto();
 				}
-				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
-						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
-				truckFactorRepository.save(truckFactor);
-				return truckFactor.toDto();
-			}	
+			}
 		}
 		return null;
 	}
@@ -537,16 +541,11 @@ public class TruckFactorService {
 	}
 
 	public void historyRepoTruckFactor(HistoryReposTruckFactorForm form) throws NoHeadException, IOException, GitAPIException, InterruptedException, URISyntaxException {
-		String pathCheckoutScript = TruckFactorService.class.getResource("/checkout_script.sh").toURI().getPath();
 		HistoryCommitsExtractor historyCommitsExtractor = new HistoryCommitsExtractor();
 		List<String> hashes = historyCommitsExtractor.getCommitHashesByInterval(form);
 		try {
 			for (String hash : hashes) {
-				String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hash;
-				ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
-				pb.redirectErrorStream(true);
-				Process process = pb.start();
-				process.waitFor();
+				projectService.checkOutProjectVersion(form.getPath(), hash);
 				projectService.generateLogFiles(form.getPath());
 				generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()
 						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
@@ -554,9 +553,7 @@ public class TruckFactorService {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
-			String command = "sh "+pathCheckoutScript+" "+form.getPath()+" "+hashes.get(hashes.size()-1);
-			Process process = Runtime.getRuntime().exec(command);
-			process.waitFor();
+			projectService.checkOutProjectVersion(form.getPath(), hashes.get(hashes.size()-1));
 		}
 	}
 

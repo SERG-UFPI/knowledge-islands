@@ -43,6 +43,17 @@ public class FilterProjectService {
 	
 	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
 		List<Project> projects = projectRepository.findAll();
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		int calendarType = Calendar.YEAR;
+		c.add(calendarType, -1);
+		for (Project project : projects) {
+			if(project.getFirstCommitDate() != null && 
+					project.getFirstCommitDate().after(c.getTime())) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
+			}
+		}
 		List<Project> projectFilteredLanguage = projects.stream().filter(p -> p.getMainLanguage() == null ||
 				p.getMainLanguage().equals("Java") == false).toList();
 		for (Project project : projectFilteredLanguage) {
@@ -53,10 +64,23 @@ public class FilterProjectService {
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
 		notProjectSoftwareNames.add("spring-projects/spring-integration-samples");
 		notProjectSoftwareNames.add("spring-projects/spring-security-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-amqp-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-session-data-mongodb-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-ws-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-hateoas-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-data-book");
 		List<Project> projectFilteredNames = projects.stream().filter(p -> notProjectSoftwareNames.contains(p.getFullName())).toList();
 		for (Project project : projectFilteredNames) {
 			project.setFiltered(true);
 			project.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
+		}
+		for (Project project : projects) {
+			if(project.getDownloadVersionDate() != null && 
+					project.getDownloadVersionDate().before(c.getTime())) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
+				projectRepository.save(project);
+			}
 		}
 		projectRepository.saveAll(projectFilteredNames);
 		projectRepository.saveAll(projectFilteredLanguage);

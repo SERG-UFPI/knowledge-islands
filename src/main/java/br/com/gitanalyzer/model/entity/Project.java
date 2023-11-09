@@ -44,6 +44,8 @@ public class Project {
 	private String defaultBranch;
 	private Integer numberStars;
 	private String downloadVersionHash;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date downloadVersionDate;
 
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;

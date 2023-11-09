@@ -151,7 +151,7 @@ public class ProjectService {
 		process.waitFor();
 		System.out.println("End generation cloc file");
 	}
-	
+
 	public String getCurrentRevisionHash(String projectPath) throws IOException {
 		String command = "cd "+projectPath+" && git rev-parse HEAD";
 		ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});
@@ -251,12 +251,13 @@ public class ProjectService {
 		}
 	}
 
-	public void setFirstDateFolder(String folderPath) throws IOException {
+	public void setProjectDatesFolder(String folderPath) throws IOException {
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				setFirstDateProject(projectPath);
+				setDownloadVersionDate(projectPath);
 			}
 		}
 	}
@@ -266,6 +267,15 @@ public class ProjectService {
 		Project project = returnProjectByPath(projectPath);
 		if(project.getFirstCommitDate() == null) {
 			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
+			projectRepository.save(project);
+		}
+	}
+	
+	public void setDownloadVersionDate(String projectPath) throws IOException {
+		CommitExtractor commitExtractor = new CommitExtractor();
+		Project project = returnProjectByPath(projectPath);
+		if(project.getDownloadVersionDate() == null) {
+			project.setDownloadVersionDate(commitExtractor.getLastCommitDate(projectPath));
 			projectRepository.save(project);
 		}
 	}
@@ -287,6 +297,23 @@ public class ProjectService {
 		fullName = fullName.replace("https://github.com/", "");
 		fullName = fullName.replace(".git", "");
 		return fullName;
+	}
+
+	public void returnVersionDownloaded() throws URISyntaxException, IOException, InterruptedException {
+		List<Project> projects = projectRepository.findAll();
+		for (Project project : projects) {
+			checkOutProjectVersion(project.getCurrentPath(), project.getDownloadVersionHash());
+		}
+	}
+
+	public void checkOutProjectVersion(String path, String hash)  throws URISyntaxException, 
+	IOException, InterruptedException {
+		String pathCheckoutScript = ProjectService.class.getResource("/checkout_script.sh").toURI().getPath();
+		String command = "sh "+pathCheckoutScript+" "+path+" "+hash;
+		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
+		process.waitFor();
 	}
 
 }
