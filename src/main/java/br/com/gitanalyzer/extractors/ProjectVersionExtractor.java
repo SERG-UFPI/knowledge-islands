@@ -58,9 +58,8 @@ public class ProjectVersionExtractor {
 		});
 		ProjectVersion projectVersion = new ProjectVersion(numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
-				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits), qualityMeasures);
-		projectVersion.setCommits(commits);
-		projectVersion.setFiles(files);
+				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits), qualityMeasures,
+				commits, files);
 		return projectVersion;
 	}
 

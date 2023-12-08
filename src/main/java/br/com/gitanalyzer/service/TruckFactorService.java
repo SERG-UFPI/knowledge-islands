@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -219,8 +220,8 @@ public class TruckFactorService {
 					for (Contributor topContributor : topContributors) {
 						for (Contributor contributor : projectVersion.getContributors()) {
 							if(topContributor.equals(contributor)) {
-								contributor.setPercentOfFilesAuthored(
-										(double)contributor.getNumberFilesAuthor()/(double)projectVersion.getNumberAnalysedFiles()); 
+								contributor.setPercentOfFilesAuthored(new BigDecimal(contributor.getNumberFilesAuthor()).divide(
+										new BigDecimal(projectVersion.getNumberAnalysedFiles()))); 
 								truckFactorDevelopers.add(contributor);
 							}
 						}

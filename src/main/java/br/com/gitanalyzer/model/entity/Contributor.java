@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -28,7 +29,7 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
-	private double percentOfFilesAuthored;
+	private BigDecimal percentOfFilesAuthored;
 	private int numberFilesAuthor;
 	private boolean active;
 	@ManyToMany(cascade = CascadeType.REMOVE)
@@ -36,7 +37,7 @@ public class Contributor {
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
 
-	public Contributor(String name, String email, double percentOfFilesAuthored) {
+	public Contributor(String name, String email, BigDecimal percentOfFilesAuthored) {
 		super();
 		this.name = name;
 		this.email = email;

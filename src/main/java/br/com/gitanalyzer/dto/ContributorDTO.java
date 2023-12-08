@@ -1,5 +1,7 @@
 package br.com.gitanalyzer.dto;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +18,6 @@ public class ContributorDTO {
 	private String email;
 	private boolean active;
 	private int numberFilesAuthor;
-	private double percentOfFilesAuthored;
+	private BigDecimal percentOfFilesAuthored;
 
 }

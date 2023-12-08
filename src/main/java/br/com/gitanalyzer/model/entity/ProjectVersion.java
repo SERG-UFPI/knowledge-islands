@@ -49,13 +49,14 @@ public class ProjectVersion {
 
 	@javax.persistence.Transient
 	private List<Commit> commits;
-	
+
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private QualityMeasures meanClassQualityMeasures;
 
 	public ProjectVersion(int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
-			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures) {
+			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures, 
+			List<Commit> commits, List<File> files) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAllFiles = numberAllFiles;
@@ -66,6 +67,8 @@ public class ProjectVersion {
 		this.versionId = versionId;
 		this.contributors = contributors;
 		this.meanClassQualityMeasures = qualityMeasures;
+		this.commits = commits;
+		this.files = files;
 	}
 
 	public String getProjectLanguage() {
