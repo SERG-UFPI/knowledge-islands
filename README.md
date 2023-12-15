@@ -9,5 +9,5 @@ This tool is used to check the concentration of knowledge in software projects. 
    `sudo /usr/bin/ruby -S gem install rugged`
 3. You have to install [Cloc](https://github.com/AlDanial/cloc#install-via-package-manager)<br/>
    `sudo apt install cloc`
-# References
+## References
 <a id="1">[1]</a> Cury, Otávio, et al. "Identifying Source Code File Experts." Proceedings of the 16th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement. 2022.
