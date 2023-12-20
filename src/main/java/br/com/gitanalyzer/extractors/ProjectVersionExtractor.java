@@ -18,9 +18,7 @@ import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.QualityMeasures;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.ContributorUtils;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class ProjectVersionExtractor {
 
 	private FileExtractor fileExtractor = new FileExtractor();
@@ -29,13 +27,14 @@ public class ProjectVersionExtractor {
 	private CkMeasuresExtractor ckMeasuresExtractor = new CkMeasuresExtractor();
 
 	public ProjectVersion extractProjectVersion(String projectPath, String projectName) throws IOException {
-		log.info("EXTRACTING PROJECT VERSION OF "+projectName);
+		long start = System.currentTimeMillis();
+		System.out.println("EXTRACTING PROJECT VERSION OF "+projectName);
 		QualityMeasures qualityMeasures = ckMeasuresExtractor.extract(projectPath);
 		if(projectPath.substring(projectPath.length() -1).equals("/") == false) {
 			projectPath = projectPath+"/";
 		}
-		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
-		List<File> files = fileExtractor.extractFilesFromClocFile(projectPath, Constants.clocFileName, projectName);
+		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath);
+		List<File> files = fileExtractor.extractFilesFromClocFile(projectPath, projectName);
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(projectPath, files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
@@ -56,15 +55,17 @@ public class ProjectVersionExtractor {
 				return c2.getDate().compareTo(c1.getDate());
 			}
 		});
+		long end = System.currentTimeMillis();
+		float sec = (end - start) / 1000F;
 		ProjectVersion projectVersion = new ProjectVersion(numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits), qualityMeasures,
-				commits, files);
+				commits, files, (double) sec);
 		return projectVersion;
 	}
 
 	public ProjectVersion extractProjectVersionFiltering(String projectPath) {
-		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath, Constants.allFilesFileName);
+		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);

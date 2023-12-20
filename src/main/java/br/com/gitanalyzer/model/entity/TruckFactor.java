@@ -37,15 +37,17 @@ public class TruckFactor {
 	private List<Contributor> contributors;
 	@ElementCollection
 	private List<String> implicatedFiles;
+	private Double timeToCalculate;
 
 	public TruckFactor(int truckfactor,
 			ProjectVersion projectVersion, KnowledgeMetric knowledgeMetric,
-			List<String> implicatedFiles, List<Contributor> contributors) {
+			List<String> implicatedFiles, List<Contributor> contributors, Double timeToCalculate) {
 		this.truckfactor = truckfactor;
 		this.projectVersion = projectVersion;
 		this.knowledgeMetric = knowledgeMetric;
 		this.implicatedFiles = implicatedFiles;
 		this.contributors = contributors;
+		this.timeToCalculate = timeToCalculate;
 	}
 
 	public TruckFactor(int truckfactor,

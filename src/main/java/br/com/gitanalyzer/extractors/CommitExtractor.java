@@ -250,54 +250,63 @@ public class CommitExtractor {
 					continue whileFile;
 				}
 				if (commitAnalyzed != null) {
-					String[] splited2 = strLine.split("\t");
-					String path = splited2[2];
-					if (path.contains("=>")) {
-						String commonString1 = "";
-						String commonString2 = "";
-						if (path.contains("{") && path.contains("}")) {
-							String[] commonString =  path.split("\\{");
-							commonString1 = commonString[0];
-							commonString = path.split("}");
-							if (commonString.length > 1) {
-								commonString2 = commonString[1];
-							}
-							String stringAux = path.substring(path.indexOf("{") + 1);
-							path = stringAux.substring(0, stringAux.indexOf("}"));
-						}
-
-						String[] splited3 = path.split("=>");
-						String path1 = splited3[0];
-						path1 = path1.trim();
-						String path2 = splited3[1];
-						path2 = path2.trim();
-
-						String file1 = commonString1+path1+commonString2;
-						String file2 = commonString1+path2+commonString2;
-						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
-							if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
-								try {
-									int linesAdded = Integer.parseInt(splited2[0]);
-									commitFile.setAdds(linesAdded);
-								} catch (Exception e) {
-									e.printStackTrace();
+					try {
+						String[] splited2 = strLine.split("\t");
+						String path = splited2[2];
+						if (path.contains("=>")) {
+							String commonString1 = "";
+							String commonString2 = "";
+							if (path.contains("{") && path.contains("}")) {
+								String[] commonString =  path.split("\\{");
+								commonString1 = commonString[0];
+								commonString = path.split("}");
+								if (commonString.length > 1) {
+									commonString2 = commonString[1];
 								}
-								continue whileFile;
+								String stringAux = path.substring(path.indexOf("{") + 1);
+								path = stringAux.substring(0, stringAux.indexOf("}"));
 							}
-						}
-					}else {
-						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
-							if(commitFile.getFile().isFile(path)) {
-								try {
-									int linesAdded = Integer.parseInt(splited2[0]);
-									commitFile.setAdds(linesAdded);
-								} catch (Exception e) {
-									e.printStackTrace();
+
+							String[] splited3 = path.split("=>");
+							String path1 = splited3[0];
+							path1 = path1.trim();
+							String file1 = commonString1+path1+commonString2;
+							if(file1.contains("//")) {
+								file1 = file1.replace("//", "/");
+							}
+							String path2 = splited3[1];
+							path2 = path2.trim();
+							String file2 = commonString1+path2+commonString2;
+							if(file2.contains("//")) {
+								file2 = file2.replace("//", "/");
+							}
+							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+								if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
+									try {
+										int linesAdded = Integer.parseInt(splited2[0]);
+										commitFile.setAdds(linesAdded);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+									continue whileFile;
 								}
-								continue whileFile;
 							}
-						}
-					}	
+						}else {
+							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+								if(commitFile.getFile().isFile(path)) {
+									try {
+										int linesAdded = Integer.parseInt(splited2[0]);
+										commitFile.setAdds(linesAdded);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+									continue whileFile;
+								}
+							}
+						}	
+					} catch (ArrayIndexOutOfBoundsException e) {
+						System.out.println("Error processing project diff "+e.getMessage());
+					}
 				}
 			}
 			br.close();

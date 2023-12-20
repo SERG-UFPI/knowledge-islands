@@ -8,9 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Configuration
 @EnableScheduling
 public class RemoveTempProjects {
@@ -20,7 +17,7 @@ public class RemoveTempProjects {
 
 	@Scheduled(fixedRate = 1000*60*60*24)
 	public void removeTemProjects() {
-		log.info("Removing temp projects...");
+		System.out.println("Removing temp projects...");
 		try {
 			File directory = new File(tmpProjectsPath);
 			org.apache.commons.io.FileUtils.deleteDirectory(directory);

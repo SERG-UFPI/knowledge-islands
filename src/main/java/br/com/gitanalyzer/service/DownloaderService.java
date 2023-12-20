@@ -30,9 +30,7 @@ import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class DownloaderService {
 
@@ -49,11 +47,11 @@ public class DownloaderService {
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
 				for (LanguageEnum language : LanguageEnum.values()) {
-					log.info("=========== download "+language.getName()+" project ==================");
+					System.out.println("=========== Download "+language.getName()+" project ==================");
 					downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
 				}
 			}else {
-				log.info("=========== download "+form.getLanguage().getName()+" project ==================");
+				System.out.println("=========== Download "+form.getLanguage().getName()+" project ==================");
 				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
 			}
 			projectService.generateCommitFileFolder(form.getPath());
@@ -65,7 +63,7 @@ public class DownloaderService {
 
 	public void downloadPerOrg(DownloaderPerOrgForm form) throws URISyntaxException, InterruptedException {
 		try {
-			log.info("=========== download from "+form.getOrg()+" org ==================");
+			System.out.println("=========== download from "+form.getOrg()+" org ==================");
 			downloaderPerOrg("org:"+form.getOrg(), form);
 			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setProjectDatesFolder(form.getPath());
@@ -83,15 +81,14 @@ public class DownloaderService {
 
 	public void downloaderPerLanguage(String query, DownloaderPerLanguageForm form) throws IOException {
 		Github github = new RtGithub(token);
-		List<ProjectInfo> projectsInfo = null;
-		projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
+		List<ProjectInfo> projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
 		cloneAndSaveRepos(projectsInfo, form.getPath());
 	}
 
 	private void cloneAndSaveRepos(List<ProjectInfo> projectsInfo, String path) {
 		for (ProjectInfo projectInfo : projectsInfo) {
 			try {
-				log.info("Cloning " + projectInfo.getFullName());
+				System.out.println("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
 					String projectPath = path+projectInfo.getName()+"/";

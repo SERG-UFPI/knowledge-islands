@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.controllers;
+package br.com.gitanalyzer.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

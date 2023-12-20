@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.controllers;
+package br.com.gitanalyzer.api;
 
 import java.io.IOException;
 

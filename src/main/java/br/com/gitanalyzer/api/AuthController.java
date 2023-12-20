@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.controllers;
+package br.com.gitanalyzer.api;
 
 import java.util.List;
 import java.util.stream.Collectors;

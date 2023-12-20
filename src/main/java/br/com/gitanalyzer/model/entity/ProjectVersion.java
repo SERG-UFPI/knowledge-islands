@@ -52,11 +52,12 @@ public class ProjectVersion {
 
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private QualityMeasures meanClassQualityMeasures;
+	private Double timeToExtract;
 
 	public ProjectVersion(int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
 			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures, 
-			List<Commit> commits, List<File> files) {
+			List<Commit> commits, List<File> files, Double timeToExtract) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAllFiles = numberAllFiles;
@@ -69,6 +70,7 @@ public class ProjectVersion {
 		this.meanClassQualityMeasures = qualityMeasures;
 		this.commits = commits;
 		this.files = files;
+		this.timeToExtract = timeToExtract;
 	}
 
 	public String getProjectLanguage() {

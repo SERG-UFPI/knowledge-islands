@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,6 +60,7 @@ import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
+import br.com.gitanalyzer.utils.SystemUtil;
 
 @Service
 public class TruckFactorService {
@@ -154,8 +158,13 @@ public class TruckFactorService {
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
-			project = new Project(projectName, repo.getPath(), 
-					projectService.extractProjectFullName(projectPath), projectService.getCurrentRevisionHash(projectPath));
+			try {
+				project = new Project(projectName, repo.getPath(), 
+						projectService.extractProjectFullName(projectPath), projectService.getCurrentRevisionHash(projectPath));
+			} catch (Exception e) {
+				project = new Project(projectName, repo.getPath(), 
+						null, projectService.getCurrentRevisionHash(projectPath));
+			}
 		}
 		//if (projectName.equals("rails") == true) {
 		//filteringProjectsCommentsStudy(project);
@@ -166,12 +175,14 @@ public class TruckFactorService {
 		//		}
 		if(project.isFiltered() == false) {
 			ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project.getCurrentPath(), project.getName());
+			//saveNumberFilesOfCommits(projectVersion.getCommits());
 			//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 			System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
 			List<AuthorFile> authorFiles = new ArrayList<AuthorFile>();
 			if(projectVersion.getContributors() != null && projectVersion.getCommits() != null && 
 					projectVersion.getFiles() != null && projectVersion.getContributors().size() > 0 && 
 					projectVersion.getCommits().size() > 0 && projectVersion.getFiles().size() > 0) {
+				long start = System.currentTimeMillis();
 				for(Contributor contributor: projectVersion.getContributors()) {
 					List<File> filesContributor = filesTouchedByContributor(contributor, projectVersion.getCommits());
 					for (File file : projectVersion.getFiles()) {
@@ -220,14 +231,17 @@ public class TruckFactorService {
 					for (Contributor topContributor : topContributors) {
 						for (Contributor contributor : projectVersion.getContributors()) {
 							if(topContributor.equals(contributor)) {
-								contributor.setPercentOfFilesAuthored(new BigDecimal(contributor.getNumberFilesAuthor()).divide(
-										new BigDecimal(projectVersion.getNumberAnalysedFiles()))); 
+								BigDecimal percentage = new BigDecimal(contributor.getNumberFilesAuthor()).divide(
+										new BigDecimal(projectVersion.getNumberAnalysedFiles()), 10, RoundingMode.HALF_UP);
+								contributor.setPercentOfFilesAuthored(percentage);
 								truckFactorDevelopers.add(contributor);
 							}
 						}
 					}
+					long end = System.currentTimeMillis();
+					float sec = (end - start) / 1000F;
 					TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
-							getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers);
+							getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers, (double) sec);
 					truckFactorRepository.save(truckFactor);
 					return truckFactor.toDto();
 				}
@@ -525,17 +539,26 @@ public class TruckFactorService {
 	}
 
 	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
+		ExecutorService executorService = Executors.newFixedThreadPool(10);//SystemUtil.getNumberOfProcessors());
 		java.io.File dir = new java.io.File(form.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				Project project = projectService.returnProjectByPath(projectPath);
 				if((project != null && project.isFiltered() == false) || project == null) {
-					historyRepoTruckFactor(HistoryReposTruckFactorForm.builder()
-							.knowledgeMetric(KnowledgeMetric.DOE)
-							.interval(form.getInterval())
-							.intervalType( form.getIntervalType())
-							.path(projectPath).build());
+					executorService.execute(() -> {
+						try {
+							historyRepoTruckFactor(HistoryReposTruckFactorForm.builder()
+									.knowledgeMetric(KnowledgeMetric.DOE)
+									.interval(form.getInterval())
+									.intervalType( form.getIntervalType())
+									.path(projectPath).build());
+						} catch (IOException | GitAPIException | InterruptedException | URISyntaxException e) {
+							e.printStackTrace();
+						}finally {
+							executorService.shutdown();
+						}
+					});
 				}
 			}
 		}

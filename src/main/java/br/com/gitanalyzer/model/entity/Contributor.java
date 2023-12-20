@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,6 +30,7 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
+	@Column(precision=12, scale=10)
 	private BigDecimal percentOfFilesAuthored;
 	private int numberFilesAuthor;
 	private boolean active;

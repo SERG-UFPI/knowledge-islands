@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.controllers;
+package br.com.gitanalyzer.api;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -60,7 +60,7 @@ public class TruckFactorController {
 		return null;
 	}
 
-	@PostMapping("history-repos-truck-factor")
+	@PostMapping("history-truck-factor-folder")
 	public ResponseEntity<?> historyReposTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
 		try {
 			service.historyReposTruckFactor(form);
@@ -70,7 +70,7 @@ public class TruckFactorController {
 		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
 
-	@PostMapping("history-repo-truck-factor")
+	@PostMapping("history-truck-factor")
 	public ResponseEntity<?> historyRepoTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
 		try {
 			service.historyRepoTruckFactor(form);

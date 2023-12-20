@@ -1,6 +1,7 @@
 
 package br.com.gitanalyzer.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ public class Constants {
 	public static final String pathScriptMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/predictionScript.R");
 	public static final String pathOutputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/output.csv");
 	
-	public static final String pathCommitFilesLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesLog.csv");
+	public static final String pathCommitFilesLog = new String("/home/otavio/estudo_ihealth/ihealth/commitFilesLog.csv");
 	public static final String pathCommitFilesFrequencyLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesFrequencyLog.csv");
 
 	public static List<String> invalidPaths = Arrays.asList(new String[]{"/dev/null"});
@@ -60,5 +61,21 @@ public class Constants {
 	public static final double thresholdPercentExpert = 0.01;
 
 	public static Map<String, String[]> projectPatterns  = new HashMap<String, String[]>();
+	
+	public static int intervalYearsProjectConsideredInactivate = 1;
+	public static int intervalYearsProjectAgeFilter = 2;
+	
+	public static List<String> projectsToRemoveInFiltering(){
+		List<String> notProjectSoftwareNames = new ArrayList<>();
+		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-integration-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-security-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-amqp-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-session-data-mongodb-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-ws-samples");
+		notProjectSoftwareNames.add("spring-projects/spring-hateoas-examples");
+		notProjectSoftwareNames.add("spring-projects/spring-data-book");
+		return notProjectSoftwareNames;
+	}
 
 }

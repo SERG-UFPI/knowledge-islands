@@ -30,9 +30,7 @@ import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.Constants;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class FilterProjectService {
 
@@ -40,50 +38,21 @@ public class FilterProjectService {
 	private ProjectRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
-	
+
 	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
 		List<Project> projects = projectRepository.findAll();
-		Calendar c = Calendar.getInstance();
-		c.setTime(new Date());
-		int calendarType = Calendar.YEAR;
-		c.add(calendarType, -1);
+		filterProjectsByAge(projects);
 		for (Project project : projects) {
-			if(project.getFirstCommitDate() != null && 
-					project.getFirstCommitDate().after(c.getTime())) {
+			if(project.getMainLanguage() == null ||
+					project.getMainLanguage().equals("Java") == false) {
 				project.setFiltered(true);
-				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
-			}
-		}
-		List<Project> projectFilteredLanguage = projects.stream().filter(p -> p.getMainLanguage() == null ||
-				p.getMainLanguage().equals("Java") == false).toList();
-		for (Project project : projectFilteredLanguage) {
-			project.setFiltered(true);
-			project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
-		}
-		List<String> notProjectSoftwareNames = new ArrayList<>();
-		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
-		notProjectSoftwareNames.add("spring-projects/spring-integration-samples");
-		notProjectSoftwareNames.add("spring-projects/spring-security-samples");
-		notProjectSoftwareNames.add("spring-projects/spring-amqp-samples");
-		notProjectSoftwareNames.add("spring-projects/spring-session-data-mongodb-examples");
-		notProjectSoftwareNames.add("spring-projects/spring-ws-samples");
-		notProjectSoftwareNames.add("spring-projects/spring-hateoas-examples");
-		notProjectSoftwareNames.add("spring-projects/spring-data-book");
-		List<Project> projectFilteredNames = projects.stream().filter(p -> notProjectSoftwareNames.contains(p.getFullName())).toList();
-		for (Project project : projectFilteredNames) {
-			project.setFiltered(true);
-			project.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
-		}
-		for (Project project : projects) {
-			if(project.getDownloadVersionDate() != null && 
-					project.getDownloadVersionDate().before(c.getTime())) {
-				project.setFiltered(true);
-				project.setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
+				project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
 				projectRepository.save(project);
 			}
 		}
-		projectRepository.saveAll(projectFilteredNames);
-		projectRepository.saveAll(projectFilteredLanguage);
+		filterNotSoftwareProjects(projects);
+		filterProjectsByInactive(projects);
+		projectRepository.saveAll(projects);
 	}
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
@@ -94,43 +63,75 @@ public class FilterProjectService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				Project project = projectService.returnProjectByPath(projectPath);
-				log.info("EXTRACTING DATA FROM "+project.getName());
 				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
 				version.setProject(project);
 				versions.add(version);
-				log.info("EXTRACTION FINISHED");
-
 			}
 		}
-		List<Project> projectsFiltered = new ArrayList<Project>();
 		Map<String, List<ProjectVersion>> versionMap = versions.stream().collect(Collectors.groupingBy(ProjectVersion::getProjectLanguage));
 		for(var entry: versionMap.entrySet()) {
-			projectsFiltered.addAll(filterProjectBySize(entry.getValue()));
+			filterProjectBySize(entry.getValue());
 		}
-		//		for(ProjectVersion version: versions) {
-		//			if(projectsFiltered.stream()
-		//					.anyMatch(p -> p.getId().equals(version.getProject().getId())) == false) {
-		//				log.info("FILTERING BY COMMITS-FILES "+version.getProject().getName());
-		//				if(filterProjectByCommits(version)) {
-		//					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-		//					projectsFiltered.add(version.getProject());
-		//				}
-		//			}
-		//		}
-		Calendar c = Calendar.getInstance();
-		c.setTime(new Date());
-		int calendarType = form.getIntervalType().equals(TimeIntervalTypeEnum.MONTH)?Calendar.MONTH:Calendar.YEAR;
-		c.add(calendarType, -form.getInterval());
-		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
-		for (Project project : projects) {
-			if(project.getFirstCommitDate().after(c.getTime())) {
-				projectsFiltered.add(project);
-				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
+		for(ProjectVersion version: versions) {
+			if(version.getProject().isFiltered() == false) {
+				if(filterProjectByCommits(version)) {
+					version.getProject().setFiltered(true);
+					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+					projectRepository.save(version.getProject());
+				}
 			}
 		}
-		for (Project project : projectsFiltered) {
-			project.setFiltered(true);
-			projectRepository.save(project);
+		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
+		filterProjectsByAge(projects);
+		for (Project project : projects) {
+			if(project.getMainLanguage() == null) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
+				projectRepository.save(project);
+			}
+		}
+		filterNotSoftwareProjects(projects);
+		filterProjectsByInactive(projects);
+	}
+
+	public void filterNotSoftwareProjects(List<Project> projects) {
+		List<String> notProjectSoftwareNames = Constants.projectsToRemoveInFiltering();
+		for (Project project : projects) {
+			if(notProjectSoftwareNames.contains(project.getFullName()) && project.isFiltered() == false) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
+				projectRepository.save(project);
+			}
+		}
+	}
+
+	public void filterProjectsByInactive(List<Project> projects) {
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		int calendarType = Calendar.YEAR;
+		c.add(calendarType, -Constants.intervalYearsProjectConsideredInactivate);
+		for (Project project : projects) {
+			if(project.getDownloadVersionDate() != null && 
+					project.getDownloadVersionDate().before(c.getTime()) && project.isFiltered() == false) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
+				projectRepository.save(project);
+			}
+		}
+	}
+
+	public void filterProjectsByAge(List<Project> projects) {
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		int calendarType = Calendar.YEAR;
+		c.add(calendarType, -Constants.intervalYearsProjectAgeFilter);
+		for (Project project : projects) {
+			if(project.getFirstCommitDate() != null && 
+					project.getFirstCommitDate().after(c.getTime()) && project.isFiltered() == false) {
+				project.setFiltered(true);
+				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
+				projectRepository.save(project);
+			}
 		}
 	}
 
@@ -172,7 +173,7 @@ public class FilterProjectService {
 		return firstCommits;
 	}
 
-	private List<Project> filterProjectBySize(List<ProjectVersion> versions) {
+	private void filterProjectBySize(List<ProjectVersion> versions) {
 		List<Double> devs = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedDevs())).toList();
 		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAllCommits())).toList();
 		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAllFiles())).toList();
@@ -204,7 +205,10 @@ public class FilterProjectService {
 		projects.addAll(versions.stream().filter(v -> v.getNumberAllCommits() < firstQCommits).map(v -> v.getProject()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAllFiles() < firstQFiles).map(v -> v.getProject()).toList());
 		projects.stream().forEach(pr -> pr.setFilteredReason(FilteredEnum.SIZE));
-		return new ArrayList<>(projects);
+		projects.stream().forEach(pr -> pr.setFiltered(true));
+		for (Project project : projects) {
+			projectRepository.save(project);
+		}
 	}
 
 }

@@ -1,25 +1,26 @@
-package br.com.gitanalyzer.controllers;
+package br.com.gitanalyzer.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.service.TruckFactorProcessService;
+import br.com.gitanalyzer.service.UserService;
 
 @RestController
-@RequestMapping("/api/truck-factor-process")
+@RequestMapping("/api/user")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
-public class TruckFactorProcessController {
+public class UserController {
 
 	@Autowired
-	private TruckFactorProcessService service;
+	private UserService service;
 
-	@GetMapping("/{id}")
-	public ResponseEntity<?> getProcessesByUserId(@PathVariable("id") Long id) throws Exception{
-		return ResponseEntity.ok(service.getByUserId(id));
+	@GetMapping("/verify")
+	public ResponseEntity<?> verify(@RequestParam String code){
+		return ResponseEntity.ok(service.verify(code));
 	}
+	
 }

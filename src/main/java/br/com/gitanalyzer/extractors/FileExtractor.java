@@ -15,10 +15,10 @@ import br.com.gitanalyzer.utils.Constants;
 
 public class FileExtractor {
 
-	public int extractSizeAllFiles(String path, String fileList) {
+	public int extractSizeAllFiles(String path) {
 		int lines = 0;
 		try {
-			FileInputStream fstream = new FileInputStream(path+fileList);
+			FileInputStream fstream = new FileInputStream(path+Constants.allFilesFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
@@ -110,7 +110,7 @@ public class FileExtractor {
 	}
 
 
-	public List<File> extractFilesFromClocFile(String path, String clocFileName, String projectName) {
+	public List<File> extractFilesFromClocFile(String path, String projectName) {
 
 		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
@@ -125,9 +125,9 @@ public class FileExtractor {
 
 		List<File> files = new ArrayList<File>();
 		String strLineCloc;
-		String clocListfullPath = path+clocFileName;
+		String clocListPath = path+Constants.clocFileName;
 		try {
-			FileInputStream fstreamCloc = new FileInputStream(clocListfullPath);
+			FileInputStream fstreamCloc = new FileInputStream(clocListPath);
 			BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));
 			whileFile: while ((strLineCloc = brCloc.readLine()) != null) {
 				String[] splitedLine = strLineCloc.split(";");
