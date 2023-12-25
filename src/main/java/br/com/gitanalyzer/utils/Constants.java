@@ -65,6 +65,9 @@ public class Constants {
 	public static int intervalYearsProjectConsideredInactivate = 1;
 	public static int intervalYearsProjectAgeFilter = 2;
 	
+	public static int numberOfThreadsToGenerateLogsFiles = 9;
+	public static int numberOfThreadsToCalculateTf = 3;
+	
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
@@ -75,6 +78,9 @@ public class Constants {
 		notProjectSoftwareNames.add("spring-projects/spring-ws-samples");
 		notProjectSoftwareNames.add("spring-projects/spring-hateoas-examples");
 		notProjectSoftwareNames.add("spring-projects/spring-data-book");
+		notProjectSoftwareNames.add("iluwatar/java-design-patterns");
+		notProjectSoftwareNames.add("eugenp/tutorials");
+		
 		return notProjectSoftwareNames;
 	}
 

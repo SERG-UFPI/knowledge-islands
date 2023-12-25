@@ -2,8 +2,6 @@ package br.com.gitanalyzer.extractors;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +14,7 @@ import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.QualityMeasures;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
 
 public class ProjectVersionExtractor {
@@ -49,12 +47,7 @@ public class ProjectVersionExtractor {
 		contributors = setAlias(contributors, projectName);
 		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 		int numberAnalysedDevs = contributors.size();
-		Collections.sort(commits, new Comparator<Commit>() {
-			@Override
-			public int compare(Commit c1, Commit c2) {
-				return c2.getDate().compareTo(c1.getDate());
-			}
-		});
+		CommitUtils.sortCommitsByDate(commits);
 		long end = System.currentTimeMillis();
 		float sec = (end - start) / 1000F;
 		ProjectVersion projectVersion = new ProjectVersion(numberAnalysedDevs, 

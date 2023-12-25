@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
-import br.com.gitanalyzer.enums.TimeIntervalTypeEnum;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
@@ -29,6 +28,7 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.Constants;
 
 @Service
@@ -72,15 +72,6 @@ public class FilterProjectService {
 		for(var entry: versionMap.entrySet()) {
 			filterProjectBySize(entry.getValue());
 		}
-		for(ProjectVersion version: versions) {
-			if(version.getProject().isFiltered() == false) {
-				if(filterProjectByCommits(version)) {
-					version.getProject().setFiltered(true);
-					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-					projectRepository.save(version.getProject());
-				}
-			}
-		}
 		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
 		filterProjectsByAge(projects);
 		for (Project project : projects) {
@@ -92,6 +83,15 @@ public class FilterProjectService {
 		}
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
+		for(ProjectVersion version: versions) {
+			if(version.getProject().isFiltered() == false) {
+				if(filterProjectByCommits(version)) {
+					version.getProject().setFiltered(true);
+					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+					projectRepository.save(version.getProject());
+				}
+			}
+		}
 	}
 
 	public void filterNotSoftwareProjects(List<Project> projects) {
@@ -138,12 +138,13 @@ public class FilterProjectService {
 	private boolean filterProjectByCommits(ProjectVersion version) {
 		FileExtractor fileExtractor = new FileExtractor();
 		CommitExtractor commitExtractor = new CommitExtractor();
-		List<File> files = fileExtractor.extractFileList(version.getProject().getCurrentPath(), Constants.linguistFileName, null);
+		List<File> files = fileExtractor.extractFilesFromClocFile(version.getProject().getCurrentPath(), version.getProject().getName());
 		fileExtractor.getRenamesFiles(version.getProject().getCurrentPath(), files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getProject().getCurrentPath());
+		CommitUtils.sortCommitsByDate(commits);
 		commits = getFirst20Commits(commits);
 		commits = commitExtractor.extractCommitsFiles(version.getProject().getCurrentPath(), commits, files);
-		int numberOfFiles = version.getNumberAnalysedFiles();
+		int numberOfFiles = files.size();
 		List<File> addedFiles = new ArrayList<File>();
 		for(Commit commit: commits) {
 			for (CommitFile commitFile : commit.getCommitFiles()) {

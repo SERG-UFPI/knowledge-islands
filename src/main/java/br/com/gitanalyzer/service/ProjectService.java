@@ -12,9 +12,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,7 @@ import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 
 @Service
@@ -232,13 +236,26 @@ public class ProjectService {
 	}
 
 	public void generateLogFilesFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
+		System.out.println("======= Generating logs from folder "+folderPath+" =======");
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				generateLogFiles(projectPath);
+				CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+					try {
+						generateLogFiles(projectPath);
+					} catch (URISyntaxException | IOException | InterruptedException e) {
+						e.printStackTrace();
+					}
+				}, executorService);
+				futures.add(future);
 			}
 		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
+		System.out.println("======= End generating logs from folder "+folderPath+" =======");
 	}
 
 	public void generateLogFilesFolderWithoutCloc(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -270,7 +287,7 @@ public class ProjectService {
 			projectRepository.save(project);
 		}
 	}
-	
+
 	public void setDownloadVersionDate(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		Project project = returnProjectByPath(projectPath);

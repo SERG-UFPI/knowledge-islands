@@ -41,7 +41,7 @@ public class ProjectController {
 		return ResponseEntity.ok(projectService.createFolderProjectLogs(form));
 	}
 
-	@PostMapping("/filtering")
+	@PostMapping("/filter-projects-folder")
 	public ResponseEntity<?> filteringProjects(@RequestBody FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filter(form);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");

@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -30,6 +33,8 @@ import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.utils.AsyncUtils;
+import br.com.gitanalyzer.utils.Constants;
 
 @Service
 public class DownloaderService {
@@ -46,9 +51,18 @@ public class DownloaderService {
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
+				ExecutorService executorService = Executors.newFixedThreadPool(5);
+				List<CompletableFuture<Void>> futures = new ArrayList<>();
 				for (LanguageEnum language : LanguageEnum.values()) {
 					System.out.println("=========== Download "+language.getName()+" project ==================");
-					downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
+					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+						try {
+							downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}, executorService);
+					futures.add(future);
 				}
 			}else {
 				System.out.println("=========== Download "+form.getLanguage().getName()+" project ==================");
