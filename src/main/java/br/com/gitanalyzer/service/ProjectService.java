@@ -124,16 +124,27 @@ public class ProjectService {
 	}
 
 	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				File commitFile = new File(projectPath+Constants.commitFileName);
-				if(commitFile.exists() == false) {
-					generateCommitFile(projectPath);
-				}
+				//if(commitFile.exists() == false) {
+				CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+					try {
+						generateCommitFile(projectPath);
+					} catch (URISyntaxException | IOException | InterruptedException e) {
+						e.printStackTrace();
+					}
+				}, executorService);
+				futures.add(future);
+				//}
 			}
 		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 	}
 
 	public void generateCommitFileFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
@@ -282,7 +293,7 @@ public class ProjectService {
 	public void setFirstDateProject(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		Project project = returnProjectByPath(projectPath);
-		if(project.getFirstCommitDate() == null) {
+		if(project != null && project.getFirstCommitDate() == null) {
 			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
 			projectRepository.save(project);
 		}
@@ -291,7 +302,7 @@ public class ProjectService {
 	public void setDownloadVersionDate(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		Project project = returnProjectByPath(projectPath);
-		if(project.getDownloadVersionDate() == null) {
+		if(project != null && project.getDownloadVersionDate() == null) {
 			project.setDownloadVersionDate(commitExtractor.getLastCommitDate(projectPath));
 			projectRepository.save(project);
 		}

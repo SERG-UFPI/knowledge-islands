@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.QualityMeasures;
 import br.com.gitanalyzer.utils.CommitUtils;
@@ -24,27 +25,30 @@ public class ProjectVersionExtractor {
 	private ContributorUtils contributorUtils = new ContributorUtils();
 	private CkMeasuresExtractor ckMeasuresExtractor = new CkMeasuresExtractor();
 
-	public ProjectVersion extractProjectVersion(String projectPath, String projectName) throws IOException {
+	public ProjectVersion extractProjectVersion(Project project) throws IOException {
 		long start = System.currentTimeMillis();
-		System.out.println("EXTRACTING PROJECT VERSION OF "+projectName);
-		QualityMeasures qualityMeasures = ckMeasuresExtractor.extract(projectPath);
-		if(projectPath.substring(projectPath.length() -1).equals("/") == false) {
-			projectPath = projectPath+"/";
+		System.out.println("EXTRACTING PROJECT VERSION OF "+project.getName());
+		if(project.getCurrentPath().substring(project.getCurrentPath().length() -1).equals("/") == false) {
+			project.setCurrentPath(project.getCurrentPath()+"/");
 		}
-		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath);
-		List<File> files = fileExtractor.extractFilesFromClocFile(projectPath, projectName);
+		QualityMeasures qualityMeasures = null;
+		if(project.getMainLanguage() != null && project.getMainLanguage().equals("Java")) {
+			qualityMeasures = ckMeasuresExtractor.extract(project.getCurrentPath());
+		}
+		int numberAllFiles = fileExtractor.extractSizeAllFiles(project.getCurrentPath());
+		List<File> files = fileExtractor.extractFilesFromClocFile(project.getCurrentPath(), project.getName());
 		int numberAnalysedFiles = files.size();
-		fileExtractor.getRenamesFiles(projectPath, files);
-		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
+		fileExtractor.getRenamesFiles(project.getCurrentPath(), files);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(project.getCurrentPath());
 		Date dateVersion = commits.get(0).getDate();
 		String versionId = commits.get(0).getExternalId();
 		int numberAllCommits = commits.size();
-		commits = commitExtractor.extractCommitsFiles(projectPath, commits, files);
+		commits = commitExtractor.extractCommitsFiles(project.getCurrentPath(), commits, files);
 		commits.removeIf(c -> c.getCommitFiles().size() == 0);
-		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(projectPath, commits, files);
+		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(project.getCurrentPath(), commits, files);
 		int numberAnalysedCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
-		contributors = setAlias(contributors, projectName);
+		contributors = setAlias(contributors, project.getName());
 		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 		int numberAnalysedDevs = contributors.size();
 		CommitUtils.sortCommitsByDate(commits);

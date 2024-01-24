@@ -4,8 +4,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -174,7 +171,7 @@ public class TruckFactorService {
 		//			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
 		//			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
 		//		}
-		ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project.getCurrentPath(), project.getName());
+		ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project);
 		//saveNumberFilesOfCommits(projectVersion.getCommits());
 		//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 		System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
@@ -226,22 +223,18 @@ public class TruckFactorService {
 			}
 			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
 				projectVersion.setProject(project);
-				projectVersionRepository.save(projectVersion);
-				List<Contributor> truckFactorDevelopers = new ArrayList<>();
-				for (Contributor topContributor : topContributors) {
-					for (Contributor contributor : projectVersion.getContributors()) {
-						if(topContributor.equals(contributor)) {
-							BigDecimal percentage = new BigDecimal(contributor.getNumberFilesAuthor()).divide(
-									new BigDecimal(projectVersion.getNumberAnalysedFiles()), 10, RoundingMode.HALF_UP);
-							contributor.setPercentOfFilesAuthored(percentage);
-							truckFactorDevelopers.add(contributor);
-						}
+				for (Contributor contributor : projectVersion.getContributors()) {
+					if(contributor.getNumberFilesAuthor() > 0) {
+						contributor.setPercentOfFilesAuthored(Double.valueOf((double)contributor.getNumberFilesAuthor()/projectVersion.getNumberAnalysedFiles()));
+					}else {
+						contributor.setPercentOfFilesAuthored(0.0);
 					}
 				}
+				projectVersionRepository.save(projectVersion);
 				long end = System.currentTimeMillis();
 				float sec = (end - start) / 1000F;
 				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
-						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), truckFactorDevelopers, (double) sec);
+						getImplicatedFiles(coveredFiles, projectVersion.getFiles()), topContributors, (double) sec);
 				truckFactorRepository.save(truckFactor);
 				return truckFactor.toDto();
 			}

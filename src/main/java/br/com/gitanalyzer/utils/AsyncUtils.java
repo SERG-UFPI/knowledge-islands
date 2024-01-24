@@ -8,8 +8,12 @@ public class AsyncUtils {
 	public static ExecutorService getExecutorServiceForLogs() {
 		return Executors.newFixedThreadPool(Constants.numberOfThreadsToGenerateLogsFiles);
 	}
-	
+
 	public static ExecutorService getExecutorServiceForTf() {
 		return Executors.newFixedThreadPool(Constants.numberOfThreadsToCalculateTf);
+	}
+
+	public static ExecutorService getExecutorServiceForDownloadProjects() {
+		return Executors.newFixedThreadPool(Constants.numberOfThreadsToDonwloadProjects);
 	}
 }

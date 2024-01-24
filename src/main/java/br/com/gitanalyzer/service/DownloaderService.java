@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -34,7 +33,7 @@ import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.SystemUtil;
 
 @Service
 public class DownloaderService {
@@ -49,21 +48,26 @@ public class DownloaderService {
 	private ProjectService projectService;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
+		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
-				ExecutorService executorService = Executors.newFixedThreadPool(5);
+				ExecutorService executorService = AsyncUtils.getExecutorServiceForDownloadProjects();
 				List<CompletableFuture<Void>> futures = new ArrayList<>();
 				for (LanguageEnum language : LanguageEnum.values()) {
-					System.out.println("=========== Download "+language.getName()+" project ==================");
-					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-						try {
-							downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}, executorService);
-					futures.add(future);
+					if(language.equals(LanguageEnum.ALL) == false) {
+						CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+							try {
+								downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}, executorService);
+						futures.add(future);
+					}
 				}
+				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+				executorService.shutdown();
+				System.out.println("=========== End of project cloning ==================");
 			}else {
 				System.out.println("=========== Download "+form.getLanguage().getName()+" project ==================");
 				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
@@ -90,13 +94,38 @@ public class DownloaderService {
 		Github github = new RtGithub(token);
 		List<ProjectInfo> projectsInfo = null;
 		projectsInfo = searchRepositoriesPerOrganization(github, query);
-		cloneAndSaveRepos(projectsInfo, form.getPath());
+		cloneAndSaveReposOrg(projectsInfo, form.getPath());
 	}
 
 	public void downloaderPerLanguage(String query, DownloaderPerLanguageForm form) throws IOException {
 		Github github = new RtGithub(token);
 		List<ProjectInfo> projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
 		cloneAndSaveRepos(projectsInfo, form.getPath());
+	}
+
+	private void cloneAndSaveReposOrg(List<ProjectInfo> projectsInfo, String path) {
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForDownloadProjects();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (ProjectInfo projectInfo : projectsInfo) {
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					System.out.println("Cloning " + projectInfo.getFullName());
+					boolean flag = cloneIfNotExists(projectInfo, path);
+					if(flag) {
+						String projectPath = path+projectInfo.getName()+"/";
+						Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
+								projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
+								projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
+						projectRepository.save(project);
+					}
+				} catch (Exception e) {
+					System.out.println("Failure on clone "+projectInfo.getFullName());
+				}
+			}, executorService);
+			futures.add(future);
+		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 	}
 
 	private void cloneAndSaveRepos(List<ProjectInfo> projectsInfo, String path) {
@@ -112,7 +141,7 @@ public class DownloaderService {
 					projectRepository.save(project);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.out.println("Failure on clone "+projectInfo.getFullName());
 			}
 		}
 	}

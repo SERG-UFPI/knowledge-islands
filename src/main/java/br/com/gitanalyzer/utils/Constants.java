@@ -66,7 +66,8 @@ public class Constants {
 	public static int intervalYearsProjectAgeFilter = 2;
 	
 	public static int numberOfThreadsToGenerateLogsFiles = 9;
-	public static int numberOfThreadsToCalculateTf = 3;
+	public static int numberOfThreadsToCalculateTf = 7;
+	public static int numberOfThreadsToDonwloadProjects = 4;
 	
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
@@ -78,9 +79,15 @@ public class Constants {
 		notProjectSoftwareNames.add("spring-projects/spring-ws-samples");
 		notProjectSoftwareNames.add("spring-projects/spring-hateoas-examples");
 		notProjectSoftwareNames.add("spring-projects/spring-data-book");
-		notProjectSoftwareNames.add("iluwatar/java-design-patterns");
 		notProjectSoftwareNames.add("eugenp/tutorials");
-		
+		notProjectSoftwareNames.add("GrowingGit/GitHub-Chinese-Top-Charts");
+		notProjectSoftwareNames.add("521xueweihan/HelloGitHub");
+		notProjectSoftwareNames.add("microsoft/Web-Dev-For-Beginners");
+		notProjectSoftwareNames.add("ryanmcdermott/clean-code-javascript");
+		notProjectSoftwareNames.add("yangshun/tech-interview-handbook");
+		notProjectSoftwareNames.add("bregman-arie/devops-exercises");
+		notProjectSoftwareNames.add("josephmisiti/awesome-machine-learning");
+		notProjectSoftwareNames.add("trekhleb/javascript-algorithms");
 		return notProjectSoftwareNames;
 	}
 
