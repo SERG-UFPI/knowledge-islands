@@ -115,23 +115,26 @@ public class CommitExtractor {
 						String idCommit = commitSplited[0];
 						String authorName = commitSplited[1];
 						String authorEmail = commitSplited[2];
-						String time = commitSplited[3];
-						Contributor contributorCommit = null;
-						for (Contributor contributor : contributors) {
-							if(contributor.getName().equals(authorName)
-									&& contributor.getEmail().equals(authorEmail)) {
-								contributorCommit = contributor;
-								break;
+						if(authorName != null && authorEmail != null 
+								&& !authorEmail.contains(Constants.noreply)) {
+							String time = commitSplited[3];
+							Contributor contributorCommit = null;
+							for (Contributor contributor : contributors) {
+								if(contributor.getName().equals(authorName)
+										&& contributor.getEmail().equals(authorEmail)) {
+									contributorCommit = contributor;
+									break;
+								}
 							}
+							if(contributorCommit == null) {
+								contributorCommit = new Contributor(authorName, authorEmail);
+								contributors.add(contributorCommit);
+							}
+							Integer timeInt = Integer.parseInt(time);
+							Instant instant = Instant.ofEpochSecond(timeInt);
+							Date commitDate = Date.from(instant);
+							commits.add(new Commit(contributorCommit, commitDate, idCommit));
 						}
-						if(contributorCommit == null) {
-							contributorCommit = new Contributor(authorName, authorEmail);
-							contributors.add(contributorCommit);
-						}
-						Integer timeInt = Integer.parseInt(time);
-						Instant instant = Instant.ofEpochSecond(timeInt);
-						Date commitDate = Date.from(instant);
-						commits.add(new Commit(contributorCommit, commitDate, idCommit));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

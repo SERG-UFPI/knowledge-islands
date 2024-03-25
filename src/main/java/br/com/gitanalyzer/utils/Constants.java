@@ -69,6 +69,17 @@ public class Constants {
 	public static int numberOfThreadsToCalculateTf = 7;
 	public static int numberOfThreadsToDonwloadProjects = 4;
 	
+	public static String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
+	
+	public static String noreply = ".noreply";
+	public static String chatGptShare = "https://chat.openai.com/share/";
+	
+	public static String openAiJsonStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\" crossorigin=\"anonymous\">";
+	public static String openAiJsonEnd = "</script><script>";
+	public static String openAiCodeJsonDelimiter = "```";
+	
+	public static String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
+	
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
@@ -88,6 +99,8 @@ public class Constants {
 		notProjectSoftwareNames.add("bregman-arie/devops-exercises");
 		notProjectSoftwareNames.add("josephmisiti/awesome-machine-learning");
 		notProjectSoftwareNames.add("trekhleb/javascript-algorithms");
+		notProjectSoftwareNames.add("spring-projects/security-advisories");
+		notProjectSoftwareNames.add("spring-projects/spring-aot-smoke-tests");
 		return notProjectSoftwareNames;
 	}
 

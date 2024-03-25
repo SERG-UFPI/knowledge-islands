@@ -39,17 +39,16 @@ public class FilterProjectService {
 	@Autowired
 	private ProjectService projectService;
 
-	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
+	public void filterEcoSpringHistory() throws URISyntaxException, IOException, InterruptedException {
 		List<Project> projects = projectRepository.findAll();
 		filterProjectsByAge(projects);
-		for (Project project : projects) {
-			if(project.getMainLanguage() == null ||
-					project.getMainLanguage().equals("Java") == false) {
-				project.setFiltered(true);
-				project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
-				projectRepository.save(project);
-			}
-		}
+		filterNotSoftwareProjects(projects);
+		filterProjectsByInactive(projects);
+		projectRepository.saveAll(projects);
+	}
+	
+	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
+		List<Project> projects = projectRepository.findAll();
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
 		projectRepository.saveAll(projects);

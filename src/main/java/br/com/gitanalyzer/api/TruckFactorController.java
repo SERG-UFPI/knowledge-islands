@@ -35,7 +35,7 @@ public class TruckFactorController {
 		return ResponseEntity.ok(service.getTruckFactorById(id));
 	}
 
-	@PostMapping("repos-truck-factor")
+	@PostMapping("repo-truck-factor-folder")
 	public ResponseEntity<?> directoriesTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
 			service.directoriesTruckFactorAnalyzes(form);

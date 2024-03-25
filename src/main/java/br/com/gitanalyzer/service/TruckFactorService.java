@@ -35,9 +35,6 @@ import br.com.gitanalyzer.enums.KnowledgeMetric;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.enums.StageEnum;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
-import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
-import br.com.gitanalyzer.main.vo.CommitFiles;
-import br.com.gitanalyzer.main.vo.MlOutput;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
@@ -50,6 +47,8 @@ import br.com.gitanalyzer.model.entity.ProjectVersion;
 import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.model.entity.User;
+import br.com.gitanalyzer.model.vo.CommitFiles;
+import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.repository.ProjectVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
@@ -65,9 +64,10 @@ public class TruckFactorService {
 
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
-	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
+	@Autowired
+	private ProjectVersionService projectVersionService;
 	@Autowired
 	private ProjectRepository projectRepository;
 	@Autowired
@@ -171,7 +171,7 @@ public class TruckFactorService {
 		//			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
 		//			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
 		//		}
-		ProjectVersion projectVersion = projectVersionExtractor.extractProjectVersion(project);
+		ProjectVersion projectVersion = projectVersionService.extractProjectVersion(project);
 		//saveNumberFilesOfCommits(projectVersion.getCommits());
 		//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 		System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
@@ -412,16 +412,31 @@ public class TruckFactorService {
 		return files;
 	}
 
-	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricForm request) throws IOException, 
-	NoHeadException, GitAPIException{
+	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricForm request) throws IOException, NoHeadException, GitAPIException{
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForTf();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(request.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				RepositoryKnowledgeMetricForm repo = new RepositoryKnowledgeMetricForm(projectPath, request.getKnowledgeMetric());
-				generateTruckFactorProject(repo);
+				Project project = projectService.returnProjectByPath(projectPath);
+				if(project != null && project.isFiltered() == false) {
+					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+						try {
+							RepositoryKnowledgeMetricForm repo = new RepositoryKnowledgeMetricForm(projectPath, request.getKnowledgeMetric());
+							generateTruckFactorProject(repo);
+						} catch (IOException | GitAPIException e) {
+							e.printStackTrace();
+						}finally {
+							executorService.shutdown();
+						}
+					}, executorService);
+					futures.add(future);
+				}
 			}
 		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 	}
 
 	protected List<File> getCoverageFiles(List<Contributor> contributors, List<File> files, KnowledgeMetric knowledgeMetric) {

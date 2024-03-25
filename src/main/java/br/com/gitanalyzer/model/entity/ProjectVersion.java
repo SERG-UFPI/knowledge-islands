@@ -11,7 +11,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -46,18 +45,16 @@ public class ProjectVersion {
 	private List<File> files;
 	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "projectVersion")
 	private List<TruckFactor> truckFactors;
-
 	@javax.persistence.Transient
 	private List<Commit> commits;
-
-	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private QualityMeasures meanClassQualityMeasures;
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<ProjectDependency> dependencies;
 	private Double timeToExtract;
 
 	public ProjectVersion(int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
-			String versionId, List<Contributor> contributors, QualityMeasures qualityMeasures, 
-			List<Commit> commits, List<File> files, Double timeToExtract) {
+			String versionId, List<Contributor> contributors, 
+			List<Commit> commits, List<File> files, Double timeToExtract, List<ProjectDependency> dependencies) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAllFiles = numberAllFiles;
@@ -67,10 +64,10 @@ public class ProjectVersion {
 		this.dateVersion = dateVersion;
 		this.versionId = versionId;
 		this.contributors = contributors;
-		this.meanClassQualityMeasures = qualityMeasures;
 		this.commits = commits;
 		this.files = files;
 		this.timeToExtract = timeToExtract;
+		this.dependencies = dependencies;
 	}
 
 	public String getProjectLanguage() {

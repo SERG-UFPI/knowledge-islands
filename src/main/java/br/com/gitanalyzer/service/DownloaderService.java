@@ -29,8 +29,8 @@ import br.com.gitanalyzer.dto.form.CloneRepoForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
-import br.com.gitanalyzer.model.ProjectInfo;
 import br.com.gitanalyzer.model.entity.Project;
+import br.com.gitanalyzer.model.github_openai.ProjectGitHub;
 import br.com.gitanalyzer.repository.ProjectRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.SystemUtil;
@@ -92,21 +92,21 @@ public class DownloaderService {
 
 	public void downloaderPerOrg(String query, DownloaderPerOrgForm form) throws IOException {
 		Github github = new RtGithub(token);
-		List<ProjectInfo> projectsInfo = null;
+		List<ProjectGitHub> projectsInfo = null;
 		projectsInfo = searchRepositoriesPerOrganization(github, query);
 		cloneAndSaveReposOrg(projectsInfo, form.getPath());
 	}
 
 	public void downloaderPerLanguage(String query, DownloaderPerLanguageForm form) throws IOException {
 		Github github = new RtGithub(token);
-		List<ProjectInfo> projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
+		List<ProjectGitHub> projectsInfo = searchRepositoriesPerLanguage(github, form.getNumRepository(), query);
 		cloneAndSaveRepos(projectsInfo, form.getPath());
 	}
 
-	private void cloneAndSaveReposOrg(List<ProjectInfo> projectsInfo, String path) {
+	private void cloneAndSaveReposOrg(List<ProjectGitHub> projectsInfo, String path) {
 		ExecutorService executorService = AsyncUtils.getExecutorServiceForDownloadProjects();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
-		for (ProjectInfo projectInfo : projectsInfo) {
+		for (ProjectGitHub projectInfo : projectsInfo) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
 					System.out.println("Cloning " + projectInfo.getFullName());
@@ -128,8 +128,8 @@ public class DownloaderService {
 		executorService.shutdown();
 	}
 
-	private void cloneAndSaveRepos(List<ProjectInfo> projectsInfo, String path) {
-		for (ProjectInfo projectInfo : projectsInfo) {
+	private void cloneAndSaveRepos(List<ProjectGitHub> projectsInfo, String path) {
+		for (ProjectGitHub projectInfo : projectsInfo) {
 			try {
 				System.out.println("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
@@ -146,7 +146,7 @@ public class DownloaderService {
 		}
 	}
 
-	public boolean cloneIfNotExists(ProjectInfo projectInfo, String path) throws Exception {
+	public boolean cloneIfNotExists(ProjectGitHub projectInfo, String path) throws Exception {
 		String cloneUrl = projectInfo.getCloneUrl();
 		String branch = projectInfo.getDefault_branch();
 		File folder = new File(path+projectInfo.getName()+"/");
@@ -160,7 +160,7 @@ public class DownloaderService {
 		return false;
 	}
 
-	public List<ProjectInfo> searchRepositoriesPerLanguage(Github github, int numRepository, String query) throws IOException {
+	public List<ProjectGitHub> searchRepositoriesPerLanguage(Github github, int numRepository, String query) throws IOException {
 		Request request = github.entry()
 				.uri().path("/search/repositories")
 				.queryParam("q", query )
@@ -172,7 +172,7 @@ public class DownloaderService {
 		return getProjectsInfo(request, query);
 	}
 
-	public List<ProjectInfo> searchRepositoriesPerOrganization(Github github, String query) throws IOException {
+	public List<ProjectGitHub> searchRepositoriesPerOrganization(Github github, String query) throws IOException {
 		Request request = github.entry()
 				.uri().path("/search/repositories")
 				.queryParam("q", query )
@@ -184,19 +184,19 @@ public class DownloaderService {
 		return getProjectsInfo(request, query);
 	}
 
-	private List<ProjectInfo> getProjectsInfo(Request request, String query) throws IOException{
-		List<ProjectInfo> projectsInfo = new ArrayList<ProjectInfo>();
+	private List<ProjectGitHub> getProjectsInfo(Request request, String query) throws IOException{
+		List<ProjectGitHub> projectsInfo = new ArrayList<ProjectGitHub>();
 		projectsInfo.addAll(findRepos(request, query));
 		return projectsInfo;
 	}
 
-	public List<ProjectInfo> findRepos(Request request, String query) throws IOException {
+	public List<ProjectGitHub> findRepos(Request request, String query) throws IOException {
 		JsonArray items = request.fetch().as(JsonResponse.class).json().readObject().getJsonArray("items");
 
-		List<ProjectInfo> projects = new ArrayList<ProjectInfo>();
+		List<ProjectGitHub> projects = new ArrayList<ProjectGitHub>();
 		for (JsonValue item : items) {
 			JsonObject repoData = (JsonObject) item;
-			ProjectInfo p = new ProjectInfo();
+			ProjectGitHub p = new ProjectGitHub();
 			if (!repoData.isNull("full_name")){
 				p.setFullName(repoData.getString("full_name"));
 				p.setName(repoData.getString("name"));
