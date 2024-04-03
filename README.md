@@ -19,4 +19,5 @@ The main endpoints to achieve these goals are:
 In the same controllers are endpoints to perform the same tasks in folders with several repositories.
    
 ## References
-<a id="1">[1]</a> Cury, Otávio, et al. "Identifying Source Code File Experts." Proceedings of the 16th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement. 2022.
+<a id="1">[1]</a> Cury, Otávio, et al. "Identifying Source Code File Experts." Proceedings of the 16th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement. 2022.<br/>
+<a id="2">[2]</a> Cury, Otávio, et al. "Source code expert identification: Models and application." Information and Software Technology (2024): 107445.
