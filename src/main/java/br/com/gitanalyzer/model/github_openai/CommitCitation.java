@@ -8,9 +8,7 @@ import br.com.gitanalyzer.model.entity.Contributor;
 public class CommitCitation implements ChatgptCitation{
 
 	private String repositoryFullName;
-	private List<String> textMatchesFragments;
-	private Date citationDate;
-	private Contributor author;
+	private List<SharedLink> sharedLinks;
 	private Date commiterDate;
 	private Contributor commiter;
 	private String url;
@@ -18,7 +16,7 @@ public class CommitCitation implements ChatgptCitation{
 	private String nodeId;
 	private String htmlUrl;
 	private String commentsUrl;
-	private List<FileDoe> filesDoes;
+	private List<FileAuthor> filesAuthor;
 	public String getUrl() {
 		return url;
 	}
@@ -57,35 +55,11 @@ public class CommitCitation implements ChatgptCitation{
 	public void setRepositoryFullName(String repositoryFullName) {
 		this.repositoryFullName = repositoryFullName;
 	}
-	@Override
-	public List<String> getTextMatchesFragments() {
-		return textMatchesFragments;
+	public List<FileAuthor> getFilesAuthor() {
+		return filesAuthor;
 	}
-	@Override
-	public void setTextMatchesFragments(List<String> textMatchesFragments) {
-		this.textMatchesFragments = textMatchesFragments;
-	}
-	@Override
-	public Contributor getAuthor() {
-		return author;
-	}
-	@Override
-	public void setAuthor(Contributor author) {
-		this.author = author;
-	}
-	@Override
-	public Date getCitationDate() {
-		return citationDate;
-	}
-	@Override
-	public void setCitationDate(Date citationDate) {
-		this.citationDate = citationDate;
-	}
-	public List<FileDoe> getFilesDoes() {
-		return filesDoes;
-	}
-	public void setFilesDoes(List<FileDoe> filesDoes) {
-		this.filesDoes = filesDoes;
+	public void setFilesAuthor(List<FileAuthor> filesAuthor) {
+		this.filesAuthor = filesAuthor;
 	}
 	public Date getCommiterDate() {
 		return commiterDate;
@@ -98,5 +72,13 @@ public class CommitCitation implements ChatgptCitation{
 	}
 	public void setCommiter(Contributor commiter) {
 		this.commiter = commiter;
+	}
+	@Override
+	public List<SharedLink> getSharedLinks() {
+		return sharedLinks;
+	}
+	@Override
+	public void setSharedLinks(List<SharedLink> sharedLinks) {
+		this.sharedLinks = sharedLinks;
 	}
 }

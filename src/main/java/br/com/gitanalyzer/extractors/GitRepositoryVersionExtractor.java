@@ -9,21 +9,21 @@ import org.apache.commons.lang.StringUtils;
 
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
-import br.com.gitanalyzer.model.entity.ProjectVersion;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 
-public class ProjectVersionExtractor {
+public class GitRepositoryVersionExtractor {
 
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 
-	public ProjectVersion extractProjectVersionFiltering(String projectPath) {
+	public GitRepositoryVersion extractProjectVersionFiltering(String projectPath) {
 		int numberAllFiles = fileExtractor.extractSizeAllFiles(projectPath);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
 		contributors = setAlias(contributors, null);
 		int numberAnalysedDevs = contributors.size();
-		ProjectVersion projectVersion = ProjectVersion.builder().numberAllCommits(numberAllCommits)
+		GitRepositoryVersion projectVersion = GitRepositoryVersion.builder().numberAllCommits(numberAllCommits)
 				.numberAllFiles(numberAllFiles).numberAnalysedDevs(numberAnalysedDevs).build();
 		return projectVersion;
 	}

@@ -5,14 +5,14 @@ import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.dto.form.HashNumberYearsForm;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
-import br.com.gitanalyzer.model.entity.Project;
-import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
 
 @Service
 public class HistoryCommitsService {
 
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
 	private HistoryCommitsExtractor extractor = new HistoryCommitsExtractor();
@@ -23,7 +23,7 @@ public class HistoryCommitsService {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				String projectName = projectService.extractProjectName(projectPath);
-				Project project = projectRepository.findByName(projectName);
+				GitRepository project = projectRepository.findByName(projectName);
 				if(project.isFiltered() == false) {
 					extractor.saveCommitsHashs(projectPath, form.getNumberYears());
 				}
@@ -33,7 +33,7 @@ public class HistoryCommitsService {
 
 	public void commitsHashsProject(HashNumberYearsForm form) {
 		String projectName = projectService.extractProjectName(form.getPath());
-		Project project = projectRepository.findByName(projectName);
+		GitRepository project = projectRepository.findByName(projectName);
 		if(project.isFiltered() == false) {
 			extractor.saveCommitsHashs(form.getPath(), form.getNumberYears());
 		}

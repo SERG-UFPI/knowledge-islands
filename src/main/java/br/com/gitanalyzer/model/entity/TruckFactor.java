@@ -32,7 +32,7 @@ public class TruckFactor {
 	@Enumerated(EnumType.STRING)
 	private KnowledgeMetric knowledgeMetric;
 	@ManyToOne
-	private ProjectVersion projectVersion;
+	private GitRepositoryVersion repositoryVersion;
 	@OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE})
 	private List<Contributor> contributors;
 	@ElementCollection
@@ -40,10 +40,10 @@ public class TruckFactor {
 	private Double timeToCalculate;
 
 	public TruckFactor(int truckfactor,
-			ProjectVersion projectVersion, KnowledgeMetric knowledgeMetric,
+			GitRepositoryVersion repositoryVersion, KnowledgeMetric knowledgeMetric,
 			List<String> implicatedFiles, List<Contributor> contributors, Double timeToCalculate) {
 		this.truckfactor = truckfactor;
-		this.projectVersion = projectVersion;
+		this.repositoryVersion = repositoryVersion;
 		this.knowledgeMetric = knowledgeMetric;
 		this.implicatedFiles = implicatedFiles;
 		this.contributors = contributors;
@@ -51,9 +51,9 @@ public class TruckFactor {
 	}
 
 	public TruckFactor(int truckfactor,
-			ProjectVersion projectVersion, KnowledgeMetric knowledgeMetric) {
+			GitRepositoryVersion repositoryVersion, KnowledgeMetric knowledgeMetric) {
 		this.truckfactor = truckfactor;
-		this.projectVersion = projectVersion;
+		this.repositoryVersion = repositoryVersion;
 		this.knowledgeMetric = knowledgeMetric;
 		//this.implicatedFiles = implicatedFiles;
 	}
@@ -61,7 +61,7 @@ public class TruckFactor {
 	public TruckFactorDTO toDto() {
 		return TruckFactorDTO.builder()
 				.id(id)
-				.projectVersion(projectVersion.toDto())
+				.projectVersion(repositoryVersion.toDto())
 				.implicatedFiles(implicatedFiles)
 				.knowledgeMetric(knowledgeMetric)
 				.truckfactor(truckfactor)

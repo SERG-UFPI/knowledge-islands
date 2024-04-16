@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.gitanalyzer.model.entity.ProjectDependency;
-import br.com.gitanalyzer.model.entity.ProjectVersion;
-import br.com.gitanalyzer.repository.ProjectVersionRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryDependency;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
+import br.com.gitanalyzer.repository.RepositoryVersionRepository;
 import br.com.gitanalyzer.utils.ProjectUtils;
 
 @Service
@@ -24,15 +24,15 @@ public class ProjectDependencyService {
 	private String token;
 
 	@Autowired
-	private ProjectVersionRepository projectVersionRepository;
+	private RepositoryVersionRepository projectVersionRepository;
 
 	public void getProjectVersionAndSetDependency(Long id) {
-		ProjectVersion version = projectVersionRepository.findById(id).get();
-		getDependenciesProjectVersion(version.getProject().getFullName());
+		GitRepositoryVersion version = projectVersionRepository.findById(id).get();
+		getDependenciesProjectVersion(version.getRepository().getFullName());
 	}
 
-	public List<ProjectDependency> getDependenciesProjectVersion(String projectFullName) {
-		List<ProjectDependency> dependencies = new ArrayList<>();
+	public List<GitRepositoryDependency> getDependenciesProjectVersion(String projectFullName) {
+		List<GitRepositoryDependency> dependencies = new ArrayList<>();
 		try {
 			String owner = ProjectUtils.getOwnerNameProject(projectFullName);
 			String name = ProjectUtils.getNameProject(projectFullName);
@@ -55,14 +55,14 @@ public class ProjectDependencyService {
 							String nameRepository = repository.get("name").asText();
 							String fullNameRepository = repository.get("nameWithOwner").asText();
 							boolean contains = false;
-							for (ProjectDependency projectDependency : dependencies) {
+							for (GitRepositoryDependency projectDependency : dependencies) {
 								if(projectDependency.getRepositoryFullName().equals(fullNameRepository)) {
 									contains = true;
 									break;
 								}
 							}
 							if(contains == false && !fullNameRepository.equals(projectFullName)) {
-								ProjectDependency dependency = new ProjectDependency(nameRepository, packageManager, fullNameRepository);
+								GitRepositoryDependency dependency = new GitRepositoryDependency(nameRepository, packageManager, fullNameRepository);
 								dependencies.add(dependency);
 							}
 						}

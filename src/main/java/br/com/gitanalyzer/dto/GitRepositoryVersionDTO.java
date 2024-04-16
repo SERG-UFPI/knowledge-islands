@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProjectVersionDTO {
+public class GitRepositoryVersionDTO {
 
 	private int numberAuthors, numberAnalysedDevs, 
 	numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits;

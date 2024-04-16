@@ -43,7 +43,7 @@ public class Contributor {
 		this.percentOfFilesAuthored = percentOfFilesAuthored;
 	}
 
-	public Contributor(String name, String email, Project project) {
+	public Contributor(String name, String email, GitRepository repository) {
 		super();
 		this.name = name;
 		this.email = email;

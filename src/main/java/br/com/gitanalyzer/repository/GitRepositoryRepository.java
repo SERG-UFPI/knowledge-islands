@@ -5,13 +5,13 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import br.com.gitanalyzer.model.entity.Project;
+import br.com.gitanalyzer.model.entity.GitRepository;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Long>{
+public interface GitRepositoryRepository extends JpaRepository<GitRepository, Long>{
 
 	boolean existsByName(String name);
-	Project findByName(String name);
-	List<Project> findByFilteredTrue();
+	GitRepository findByName(String name);
+	List<GitRepository> findByFilteredTrue();
 
 }

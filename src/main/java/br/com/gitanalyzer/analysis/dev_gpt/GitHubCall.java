@@ -45,4 +45,26 @@ public class GitHubCall {
 		reader.close();
 		return content.toString();
 	}
+	
+	
+//	gh api graphql -f query='query {
+//			  repository(owner: "OtavioCury", name: "knowledge-islands") {
+//			    object(expression: "main") {
+//			      ... on Commit {
+//			        blame(path: "src/main/java/br/com/gitanalyzer/utils/JwtUtils.java") {
+//			          ranges {
+//			            commit {
+//			              author {
+//			                name
+//			              }
+//			            }
+//			            startingLine
+//			            endingLine
+//			            age
+//			          }
+//			        }
+//			      }
+//			    }
+//			  }
+//			}'
 }

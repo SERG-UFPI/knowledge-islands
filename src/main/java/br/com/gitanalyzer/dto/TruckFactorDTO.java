@@ -17,7 +17,7 @@ public class TruckFactorDTO {
 	private Long id;
 	private int truckfactor;
 	private KnowledgeMetric knowledgeMetric;
-	private ProjectVersionDTO projectVersion;
+	private GitRepositoryVersionDTO projectVersion;
 	private List<String> implicatedFiles;
 	private List<ContributorDTO> truckFactorDevelopers;
 

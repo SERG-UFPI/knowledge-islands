@@ -21,26 +21,26 @@ import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.Project;
-import br.com.gitanalyzer.model.entity.ProjectVersion;
-import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.Constants;
 
 @Service
-public class FilterProjectService {
+public class FilterGitRepositoryService {
 
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
 
 	public void filterEcoSpringHistory() throws URISyntaxException, IOException, InterruptedException {
-		List<Project> projects = projectRepository.findAll();
+		List<GitRepository> projects = projectRepository.findAll();
 		filterProjectsByAge(projects);
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
@@ -48,32 +48,32 @@ public class FilterProjectService {
 	}
 	
 	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
-		List<Project> projects = projectRepository.findAll();
+		List<GitRepository> projects = projectRepository.findAll();
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
 		projectRepository.saveAll(projects);
 	}
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
-		ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
-		List<ProjectVersion> versions = new ArrayList<ProjectVersion>();
+		GitRepositoryVersionExtractor projectVersionExtractor = new GitRepositoryVersionExtractor();
+		List<GitRepositoryVersion> versions = new ArrayList<GitRepositoryVersion>();
 		java.io.File dir = new java.io.File(form.getFolderPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				Project project = projectService.returnProjectByPath(projectPath);
-				ProjectVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
-				version.setProject(project);
+				GitRepository project = projectService.returnProjectByPath(projectPath);
+				GitRepositoryVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
+				version.setRepository(project);
 				versions.add(version);
 			}
 		}
-		Map<String, List<ProjectVersion>> versionMap = versions.stream().collect(Collectors.groupingBy(ProjectVersion::getProjectLanguage));
+		Map<String, List<GitRepositoryVersion>> versionMap = versions.stream().collect(Collectors.groupingBy(GitRepositoryVersion::getRepositoryLanguage));
 		for(var entry: versionMap.entrySet()) {
 			filterProjectBySize(entry.getValue());
 		}
-		List<Project> projects = versions.stream().map(v -> v.getProject()).toList();
+		List<GitRepository> projects = versions.stream().map(v -> v.getRepository()).toList();
 		filterProjectsByAge(projects);
-		for (Project project : projects) {
+		for (GitRepository project : projects) {
 			if(project.getMainLanguage() == null) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
@@ -82,20 +82,20 @@ public class FilterProjectService {
 		}
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
-		for(ProjectVersion version: versions) {
-			if(version.getProject().isFiltered() == false) {
+		for(GitRepositoryVersion version: versions) {
+			if(version.getRepository().isFiltered() == false) {
 				if(filterProjectByCommits(version)) {
-					version.getProject().setFiltered(true);
-					version.getProject().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-					projectRepository.save(version.getProject());
+					version.getRepository().setFiltered(true);
+					version.getRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+					projectRepository.save(version.getRepository());
 				}
 			}
 		}
 	}
 
-	public void filterNotSoftwareProjects(List<Project> projects) {
+	public void filterNotSoftwareProjects(List<GitRepository> projects) {
 		List<String> notProjectSoftwareNames = Constants.projectsToRemoveInFiltering();
-		for (Project project : projects) {
+		for (GitRepository project : projects) {
 			if(notProjectSoftwareNames.contains(project.getFullName()) && project.isFiltered() == false) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
@@ -104,12 +104,12 @@ public class FilterProjectService {
 		}
 	}
 
-	public void filterProjectsByInactive(List<Project> projects) {
+	public void filterProjectsByInactive(List<GitRepository> projects) {
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
 		int calendarType = Calendar.YEAR;
 		c.add(calendarType, -Constants.intervalYearsProjectConsideredInactivate);
-		for (Project project : projects) {
+		for (GitRepository project : projects) {
 			if(project.getDownloadVersionDate() != null && 
 					project.getDownloadVersionDate().before(c.getTime()) && project.isFiltered() == false) {
 				project.setFiltered(true);
@@ -119,12 +119,12 @@ public class FilterProjectService {
 		}
 	}
 
-	public void filterProjectsByAge(List<Project> projects) {
+	public void filterProjectsByAge(List<GitRepository> projects) {
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
 		int calendarType = Calendar.YEAR;
 		c.add(calendarType, -Constants.intervalYearsProjectAgeFilter);
-		for (Project project : projects) {
+		for (GitRepository project : projects) {
 			if(project.getFirstCommitDate() != null && 
 					project.getFirstCommitDate().after(c.getTime()) && project.isFiltered() == false) {
 				project.setFiltered(true);
@@ -134,15 +134,15 @@ public class FilterProjectService {
 		}
 	}
 
-	private boolean filterProjectByCommits(ProjectVersion version) {
+	private boolean filterProjectByCommits(GitRepositoryVersion version) {
 		FileExtractor fileExtractor = new FileExtractor();
 		CommitExtractor commitExtractor = new CommitExtractor();
-		List<File> files = fileExtractor.extractFilesFromClocFile(version.getProject().getCurrentPath(), version.getProject().getName());
-		fileExtractor.getRenamesFiles(version.getProject().getCurrentPath(), files);
-		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getProject().getCurrentPath());
+		List<File> files = fileExtractor.extractFilesFromClocFile(version.getRepository().getCurrentPath(), version.getRepository().getName());
+		fileExtractor.getRenamesFiles(version.getRepository().getCurrentPath(), files);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getRepository().getCurrentPath());
 		CommitUtils.sortCommitsByDate(commits);
 		commits = getFirst20Commits(commits);
-		commits = commitExtractor.extractCommitsFiles(version.getProject().getCurrentPath(), commits, files);
+		commits = commitExtractor.extractCommitsFiles(version.getRepository().getCurrentPath(), commits, files);
 		int numberOfFiles = files.size();
 		List<File> addedFiles = new ArrayList<File>();
 		for(Commit commit: commits) {
@@ -173,7 +173,7 @@ public class FilterProjectService {
 		return firstCommits;
 	}
 
-	private void filterProjectBySize(List<ProjectVersion> versions) {
+	private void filterProjectBySize(List<GitRepositoryVersion> versions) {
 		List<Double> devs = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedDevs())).toList();
 		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAllCommits())).toList();
 		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAllFiles())).toList();
@@ -200,13 +200,13 @@ public class FilterProjectService {
 		double firstQDevs = p.evaluate(devsArray, 25);
 		double firstQCommits = p.evaluate(commitsArray, 25);
 		double firstQFiles = p.evaluate(filesArray, 25);
-		Set<Project> projects = new HashSet<Project>();
-		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getProject()).toList());
-		projects.addAll(versions.stream().filter(v -> v.getNumberAllCommits() < firstQCommits).map(v -> v.getProject()).toList());
-		projects.addAll(versions.stream().filter(v -> v.getNumberAllFiles() < firstQFiles).map(v -> v.getProject()).toList());
+		Set<GitRepository> projects = new HashSet<GitRepository>();
+		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getRepository()).toList());
+		projects.addAll(versions.stream().filter(v -> v.getNumberAllCommits() < firstQCommits).map(v -> v.getRepository()).toList());
+		projects.addAll(versions.stream().filter(v -> v.getNumberAllFiles() < firstQFiles).map(v -> v.getRepository()).toList());
 		projects.stream().forEach(pr -> pr.setFilteredReason(FilteredEnum.SIZE));
 		projects.stream().forEach(pr -> pr.setFiltered(true));
-		for (Project project : projects) {
+		for (GitRepository project : projects) {
 			projectRepository.save(project);
 		}
 	}

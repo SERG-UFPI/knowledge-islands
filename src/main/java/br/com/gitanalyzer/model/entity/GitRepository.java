@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Project {
+public class GitRepository {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,8 +37,8 @@ public class Project {
 	private boolean filtered;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date firstCommitDate;
-	@OneToMany(mappedBy="project", fetch=FetchType.LAZY, cascade = CascadeType.REMOVE)
-	private List<ProjectVersion> versions;
+	@OneToMany(mappedBy="repository", fetch=FetchType.LAZY, cascade = CascadeType.REMOVE)
+	private List<GitRepositoryVersion> versions;
 	@Enumerated(EnumType.STRING)
 	private FilteredEnum filteredReason;
 	private String defaultBranch;
@@ -50,14 +50,14 @@ public class Project {
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
-	public Project(String name, String currentPath, String fullName, String downloadVersionHash) {
+	public GitRepository(String name, String currentPath, String fullName, String downloadVersionHash) {
 		this.name = name;
 		this.currentPath = currentPath;
 		this.fullName = fullName;
 		this.downloadVersionHash = downloadVersionHash;
 	}
 
-	public Project(String name, String fullName, String mainLanguage, 
+	public GitRepository(String name, String fullName, String mainLanguage, 
 			String currentPath, String defaultBranch, Integer numberStars, String downloadVersionHash) {
 		super();
 		this.name = name;

@@ -14,7 +14,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import br.com.gitanalyzer.dto.ProjectVersionDTO;
+import br.com.gitanalyzer.dto.GitRepositoryVersionDTO;
 import br.com.gitanalyzer.model.Commit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectVersion {
+public class GitRepositoryVersion {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,23 +38,23 @@ public class ProjectVersion {
 	private Date dateVersion; 
 	private String versionId;
 	@ManyToOne(optional = false)
-	private Project project;
+	private GitRepository repository;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Contributor> contributors;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<File> files;
-	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "projectVersion")
+	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "repositoryVersion")
 	private List<TruckFactor> truckFactors;
 	@javax.persistence.Transient
 	private List<Commit> commits;
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private List<ProjectDependency> dependencies;
+	private List<GitRepositoryDependency> dependencies;
 	private Double timeToExtract;
 
-	public ProjectVersion(int numberAnalysedDevs, int numberAllFiles,
+	public GitRepositoryVersion(int numberAnalysedDevs, int numberAllFiles,
 			int numberAnalysedFiles, int numberAllCommits, int numberAnalysedCommits, Date dateVersion,
 			String versionId, List<Contributor> contributors, 
-			List<Commit> commits, List<File> files, Double timeToExtract, List<ProjectDependency> dependencies) {
+			List<Commit> commits, List<File> files, Double timeToExtract, List<GitRepositoryDependency> dependencies) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAllFiles = numberAllFiles;
@@ -70,14 +70,14 @@ public class ProjectVersion {
 		this.dependencies = dependencies;
 	}
 
-	public String getProjectLanguage() {
-		return project.getMainLanguage();
+	public String getRepositoryLanguage() {
+		return repository.getMainLanguage();
 	}
 
-	public ProjectVersionDTO toDto() {
+	public GitRepositoryVersionDTO toDto() {
 		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-		return ProjectVersionDTO.builder()
-				.project(project.toDto())
+		return GitRepositoryVersionDTO.builder()
+				.project(repository.toDto())
 				.activeContributors(contributors!=null?contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList():null)
 				.dateVersion(dateVersion!=null?fmt.format(dateVersion):null)
 				.numberAllCommits(numberAllCommits)

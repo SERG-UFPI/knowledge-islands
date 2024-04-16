@@ -19,6 +19,7 @@ public class File {
 	private String gitUrl;
 	private String contentEncoded;
 	private String contentDecoded;
+	private String encoding;
 	private List<Commit> commits;
 	
 	public File() {

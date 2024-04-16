@@ -13,14 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.ProjectVersionExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.Project;
-import br.com.gitanalyzer.model.entity.ProjectVersion;
-import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.repository.ProjectVersionRepository;
+import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.RepositoryVersionRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
@@ -32,21 +32,21 @@ public class ProjectVersionService {
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private ContributorUtils contributorUtils = new ContributorUtils();
 	//private CkMeasuresExtractor ckMeasuresExtractor = new CkMeasuresExtractor();
-	private ProjectVersionExtractor projectVersionExtractor = new ProjectVersionExtractor();
+	private GitRepositoryVersionExtractor projectVersionExtractor = new GitRepositoryVersionExtractor();
 
 	@Autowired
-	private ProjectVersionRepository repository;
+	private RepositoryVersionRepository repository;
 	@Autowired
 	private ProjectDependencyService projectDependencyService;
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 
 	public void remove(Long id) {
 		repository.deleteById(id);
 	}
 
 	public void removeAll() {
-		List<ProjectVersion> versions = repository.findAll();
+		List<GitRepositoryVersion> versions = repository.findAll();
 		List<Long> ids = versions.stream().map(v -> v.getId()).toList();
 
 		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
@@ -63,17 +63,17 @@ public class ProjectVersionService {
 
 	@Transactional
 	public void removeFromProject(Long id) {
-		repository.deleteByProjectId(id);
+		repository.deleteByRepositoryId(id);
 	}
 
 	@Transactional
 	public void removeFromProjectsFiltered() {
-		List<Project> projects = projectRepository.findByFilteredTrue();
+		List<GitRepository> projects = projectRepository.findByFilteredTrue();
 		List<Long> ids = projects.stream().map(p -> p.getId()).toList();
-		repository.deleteByProjectIdIn(ids);
+		repository.deleteByRepositoryIdIn(ids);
 	}
 	
-	public ProjectVersion extractProjectVersion(Project project) throws IOException {
+	public GitRepositoryVersion extractProjectVersion(GitRepository project) throws IOException {
 		long start = System.currentTimeMillis();
 		System.out.println("EXTRACTING PROJECT VERSION OF "+project.getName());
 		if(project.getCurrentPath().substring(project.getCurrentPath().length() -1).equals("/") == false) {
@@ -102,7 +102,7 @@ public class ProjectVersionService {
 		CommitUtils.sortCommitsByDate(commits);
 		long end = System.currentTimeMillis();
 		float sec = (end - start) / 1000F;
-		ProjectVersion projectVersion = new ProjectVersion(numberAnalysedDevs, 
+		GitRepositoryVersion projectVersion = new GitRepositoryVersion(numberAnalysedDevs, 
 				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
 				commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(project.getFullName()));

@@ -29,9 +29,9 @@ import br.com.gitanalyzer.dto.form.CloneRepoForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
-import br.com.gitanalyzer.model.entity.Project;
+import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.github_openai.ProjectGitHub;
-import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.SystemUtil;
 
@@ -43,7 +43,7 @@ public class DownloaderService {
 	@Value("${configuration.github.token}")
 	private String token;
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 	@Autowired
 	private ProjectService projectService;
 
@@ -113,7 +113,7 @@ public class DownloaderService {
 					boolean flag = cloneIfNotExists(projectInfo, path);
 					if(flag) {
 						String projectPath = path+projectInfo.getName()+"/";
-						Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
+						GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 								projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
 								projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
 						projectRepository.save(project);
@@ -135,7 +135,7 @@ public class DownloaderService {
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
 					String projectPath = path+projectInfo.getName()+"/";
-					Project project = new Project(projectInfo.getName(), projectInfo.getFullName(), 
+					GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 							projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
 							projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
 					projectRepository.save(project);

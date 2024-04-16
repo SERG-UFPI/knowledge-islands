@@ -9,10 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MetricsDoa {
+public class DOE {
 
-	double faModel;
-	double dlModel;
-	double acModel;
+	private double adds;
+	private double fa;
+	private double numDays;
+	private double size;
+	private double doe;
 
 }

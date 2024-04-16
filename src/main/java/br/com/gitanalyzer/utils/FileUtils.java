@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class FileUtils {
-	
+
 	public static List<String> getProgrammingLanguagesAliasGithub(){
 		List<String> alias = new ArrayList<>();
 		alias.add("javascript");
@@ -49,7 +49,7 @@ public class FileUtils {
 		name = name.substring(0, name.indexOf("."));
 		return name;
 	}
-	
+
 	public static List<String> getProgrammingExtensions(){
 		ObjectMapper objectMapper = new ObjectMapper();
 		List<String> extensions = new ArrayList<>();

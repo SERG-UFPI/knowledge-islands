@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
-import br.com.gitanalyzer.service.FilterProjectService;
+import br.com.gitanalyzer.service.FilterGitRepositoryService;
 import br.com.gitanalyzer.service.ProjectService;
 
 @RestController
@@ -23,7 +23,7 @@ public class ProjectController {
 	@Autowired
 	private ProjectService projectService;
 	@Autowired
-	private FilterProjectService filterProjectService;
+	private FilterGitRepositoryService filterProjectService;
 	
 	@PostMapping("set-download-version-date")
 	public ResponseEntity<?> setDownloadVersionDate(@RequestBody String folderPath) throws IOException{

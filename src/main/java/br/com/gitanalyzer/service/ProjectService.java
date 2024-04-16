@@ -28,8 +28,8 @@ import com.opencsv.exceptions.CsvException;
 
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
-import br.com.gitanalyzer.model.entity.Project;
-import br.com.gitanalyzer.repository.ProjectRepository;
+import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 
@@ -37,13 +37,13 @@ import br.com.gitanalyzer.utils.Constants;
 public class ProjectService {
 
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 	@Value("${configuration.project-logs.path}")
 	private String projectLogsFolder;
 
-	public Project returnProjectByPath(String projectPath) {
+	public GitRepository returnProjectByPath(String projectPath) {
 		String projectName = extractProjectName(projectPath);
-		Project project = projectRepository.findByName(projectName);
+		GitRepository project = projectRepository.findByName(projectName);
 		return project;
 	}
 
@@ -203,7 +203,7 @@ public class ProjectService {
 
 	public Object setProjectsMainLanguage() {
 		HashMap<String, String> nameLanguage = new HashMap<String, String>();
-		List<Project> projetos = projectRepository.findAll();
+		List<GitRepository> projetos = projectRepository.findAll();
 		List<String[]> projectsFile = null;
 		try (CSVReader reader = new CSVReader(new FileReader("/home/otavio/Desktop/shell_scripts/rep-info-new.csv"))) {
 			projectsFile = reader.readAll();
@@ -215,7 +215,7 @@ public class ProjectService {
 			String language = string[1];
 			nameLanguage.put(name, language);
 		}
-		for (Project project : projetos) {
+		for (GitRepository project : projetos) {
 			for(Map.Entry<String, String> set: nameLanguage.entrySet()) {
 				if (set.getKey().contains(project.getName())) {
 					project.setMainLanguage(set.getValue());
@@ -292,7 +292,7 @@ public class ProjectService {
 
 	public void setFirstDateProject(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
-		Project project = returnProjectByPath(projectPath);
+		GitRepository project = returnProjectByPath(projectPath);
 		if(project != null && project.getFirstCommitDate() == null) {
 			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
 			projectRepository.save(project);
@@ -301,7 +301,7 @@ public class ProjectService {
 
 	public void setDownloadVersionDate(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
-		Project project = returnProjectByPath(projectPath);
+		GitRepository project = returnProjectByPath(projectPath);
 		if(project != null && project.getDownloadVersionDate() == null) {
 			project.setDownloadVersionDate(commitExtractor.getLastCommitDate(projectPath));
 			projectRepository.save(project);
@@ -328,8 +328,8 @@ public class ProjectService {
 	}
 
 	public void returnVersionDownloaded() throws URISyntaxException, IOException, InterruptedException {
-		List<Project> projects = projectRepository.findAll();
-		for (Project project : projects) {
+		List<GitRepository> projects = projectRepository.findAll();
+		for (GitRepository project : projects) {
 			checkOutProjectVersion(project.getCurrentPath(), project.getDownloadVersionHash());
 		}
 	}

@@ -38,19 +38,19 @@ import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
-import br.com.gitanalyzer.model.MetricsDoa;
-import br.com.gitanalyzer.model.MetricsDoe;
+import br.com.gitanalyzer.model.DOA;
+import br.com.gitanalyzer.model.DOE;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.Project;
-import br.com.gitanalyzer.model.entity.ProjectVersion;
+import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.model.vo.CommitFiles;
 import br.com.gitanalyzer.model.vo.MlOutput;
-import br.com.gitanalyzer.repository.ProjectRepository;
-import br.com.gitanalyzer.repository.ProjectVersionRepository;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.RepositoryVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.repository.UserRepository;
@@ -69,11 +69,11 @@ public class TruckFactorService {
 	@Autowired
 	private ProjectVersionService projectVersionService;
 	@Autowired
-	private ProjectRepository projectRepository;
+	private GitRepositoryRepository projectRepository;
 	@Autowired
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
-	private ProjectVersionRepository projectVersionRepository;
+	private RepositoryVersionRepository projectVersionRepository;
 	@Autowired
 	private ProjectService projectService;
 	@Autowired
@@ -152,15 +152,15 @@ public class TruckFactorService {
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		String projectPath = repo.getPath();
 		String projectName = projectService.extractProjectName(projectPath);
-		Project project = null;
+		GitRepository project = null;
 		if(projectRepository.existsByName(projectName)) {
 			project = projectRepository.findByName(projectName);
 		}else {
 			try {
-				project = new Project(projectName, repo.getPath(), 
+				project = new GitRepository(projectName, repo.getPath(), 
 						projectService.extractProjectFullName(projectPath), projectService.getCurrentRevisionHash(projectPath));
 			} catch (Exception e) {
-				project = new Project(projectName, repo.getPath(), 
+				project = new GitRepository(projectName, repo.getPath(), 
 						null, projectService.getCurrentRevisionHash(projectPath));
 			}
 		}
@@ -171,7 +171,7 @@ public class TruckFactorService {
 		//			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
 		//			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
 		//		}
-		ProjectVersion projectVersion = projectVersionService.extractProjectVersion(project);
+		GitRepositoryVersion projectVersion = projectVersionService.extractProjectVersion(project);
 		//saveNumberFilesOfCommits(projectVersion.getCommits());
 		//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 		System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
@@ -222,7 +222,7 @@ public class TruckFactorService {
 				projectRepository.save(project);
 			}
 			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
-				projectVersion.setProject(project);
+				projectVersion.setRepository(project);
 				for (Contributor contributor : projectVersion.getContributors()) {
 					if(contributor.getNumberFilesAuthor() > 0) {
 						contributor.setPercentOfFilesAuthored(Double.valueOf((double)contributor.getNumberFilesAuthor()/projectVersion.getNumberAnalysedFiles()));
@@ -245,9 +245,9 @@ public class TruckFactorService {
 	private void addFileKnowledgeOfAuthor(KnowledgeMetric knowledgeMetric, File file, AuthorFile authorFile) {
 		if (knowledgeMetric.equals(KnowledgeMetric.DOE) 
 				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
-			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoe());
+			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoe().getDoe());
 		}else {
-			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoa());
+			file.setTotalKnowledge(file.getTotalKnowledge()+authorFile.getDoa().getDoa());
 		}
 	}
 
@@ -256,17 +256,17 @@ public class TruckFactorService {
 		if (knowledgeMetric.equals(KnowledgeMetric.DOE) 
 				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 			DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
-			double doe = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
+			double doeValue = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
 					doeContributorFile.numDays, file.getFileSize());
-			MetricsDoe metricsDoe = new MetricsDoe(doeContributorFile.numberAdds, doeContributorFile.fa,
-					doeContributorFile.numDays, file.getFileSize());
-			return new AuthorFile(contributor, file, doe, metricsDoe);
+			DOE doe = new DOE(doeContributorFile.numberAdds, doeContributorFile.fa,
+					doeContributorFile.numDays, file.getFileSize(), doeValue);
+			return new AuthorFile(contributor, file, doe);
 		}else {
 			DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
-			double doa = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
+			double doaValue = doaUtils.getDOA(doaContributorFile.fa, doaContributorFile.numberCommits,
 					doaContributorFile.ac);
-			MetricsDoa metricsDoa = new MetricsDoa(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac);
-			return new AuthorFile(contributor, doa, file, metricsDoa);
+			DOA doa = new DOA(doaContributorFile.fa, doaContributorFile.numberCommits, doaContributorFile.ac, doaValue);
+			return new AuthorFile(contributor, file, doa);
 		}
 	}
 
@@ -283,7 +283,7 @@ public class TruckFactorService {
 		return filePaths;
 	}
 
-	private void filteringProjectsCommentsStudy(Project project) {
+	private void filteringProjectsCommentsStudy(GitRepository project) {
 		if(invalidsProjects.contains(project.getName())) {
 			project.setFiltered(true);
 		}
@@ -419,7 +419,7 @@ public class TruckFactorService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				Project project = projectService.returnProjectByPath(projectPath);
+				GitRepository project = projectService.returnProjectByPath(projectPath);
 				if(project != null && project.isFiltered() == false) {
 					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 						try {
@@ -463,20 +463,30 @@ public class TruckFactorService {
 				List<AuthorFile> authorsFilesAux = authorsFiles.stream().
 						filter(authorFile -> authorFile.getFile().getPath().equals(file.getPath())).collect(Collectors.toList());
 				if(authorsFilesAux != null && authorsFilesAux.size() > 0) {
-					AuthorFile max = authorsFilesAux.stream().max(
-							Comparator.comparing(knowledgeMetric.equals(KnowledgeMetric.DOE)?AuthorFile::getDoe:AuthorFile::getDoa)).get();
+					AuthorFile max = null;
+					double maxValue = 0.0;
+					for (AuthorFile authorFile : authorsFilesAux) {
+						if(knowledgeMetric.equals(KnowledgeMetric.DOE) && authorFile.getDoe().getDoe() > maxValue) {
+							maxValue = authorFile.getDoe().getDoe();
+							max = authorFile;
+						}
+						if(knowledgeMetric.equals(KnowledgeMetric.DOA) && authorFile.getDoa().getDoa() > maxValue) {
+							maxValue = authorFile.getDoa().getDoa();
+							max = authorFile;
+						}
+					}
 					for (AuthorFile authorFile : authorsFilesAux) {
 						double normalized = 0;
 						boolean maintainer = false;
 						if (knowledgeMetric.equals(KnowledgeMetric.DOE)) {
-							normalized = authorFile.getDoe()/max.getDoe();
+							normalized = authorFile.getDoe().getDoe()/maxValue;
 							if (normalized >= Constants.normalizedThresholdMantainerDOE) {
 								maintainer = true;
 							}
 						}else if(knowledgeMetric.equals(KnowledgeMetric.DOA)){
-							normalized = authorFile.getDoa()/max.getDoa();
+							normalized = authorFile.getDoa().getDoa()/maxValue;
 							if (normalized > Constants.normalizedThresholdMantainerDOA && 
-									authorFile.getDoa() >= Constants.thresholdMantainerDOA) {
+									authorFile.getDoa().getDoa() >= Constants.thresholdMantainerDOA) {
 								maintainer = true;
 							}
 						}
@@ -501,10 +511,10 @@ public class TruckFactorService {
 				writer.writeNext(header);
 				for (AuthorFile authorFile : authorsFiles) {
 					writer.writeNext(new String[] {
-							String.valueOf(authorFile.getMetricsDoe().getAdds()),
-							String.valueOf(authorFile.getMetricsDoe().getNumDays()),
-							String.valueOf(authorFile.getMetricsDoe().getSize()),
-							String.valueOf(authorFile.getMetricsDoe().getFa()),
+							String.valueOf(authorFile.getDoe().getAdds()),
+							String.valueOf(authorFile.getDoe().getNumDays()),
+							String.valueOf(authorFile.getDoe().getSize()),
+							String.valueOf(authorFile.getDoe().getFa()),
 							authorFile.getAuthor().getEmail(),
 							authorFile.getFile().getPath()
 					});
@@ -552,7 +562,7 @@ public class TruckFactorService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				Project project = projectService.returnProjectByPath(projectPath);
+				GitRepository project = projectService.returnProjectByPath(projectPath);
 				if((project != null && project.isFiltered() == false) || project == null) {
 					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 						try {

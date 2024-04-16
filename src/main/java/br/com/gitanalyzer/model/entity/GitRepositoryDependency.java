@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectDependency {
+public class GitRepositoryDependency {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,7 @@ public class ProjectDependency {
 	private String packageName;
 	private String packageManager;
 	private String repositoryFullName;
-	public ProjectDependency(String packageName, String packageManager, String repositoryFullName) {
+	public GitRepositoryDependency(String packageName, String packageManager, String repositoryFullName) {
 		super();
 		this.packageName = packageName;
 		this.packageManager = packageManager;

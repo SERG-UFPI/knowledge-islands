@@ -3,9 +3,9 @@ package br.com.gitanalyzer.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import br.com.gitanalyzer.model.entity.ProjectDependency;
+import br.com.gitanalyzer.model.entity.GitRepositoryDependency;
 
 @Repository
-public interface ProjectDependencyRepository extends JpaRepository<ProjectDependency, Long>{
+public interface GitRepositoryDependencyRepository extends JpaRepository<GitRepositoryDependency, Long>{
 	
 }
