@@ -93,7 +93,7 @@ public class FileExtractor {
 						if (strLineCloc.split(";").length > 1) {
 							String fileSizeString = strLineCloc.split(";")[2];
 							if (fileSizeString != null && fileSizeString.equals("") == false) {
-								file.setFileSize(Integer.parseInt(fileSizeString));
+								file.setSize(Integer.parseInt(fileSizeString));
 								break;
 							}
 						}
@@ -101,7 +101,7 @@ public class FileExtractor {
 				}
 			}
 			brCloc.close();
-			files.removeIf(f -> f.getFileSize() == 0);
+			files.removeIf(f -> f.getSize() == 0);
 			return files;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -144,10 +144,10 @@ public class FileExtractor {
 				if (splitedLine.length > 1) {
 					String fileSizeString = splitedLine[2];
 					if (fileSizeString != null && fileSizeString.equals("") == false) {
-						file.setFileSize(Integer.parseInt(fileSizeString));
+						file.setSize(Integer.parseInt(fileSizeString));
 					}
 				}
-				if(file.getFileSize() != 0) {
+				if(file.getSize() != 0) {
 					files.add(file);
 				}
 			}

@@ -71,7 +71,7 @@ public class GitRepositoryVersion {
 	}
 
 	public String getRepositoryLanguage() {
-		return repository.getMainLanguage();
+		return repository.getLanguage();
 	}
 
 	public GitRepositoryVersionDTO toDto() {

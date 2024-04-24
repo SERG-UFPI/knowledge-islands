@@ -20,13 +20,13 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.repository.RepositoryVersionRepository;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
 
 @Service
-public class ProjectVersionService {
+public class GitRepositoryVersionService {
 	
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
@@ -35,9 +35,9 @@ public class ProjectVersionService {
 	private GitRepositoryVersionExtractor projectVersionExtractor = new GitRepositoryVersionExtractor();
 
 	@Autowired
-	private RepositoryVersionRepository repository;
+	private GitRepositoryVersionRepository repository;
 	@Autowired
-	private ProjectDependencyService projectDependencyService;
+	private GitRepositoryDependencyService projectDependencyService;
 	@Autowired
 	private GitRepositoryRepository projectRepository;
 
@@ -88,8 +88,8 @@ public class ProjectVersionService {
 		int numberAnalysedFiles = files.size();
 		fileExtractor.getRenamesFiles(project.getCurrentPath(), files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(project.getCurrentPath());
-		Date dateVersion = commits.get(0).getDate();
-		String versionId = commits.get(0).getExternalId();
+		Date dateVersion = commits.get(0).getAuthorDate();
+		String versionId = commits.get(0).getSha();
 		int numberAllCommits = commits.size();
 		commits = commitExtractor.extractCommitsFiles(project.getCurrentPath(), commits, files);
 		commits.removeIf(c -> c.getCommitFiles().size() == 0);

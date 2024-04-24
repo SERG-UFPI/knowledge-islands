@@ -37,7 +37,7 @@ public class FilterGitRepositoryService {
 	@Autowired
 	private GitRepositoryRepository projectRepository;
 	@Autowired
-	private ProjectService projectService;
+	private GitRepositoryService projectService;
 
 	public void filterEcoSpringHistory() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> projects = projectRepository.findAll();
@@ -74,7 +74,7 @@ public class FilterGitRepositoryService {
 		List<GitRepository> projects = versions.stream().map(v -> v.getRepository()).toList();
 		filterProjectsByAge(projects);
 		for (GitRepository project : projects) {
-			if(project.getMainLanguage() == null) {
+			if(project.getLanguage() == null) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.NOT_THE_ANALYZED_LANGUAGE);
 				projectRepository.save(project);

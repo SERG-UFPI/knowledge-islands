@@ -19,6 +19,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.jcabi.github.Github;
 import com.jcabi.github.RtGithub;
@@ -30,22 +31,26 @@ import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.github_openai.ProjectGitHub;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.SystemUtil;
 
 @Service
 public class DownloaderService {
 
-	@Value("${configuration.clone.path}")
+	@Value("${configuration.permanent-clone.path}")
 	private String cloneFolder;
 	@Value("${configuration.github.token}")
 	private String token;
 	@Autowired
-	private GitRepositoryRepository projectRepository;
+	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
-	private ProjectService projectService;
+	private GitRepositoryService projectService;
+	@Autowired
+	private SharedLinkRepository sharedLinkRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
@@ -116,7 +121,7 @@ public class DownloaderService {
 						GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 								projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
 								projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
-						projectRepository.save(project);
+						gitRepositoryRepository.save(project);
 					}
 				} catch (Exception e) {
 					System.out.println("Failure on clone "+projectInfo.getFullName());
@@ -138,7 +143,7 @@ public class DownloaderService {
 					GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 							projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
 							projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
-					projectRepository.save(project);
+					gitRepositoryRepository.save(project);
 				}
 			} catch (Exception e) {
 				System.out.println("Failure on clone "+projectInfo.getFullName());
@@ -214,19 +219,48 @@ public class DownloaderService {
 		return projects;
 	}
 
-	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
-		String projectName = projectService.extractProjectName(form.getUrl());
+	@Transactional
+	public String cloneRepositoriesWithSharedLinks() {
+		List<SharedLink> sharedLinks = sharedLinkRepository.findByRepositoryNotNull();
+		List<GitRepository> repositories = new ArrayList<GitRepository>();
+		for (SharedLink sharedLink : sharedLinks) {
+			if(!repositories.stream().anyMatch(g -> g.getFullName().equals(sharedLink.getRepository().getFullName()))) {
+				repositories.add(sharedLink.getRepository());
+			}
+		}
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (GitRepository repository : repositories) {
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					repository.setCurrentPath(cloneProject(CloneRepoForm.builder()
+							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+			}, executorService);
+			futures.add(future);
+		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
+		gitRepositoryRepository.saveAll(repositories);
+		return "Downloads finished in "+cloneFolder;
+	}
+
+	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException, IOException {
+		String projectName = projectService.extractProjectName(form.getCloneUrl());
 		projectName = projectName.replace(".git", "");
 		File file = new File(cloneFolder+projectName);
+		Git git = null;
 		if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
-			Git.cloneRepository().setURI(form.getUrl()).setDirectory(file)
-			.setBranch(form.getBranch()) 
-			.call();
+			git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+					.setBranch(form.getBranch()) 
+					.call();
 		}else {
-			Git.cloneRepository().setURI(form.getUrl()).setDirectory(file)
-			.call();
+			git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+					.call();
 		}
-		return cloneFolder+projectName+"/";
+		return git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
 	}
 
 }

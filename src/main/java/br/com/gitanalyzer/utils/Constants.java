@@ -80,6 +80,8 @@ public class Constants {
 	
 	public static String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
 	
+	public static String githubApiBaseUrl = "https://api.github.com";
+	
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");

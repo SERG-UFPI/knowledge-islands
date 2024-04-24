@@ -14,7 +14,7 @@ public class HistoryCommitsService {
 	@Autowired
 	private GitRepositoryRepository projectRepository;
 	@Autowired
-	private ProjectService projectService;
+	private GitRepositoryService projectService;
 	private HistoryCommitsExtractor extractor = new HistoryCommitsExtractor();
 
 	public void commitsHashsFolder(HashNumberYearsForm form) {

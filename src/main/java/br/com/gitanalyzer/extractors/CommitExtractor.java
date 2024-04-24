@@ -111,13 +111,14 @@ public class CommitExtractor {
 			while ((strLine = br.readLine()) != null) {
 				try {
 					String[] commitSplited = strLine.split(";");
-					if(commitSplited.length == 4) {
+					if(commitSplited.length == 5) {
 						String idCommit = commitSplited[0];
 						String authorName = commitSplited[1];
 						String authorEmail = commitSplited[2];
 						if(authorName != null && authorEmail != null 
 								&& !authorEmail.contains(Constants.noreply)) {
 							String time = commitSplited[3];
+							String message = commitSplited[4];
 							Contributor contributorCommit = null;
 							for (Contributor contributor : contributors) {
 								if(contributor.getName().equals(authorName)
@@ -133,7 +134,7 @@ public class CommitExtractor {
 							Integer timeInt = Integer.parseInt(time);
 							Instant instant = Instant.ofEpochSecond(timeInt);
 							Date commitDate = Date.from(instant);
-							commits.add(new Commit(contributorCommit, commitDate, idCommit));
+							commits.add(new Commit(contributorCommit, commitDate, idCommit, message));
 						}
 					}
 				} catch (Exception e) {
@@ -157,7 +158,7 @@ public class CommitExtractor {
 				String[] splited = strLine.split(";");
 				String id = splited[0];
 				for (Commit commit : commits) {
-					if (id.equals(commit.getExternalId())) {
+					if (id.equals(commit.getSha())) {
 						String operation = splited[1];
 						String filePath = splited[3];
 						for (File fileCommitFile : files) {
@@ -244,7 +245,7 @@ public class CommitExtractor {
 				if (string1.equals("commit")) {
 					String idCommitString = splited1[1];
 					for (Commit commit : commits) {
-						if (idCommitString.equals(commit.getExternalId())) {
+						if (idCommitString.equals(commit.getSha())) {
 							commitAnalyzed = commit;
 							continue whileFile;
 						}
@@ -287,7 +288,7 @@ public class CommitExtractor {
 								if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
 									try {
 										int linesAdded = Integer.parseInt(splited2[0]);
-										commitFile.setAdds(linesAdded);
+										commitFile.setAdditions(linesAdded);
 									} catch (Exception e) {
 										e.printStackTrace();
 									}
@@ -299,7 +300,7 @@ public class CommitExtractor {
 								if(commitFile.getFile().isFile(path)) {
 									try {
 										int linesAdded = Integer.parseInt(splited2[0]);
-										commitFile.setAdds(linesAdded);
+										commitFile.setAdditions(linesAdded);
 									} catch (Exception e) {
 										e.printStackTrace();
 									}

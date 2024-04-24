@@ -12,7 +12,7 @@ public class CommitUtils {
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override
 			public int compare(Commit c1, Commit c2) {
-				return c2.getDate().compareTo(c1.getDate());
+				return c2.getAuthorDate().compareTo(c1.getAuthorDate());
 			}
 		});
 	}

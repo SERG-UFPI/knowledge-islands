@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableScheduling
 public class RemoveTempProjects {
 
-	@Value("${configuration.clone.path}")
+	@Value("${configuration.tmp-clone.path}")
 	private String tmpProjectsPath;
 
 	@Scheduled(fixedRate = 1000*60*60*24)

@@ -2,6 +2,8 @@ package br.com.gitanalyzer.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.IOException;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
@@ -23,9 +25,9 @@ public class DownloaderServiceTest {
 	private DownloaderService service;
 
 	@Test
-	public void cloneProject_checkIfFolderExists() throws InvalidRemoteException, TransportException, GitAPIException {
+	public void cloneProject_checkIfFolderExists() throws InvalidRemoteException, TransportException, GitAPIException, IOException {
 		CloneRepoForm form = CloneRepoForm.builder()
-				.url("https://github.com/OtavioCury/git-analyzer.git").build();
+				.cloneUrl("https://github.com/OtavioCury/git-analyzer.git").build();
 		String folderPath = cloneFolder+"git-analyzer"+"/";
 		assertEquals(service.cloneProject(form), folderPath);
 	}

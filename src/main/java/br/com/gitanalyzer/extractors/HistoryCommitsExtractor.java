@@ -39,22 +39,22 @@ public class HistoryCommitsExtractor {
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override
 			public int compare(Commit c1, Commit c2) {
-				return c2.getDate().compareTo(c1.getDate());
+				return c2.getAuthorDate().compareTo(c1.getAuthorDate());
 			}
 		});
 		String[] hashes = new String[numberYears];
 		int index = 0;
-		Date date = commits.get(0).getDate();
-		hashes[index] = commits.get(0).getExternalId();
+		Date date = commits.get(0).getAuthorDate();
+		hashes[index] = commits.get(0).getSha();
 		index++;
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 		calendar.add(Calendar.YEAR, -1);
 		date = calendar.getTime();
 		for (Commit commit: commits) {
-			if (commit.getDate().before(date)) {
-				date = commit.getDate();
-				hashes[index] = commit.getExternalId();
+			if (commit.getAuthorDate().before(date)) {
+				date = commit.getAuthorDate();
+				hashes[index] = commit.getSha();
 				calendar = Calendar.getInstance();
 				calendar.setTime(date);
 				calendar.add(Calendar.YEAR, -1);
@@ -74,28 +74,28 @@ public class HistoryCommitsExtractor {
 		Collections.sort(commits, new Comparator<Commit>() {
 			@Override
 			public int compare(Commit c1, Commit c2) {
-				return c2.getDate().compareTo(c1.getDate());
+				return c2.getAuthorDate().compareTo(c1.getAuthorDate());
 			}
 		});
 		Collections.reverse(commits);
 		List<String> hashes = new ArrayList<String>();
-		Date date = commits.get(0).getDate();
+		Date date = commits.get(0).getAuthorDate();
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 		int calendarType = form.getIntervalType().equals(TimeIntervalTypeEnum.MONTH)?Calendar.MONTH:Calendar.YEAR;
 		calendar.add(calendarType, form.getInterval());
 		date = calendar.getTime();
 		for (Commit commit: commits) {
-			if (commit.getDate().after(date)) {
-				hashes.add(commit.getExternalId());
-				date = commit.getDate();
+			if (commit.getAuthorDate().after(date)) {
+				hashes.add(commit.getSha());
+				date = commit.getAuthorDate();
 				calendar = Calendar.getInstance();
 				calendar.setTime(date);
 				calendar.add(calendarType, form.getInterval());
 				date = calendar.getTime();
 			}
 		}
-		hashes.add(commits.get(commits.size()-1).getExternalId());
+		hashes.add(commits.get(commits.size()-1).getSha());
 		return hashes.stream().distinct().toList();
 	}
 

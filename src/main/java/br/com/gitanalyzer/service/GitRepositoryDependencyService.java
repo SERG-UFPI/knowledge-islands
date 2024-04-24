@@ -14,17 +14,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.gitanalyzer.model.entity.GitRepositoryDependency;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
-import br.com.gitanalyzer.repository.RepositoryVersionRepository;
-import br.com.gitanalyzer.utils.ProjectUtils;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
+import br.com.gitanalyzer.utils.GitRepositoryUtils;
 
 @Service
-public class ProjectDependencyService {
+public class GitRepositoryDependencyService {
 
 	@Value("${configuration.github.token}")
 	private String token;
 
 	@Autowired
-	private RepositoryVersionRepository projectVersionRepository;
+	private GitRepositoryVersionRepository projectVersionRepository;
 
 	public void getProjectVersionAndSetDependency(Long id) {
 		GitRepositoryVersion version = projectVersionRepository.findById(id).get();
@@ -34,8 +34,8 @@ public class ProjectDependencyService {
 	public List<GitRepositoryDependency> getDependenciesProjectVersion(String projectFullName) {
 		List<GitRepositoryDependency> dependencies = new ArrayList<>();
 		try {
-			String owner = ProjectUtils.getOwnerNameProject(projectFullName);
-			String name = ProjectUtils.getNameProject(projectFullName);
+			String owner = GitRepositoryUtils.getOwnerNameProject(projectFullName);
+			String name = GitRepositoryUtils.getNameProject(projectFullName);
 			String command = br.com.gitanalyzer.utils.Constants.commandGetDependencyRepo.replace("$TOKEN", token).replace("$OWNER", owner).replace("$PROJECT", name);
 			ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});
 			pb.redirectErrorStream(true);

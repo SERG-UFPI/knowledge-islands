@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model.github_openai;
+package br.com.gitanalyzer.model.github_openai.enums;
 
 import java.util.ArrayList;
 import java.util.List;

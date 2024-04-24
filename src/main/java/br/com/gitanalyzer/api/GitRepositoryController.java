@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.service.FilterGitRepositoryService;
-import br.com.gitanalyzer.service.ProjectService;
+import br.com.gitanalyzer.service.GitRepositoryService;
 
 @RestController
-@RequestMapping("/api/project")
-public class ProjectController {
+@RequestMapping("/api/git-repository")
+public class GitRepositoryController {
 
 	@Autowired
-	private ProjectService projectService;
+	private GitRepositoryService projectService;
 	@Autowired
 	private FilterGitRepositoryService filterProjectService;
 	

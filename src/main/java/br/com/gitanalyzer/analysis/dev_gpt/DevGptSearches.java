@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -21,20 +24,23 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
 import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
 import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
 import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
+import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.CommitFile;
+import br.com.gitanalyzer.model.entity.ChatgptConversation;
 import br.com.gitanalyzer.model.entity.Contributor;
-import br.com.gitanalyzer.model.github_openai.ChatgptConversation;
-import br.com.gitanalyzer.model.github_openai.ChatgptUserAgent;
-import br.com.gitanalyzer.model.github_openai.Commit;
-import br.com.gitanalyzer.model.github_openai.CommitFile;
-import br.com.gitanalyzer.model.github_openai.ConversationTurn;
-import br.com.gitanalyzer.model.github_openai.File;
+import br.com.gitanalyzer.model.entity.ConversationTurn;
+import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.entity.PromptCode;
+import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.github_openai.FileCitation;
-import br.com.gitanalyzer.model.github_openai.PromptCode;
+import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
+import br.com.gitanalyzer.model.github_openai.enums.ChatgptUserAgent;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
 
@@ -210,10 +216,10 @@ public class DevGptSearches {
 		JsonNode dataNode = rootNode.get("props").get("pageProps")
 				.get("serverResponse").get("data");
 		ChatgptConversation conversation = new ChatgptConversation();
-		Long conversationCreateTime = dataNode.get("create_time").asLong();
-		Long conversationUpdateTime = dataNode.get("update_time").asLong();
-		conversation.setCreateTime(conversationCreateTime);
-		conversation.setUpdateTime(conversationUpdateTime);
+		Date createTime = new java.util.Date(dataNode.get("create_time").asLong()*1000);
+		conversation.setCreateTime(createTime);
+		Date updateTime = new java.util.Date(dataNode.get("update_time").asLong()*1000);
+		conversation.setUpdateTime(updateTime);
 		if(dataNode != null) {
 			JsonNode conversationsNode = dataNode.get("linear_conversation");
 			for (JsonNode node : conversationsNode) {
@@ -348,14 +354,14 @@ public class DevGptSearches {
 			if (rootNode.get("files") != null && rootNode.get("files").size() > 0) {
 				for (JsonNode item : rootNode.get("files")) {
 					CommitFile commitFile = new CommitFile();
-					commitFile.setShaFile(item.get("sha").asText());
-					commitFile.setFilePath(item.get("filename").asText());
+					commitFile.getFile().setSha(item.get("sha").asText());
+					commitFile.getFile().setPath(item.get("filename").asText());
 					commitFile.setAdditions(item.get("additions").asInt());
 					commitFile.setDeletions(item.get("deletions").asInt());
 					commitFile.setChanges(item.get("changes").asInt());
 					commitFile.setPatch(item.get("patch")!=null?item.get("patch").asText():null);
 					commitFile.setAddedLines(commitFile.getPatch() != null ? getAddedLinesFromPatch(commitFile.getPatch()):null);
-					commitFile.setStatus(item.get("status").asText());
+					commitFile.setStatus(OperationType.getEnumByType(item.get("status").asText()));
 					commitFiles.add(commitFile);
 				}
 			}
@@ -399,7 +405,7 @@ public class DevGptSearches {
 	public static Commit getCommitThatAddedLink(File file, String link) throws LinkNotFoundOnCommitsException, FileNotFoundOnCommitException {
 		for (Commit commit : file.getCommits()) {
 			for (CommitFile commitFile : commit.getCommitFiles()) {
-				if(commitFile.getFilePath().equals(file.getPath())) {
+				if(commitFile.getFile().getPath().equals(file.getPath())) {
 					if(commitFile.getAddedLines() != null && commitFile.getAddedLines().size() > 0) {
 						if(commitFile.getAddedLines().stream().anyMatch(a -> a.contains(link))) {
 							return commit;
@@ -420,5 +426,30 @@ public class DevGptSearches {
 			}
 		}
 		return commitsAuthor;
+	}
+	
+	public static List<CommitFile> getAllCommitFilesOfAuthor(File file, Contributor contributor){
+		List<CommitFile> commitFilesAuthor = new ArrayList<>();
+		for (Commit commit : file.getCommits()) {
+			if(commit.getAuthor().getEmail().equals(contributor.getEmail()) 
+					|| GitRepositoryVersionExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
+				commitFilesAuthor.add(commit.getCommitFiles().stream().filter(cf -> cf.getFile().getPath().equals(file.getPath())).findFirst().get());
+				continue;
+			}
+		}
+		return commitFilesAuthor;
+	}
+
+	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
+		List<File> files = new ArrayList<>();
+		for (SharedLink sharedLink : sharedLinks) {
+			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
+				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFile().getPath()) 
+						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFile().getRepository().getFullName()))) {
+					files.add(fileLinkAuthor.getAuthorFile().getFile());
+				}
+			}
+		}
+		return files;
 	}
 }

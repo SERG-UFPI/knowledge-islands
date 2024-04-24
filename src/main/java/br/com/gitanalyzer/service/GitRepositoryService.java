@@ -34,7 +34,7 @@ import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 
 @Service
-public class ProjectService {
+public class GitRepositoryService {
 
 	@Autowired
 	private GitRepositoryRepository projectRepository;
@@ -114,7 +114,7 @@ public class ProjectService {
 	public void generateCommitFile(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
 		System.out.println("Generating commit file of "+name);
-		String pathCommitScript = ProjectService.class.getResource("/scripts_shell/commit_log_script.sh").toURI().getPath();
+		String pathCommitScript = GitRepositoryService.class.getResource("/scripts_shell/commit_log_script.sh").toURI().getPath();
 		String command = "sh "+pathCommitScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
@@ -158,7 +158,7 @@ public class ProjectService {
 	public void generateClocFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
 		System.out.println("Generating cloc file of "+name);
-		String pathClocScript = ProjectService.class.getResource("/scripts_shell/cloc_script.sh").toURI().getPath();
+		String pathClocScript = GitRepositoryService.class.getResource("/scripts_shell/cloc_script.sh").toURI().getPath();
 		String command = "sh "+pathClocScript+" "+projectPath;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
@@ -180,7 +180,7 @@ public class ProjectService {
 	public void generateFileLists(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
 		System.out.println("Generating linguist file of "+name);
-		String pathRubyScript = ProjectService.class.getResource("/scripts_shell/linguist.rb").toURI().getPath();
+		String pathRubyScript = GitRepositoryService.class.getResource("/scripts_shell/linguist.rb").toURI().getPath();
 		String command = "ruby "+pathRubyScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
@@ -218,7 +218,7 @@ public class ProjectService {
 		for (GitRepository project : projetos) {
 			for(Map.Entry<String, String> set: nameLanguage.entrySet()) {
 				if (set.getKey().contains(project.getName())) {
-					project.setMainLanguage(set.getValue());
+					project.setLanguage(set.getValue());
 					break;
 				}
 			}
@@ -336,7 +336,7 @@ public class ProjectService {
 
 	public void checkOutProjectVersion(String path, String hash)  throws URISyntaxException, 
 	IOException, InterruptedException {
-		String pathCheckoutScript = ProjectService.class.getResource("/scripts_shell/checkout_script.sh").toURI().getPath();
+		String pathCheckoutScript = GitRepositoryService.class.getResource("/scripts_shell/checkout_script.sh").toURI().getPath();
 		String command = "sh "+pathCheckoutScript+" "+path+" "+hash;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);

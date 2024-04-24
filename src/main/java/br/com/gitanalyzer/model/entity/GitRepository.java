@@ -33,7 +33,7 @@ public class GitRepository {
 	private String name;
 	private String fullName;
 	private String currentPath;
-	private String mainLanguage;
+	private String language;
 	private boolean filtered;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date firstCommitDate;
@@ -46,7 +46,9 @@ public class GitRepository {
 	private String downloadVersionHash;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date downloadVersionDate;
-
+	private String cloneUrl;
+	private boolean privateRepository;
+	
 	@javax.persistence.Transient
 	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
 
@@ -57,12 +59,12 @@ public class GitRepository {
 		this.downloadVersionHash = downloadVersionHash;
 	}
 
-	public GitRepository(String name, String fullName, String mainLanguage, 
+	public GitRepository(String name, String fullName, String language, 
 			String currentPath, String defaultBranch, Integer numberStars, String downloadVersionHash) {
 		super();
 		this.name = name;
 		this.fullName = fullName;
-		this.mainLanguage = mainLanguage;
+		this.language = language;
 		this.currentPath = currentPath;
 		this.defaultBranch = defaultBranch;
 		this.numberStars = numberStars;
@@ -76,9 +78,15 @@ public class GitRepository {
 				.defaultBranch(defaultBranch)
 				.firstCommitDate(firstCommitDate)
 				.fullName(fullName)
-				.mainLanguage(mainLanguage)
+				.mainLanguage(language)
 				.name(name)
 				.numberStars(numberStars)
 				.build();
+	}
+
+	public GitRepository(String name, String fullName) {
+		super();
+		this.name = name;
+		this.fullName = fullName;
 	}
 }		

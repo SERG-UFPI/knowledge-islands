@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.exception;
+package br.com.gitanalyzer.exceptions;
 
 public class UserAlreadyExistException extends Exception{
 

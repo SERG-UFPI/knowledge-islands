@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.service.ProjectVersionService;
+import br.com.gitanalyzer.service.GitRepositoryVersionService;
 
 @RestController
-@RequestMapping("/api/project-version")
-public class ProjectVersionController {
+@RequestMapping("/api/git-repository-version")
+public class GitRepositoryVersionController {
 
 	@Autowired
-	private ProjectVersionService service;
+	private GitRepositoryVersionService service;
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> remove(@PathVariable Long id){

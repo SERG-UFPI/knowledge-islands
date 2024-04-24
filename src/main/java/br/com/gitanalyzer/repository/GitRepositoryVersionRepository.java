@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 
 @Repository
-public interface RepositoryVersionRepository extends JpaRepository<GitRepositoryVersion, Long>{
+public interface GitRepositoryVersionRepository extends JpaRepository<GitRepositoryVersion, Long>{
 	
 	boolean existsByVersionId(String versionId);
 	

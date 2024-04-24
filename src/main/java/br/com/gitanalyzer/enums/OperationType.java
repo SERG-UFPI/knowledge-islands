@@ -12,7 +12,7 @@ public enum OperationType {
 
 	public static OperationType getEnumByType(String operationType) {
 		for (OperationType operation : OperationType.values()) {
-			if (operation.getOperationType().equals(operationType)) {
+			if (operation.getOperationType().toUpperCase().equals(operationType)) {
 				return operation;
 			}
 		}

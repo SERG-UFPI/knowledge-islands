@@ -14,8 +14,7 @@ import lombok.NoArgsConstructor;
 public class CloneRepoForm {
 
 	@NotNull
-	public String url;
-	@NotNull
+	public String cloneUrl;
 	public Long idUser;
 	public String branch;
 }

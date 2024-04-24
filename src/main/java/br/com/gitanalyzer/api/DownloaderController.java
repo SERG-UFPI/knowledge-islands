@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.api;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -38,8 +39,13 @@ public class DownloaderController {
 	}
 
 	@PostMapping("clone-repository")
-	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException{
+	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException, IOException{
 		return ResponseEntity.ok(service.cloneProject(form));
+	}
+	
+	@PostMapping("clone-shared-links-repositories")
+	public ResponseEntity<?> cloneSharedLinkRepositories() throws InvalidRemoteException, TransportException, GitAPIException{
+		return ResponseEntity.ok(service.cloneRepositoriesWithSharedLinks());
 	}
 
 }

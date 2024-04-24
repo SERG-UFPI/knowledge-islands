@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.service.ProjectDependencyService;
+import br.com.gitanalyzer.service.GitRepositoryDependencyService;
 
 @RestController
-@RequestMapping("/api/project-dependency")
-public class ProjectDependencyController {
+@RequestMapping("/api/git-repository-dependency")
+public class GitRepositoryDependencyController {
 	
 	@Autowired
-	private ProjectDependencyService projectDependencyService;
+	private GitRepositoryDependencyService projectDependencyService;
 	
 	@PostMapping("/set-dependencies_project")
 	public ResponseEntity<?> extractVersion(@RequestBody Long id) throws IOException, InterruptedException{

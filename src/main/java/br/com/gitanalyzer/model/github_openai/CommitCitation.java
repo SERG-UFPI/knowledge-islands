@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.SharedLink;
 
 public class CommitCitation implements ChatgptCitation{
 
@@ -16,7 +17,7 @@ public class CommitCitation implements ChatgptCitation{
 	private String nodeId;
 	private String htmlUrl;
 	private String commentsUrl;
-	private List<FileAuthor> filesAuthor;
+	private List<FileLinkAuthor> filesAuthor;
 	public String getUrl() {
 		return url;
 	}
@@ -55,10 +56,10 @@ public class CommitCitation implements ChatgptCitation{
 	public void setRepositoryFullName(String repositoryFullName) {
 		this.repositoryFullName = repositoryFullName;
 	}
-	public List<FileAuthor> getFilesAuthor() {
+	public List<FileLinkAuthor> getFilesAuthor() {
 		return filesAuthor;
 	}
-	public void setFilesAuthor(List<FileAuthor> filesAuthor) {
+	public void setFilesAuthor(List<FileLinkAuthor> filesAuthor) {
 		this.filesAuthor = filesAuthor;
 	}
 	public Date getCommiterDate() {

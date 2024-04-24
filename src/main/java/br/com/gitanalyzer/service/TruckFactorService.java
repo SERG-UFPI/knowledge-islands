@@ -50,7 +50,7 @@ import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.model.vo.CommitFiles;
 import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.repository.RepositoryVersionRepository;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.repository.UserRepository;
@@ -67,15 +67,15 @@ public class TruckFactorService {
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	@Autowired
-	private ProjectVersionService projectVersionService;
+	private GitRepositoryVersionService gitRepositoryVersionService;
 	@Autowired
-	private GitRepositoryRepository projectRepository;
+	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
-	private RepositoryVersionRepository projectVersionRepository;
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 	@Autowired
-	private ProjectService projectService;
+	private GitRepositoryService gitRepositoryService;
 	@Autowired
 	private DownloaderService downloaderService;
 	@Autowired
@@ -101,7 +101,7 @@ public class TruckFactorService {
 				setProcessStage(process, StageEnum.DOWNLOADING);
 				String projectPath = downloaderService.cloneProject(form);
 				setProcessStage(process, StageEnum.EXTRACTING_DATA);
-				projectService.generateLogFiles(projectPath);
+				gitRepositoryService.generateLogFiles(projectPath);
 				setProcessStage(process, StageEnum.CALCULATING);
 				TruckFactorDTO truckFactor = generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()
 						.path(projectPath).knowledgeMetric(KnowledgeMetric.DOE).build());
@@ -125,7 +125,7 @@ public class TruckFactorService {
 		if(user == null) {
 			throw new Exception("User not found");
 		}
-		TruckFactorProcess process = new TruckFactorProcess(StageEnum.INITIALIZED, user, form.getUrl());
+		TruckFactorProcess process = new TruckFactorProcess(StageEnum.INITIALIZED, user, form.getCloneUrl());
 		truckFactorProcessRepository.save(process);
 		Thread t = new Thread(new CloneTruckFactorTask(form, process));
 		t.start();
@@ -136,7 +136,7 @@ public class TruckFactorService {
 		boolean flag = false;
 		List<Commit> commitsReturn = new ArrayList<Commit>();
 		for(int i = 0; i < commits.size(); i++){
-			if(commits.get(i).getExternalId().equals(hash)) {
+			if(commits.get(i).getSha().equals(hash)) {
 				flag = true; 
 			}
 			if(flag == true) {
@@ -151,17 +151,17 @@ public class TruckFactorService {
 			throws IOException, NoHeadException, GitAPIException {
 		KnowledgeMetric knowledgeMetric = repo.getKnowledgeMetric();
 		String projectPath = repo.getPath();
-		String projectName = projectService.extractProjectName(projectPath);
+		String projectName = gitRepositoryService.extractProjectName(projectPath);
 		GitRepository project = null;
-		if(projectRepository.existsByName(projectName)) {
-			project = projectRepository.findByName(projectName);
+		if(gitRepositoryRepository.existsByName(projectName)) {
+			project = gitRepositoryRepository.findByName(projectName);
 		}else {
 			try {
 				project = new GitRepository(projectName, repo.getPath(), 
-						projectService.extractProjectFullName(projectPath), projectService.getCurrentRevisionHash(projectPath));
+						gitRepositoryService.extractProjectFullName(projectPath), gitRepositoryService.getCurrentRevisionHash(projectPath));
 			} catch (Exception e) {
 				project = new GitRepository(projectName, repo.getPath(), 
-						null, projectService.getCurrentRevisionHash(projectPath));
+						null, gitRepositoryService.getCurrentRevisionHash(projectPath));
 			}
 		}
 		//if (projectName.equals("rails") == true) {
@@ -171,7 +171,7 @@ public class TruckFactorService {
 		//			String lastCommitHash = commitExtractor.getLastCommitHash(projectPath);
 		//			versionAnalyzed = project.getVersions().stream().anyMatch(v -> v.getVersionId().equals(lastCommitHash));
 		//		}
-		GitRepositoryVersion projectVersion = projectVersionService.extractProjectVersion(project);
+		GitRepositoryVersion projectVersion = gitRepositoryVersionService.extractProjectVersion(project);
 		//saveNumberFilesOfCommits(projectVersion.getCommits());
 		//projectService.createFolderLogsAndCopyFiles(project.getCurrentPath(), project.getName(), projectVersion.getVersionId());
 		System.out.println("CALCULATING "+knowledgeMetric.getName()+" OF "+project.getName());
@@ -219,9 +219,9 @@ public class TruckFactorService {
 			List<File> coveredFiles = getCoverageFiles(contributors, projectVersion.getFiles(), knowledgeMetric);
 			System.out.println("SAVING TF DATA OF "+project.getName());
 			if(project.getId() == null) {
-				projectRepository.save(project);
+				gitRepositoryRepository.save(project);
 			}
-			if(projectVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
+			if(gitRepositoryVersionRepository.existsByVersionId(projectVersion.getVersionId()) == false) {
 				projectVersion.setRepository(project);
 				for (Contributor contributor : projectVersion.getContributors()) {
 					if(contributor.getNumberFilesAuthor() > 0) {
@@ -230,7 +230,7 @@ public class TruckFactorService {
 						contributor.setPercentOfFilesAuthored(0.0);
 					}
 				}
-				projectVersionRepository.save(projectVersion);
+				gitRepositoryVersionRepository.save(projectVersion);
 				long end = System.currentTimeMillis();
 				float sec = (end - start) / 1000F;
 				TruckFactor truckFactor = new TruckFactor(tf, projectVersion, knowledgeMetric,
@@ -257,9 +257,9 @@ public class TruckFactorService {
 				|| knowledgeMetric.equals(KnowledgeMetric.MACHINE_LEARNING)) {
 			DoeContributorFile doeContributorFile = getDoeContributorFile(contributor, file, commits);
 			double doeValue = doeUtils.getDOE(doeContributorFile.numberAdds, doeContributorFile.fa,
-					doeContributorFile.numDays, file.getFileSize());
+					doeContributorFile.numDays, file.getSize());
 			DOE doe = new DOE(doeContributorFile.numberAdds, doeContributorFile.fa,
-					doeContributorFile.numDays, file.getFileSize(), doeValue);
+					doeContributorFile.numDays, file.getSize(), doeValue);
 			return new AuthorFile(contributor, file, doe);
 		}else {
 			DoaContributorFile doaContributorFile = getDoaContributorFile(contributor, file, commits);
@@ -295,7 +295,7 @@ public class TruckFactorService {
 			CSVWriter writer = new CSVWriter(fw);
 			List<CommitFiles> commitsFiles = new ArrayList<CommitFiles>();
 			for (Commit commit : commits) {
-				commitsFiles.add(new CommitFiles(commit.getExternalId(), commit.getCommitFiles().size()));
+				commitsFiles.add(new CommitFiles(commit.getSha(), commit.getCommitFiles().size()));
 			}
 			commitsFiles = commitsFiles.stream().filter(c -> c.getNumberOfFilesModified() != 0).collect(Collectors.toList());
 			commitsFiles = commitsFiles.stream().sorted().collect(Collectors.toList());
@@ -311,7 +311,7 @@ public class TruckFactorService {
 
 	protected DoeContributorFile getDoeContributorFile(Contributor contributor, 
 			File file, List<Commit> commits) {
-		Date currentDate = commits.get(0).getDate();
+		Date currentDate = commits.get(0).getAuthorDate();
 		int adds = 0;
 		int fa = 0;
 		int numDays = 0;
@@ -326,9 +326,9 @@ public class TruckFactorService {
 				if (contributorAux.equals(commit.getAuthor())) {
 					for (CommitFile commitFile: commit.getCommitFiles()) {
 						if (file.isFile(commitFile.getFile().getPath())) {
-							adds = commitFile.getAdds() + adds;
+							adds = commitFile.getAdditions() + adds;
 							if (dateLastCommit == null) {
-								dateLastCommit = commit.getDate();
+								dateLastCommit = commit.getAuthorDate();
 							}
 							if(commitFile.getOperation().equals(OperationType.ADD)) {
 								fa = 1;
@@ -419,7 +419,7 @@ public class TruckFactorService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				GitRepository project = projectService.returnProjectByPath(projectPath);
+				GitRepository project = gitRepositoryService.returnProjectByPath(projectPath);
 				if(project != null && project.isFiltered() == false) {
 					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 						try {
@@ -562,7 +562,7 @@ public class TruckFactorService {
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				GitRepository project = projectService.returnProjectByPath(projectPath);
+				GitRepository project = gitRepositoryService.returnProjectByPath(projectPath);
 				if((project != null && project.isFiltered() == false) || project == null) {
 					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 						try {
@@ -590,15 +590,15 @@ public class TruckFactorService {
 		List<String> hashes = historyCommitsExtractor.getCommitHashesByInterval(form);
 		try {
 			for (String hash : hashes) {
-				projectService.checkOutProjectVersion(form.getPath(), hash);
-				projectService.generateLogFiles(form.getPath());
+				gitRepositoryService.checkOutProjectVersion(form.getPath(), hash);
+				gitRepositoryService.generateLogFiles(form.getPath());
 				generateTruckFactorProject(RepositoryKnowledgeMetricForm.builder()
 						.knowledgeMetric(form.getKnowledgeMetric()).path(form.getPath()).build());
 			}
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
-			projectService.checkOutProjectVersion(form.getPath(), hashes.get(hashes.size()-1));
+			gitRepositoryService.checkOutProjectVersion(form.getPath(), hashes.get(hashes.size()-1));
 		}
 	}
 
