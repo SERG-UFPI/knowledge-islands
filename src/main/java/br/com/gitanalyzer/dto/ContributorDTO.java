@@ -10,12 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContributorDTO {
-
 	private Long id;
 	private String name;
 	private String email;
 	private boolean active;
-	private int numberFilesAuthor;
-	private Double percentOfFilesAuthored;
-
 }

@@ -29,7 +29,7 @@ import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
 import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
 import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
-import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.ChatgptConversation;
@@ -283,7 +283,7 @@ public class DevGptSearches {
 		ObjectMapper objectMapper = new ObjectMapper();
 		String cookie = System.getenv("OPENAI_COOKIE");
 		try {
-			String[] command = {"curl", "-b", cookie, url};
+			String[] command = {"curl", "-L", "-b", cookie, url};
 
 			ProcessBuilder processBuilder = new ProcessBuilder(command);
 			Process process = processBuilder.start();
@@ -310,11 +310,12 @@ public class DevGptSearches {
 					}
 				}
 				return json;
+			}else {
+				throw new FetchPageException(url);
 			}
 		} catch (Exception e) {
 			throw new FetchPageException(url);
 		}
-		return null;
 	}
 
 	public static File getFileContent(String token, String repoFullName, String filePath) throws Exception {
@@ -361,7 +362,7 @@ public class DevGptSearches {
 					commitFile.setChanges(item.get("changes").asInt());
 					commitFile.setPatch(item.get("patch")!=null?item.get("patch").asText():null);
 					commitFile.setAddedLines(commitFile.getPatch() != null ? getAddedLinesFromPatch(commitFile.getPatch()):null);
-					commitFile.setStatus(OperationType.getEnumByType(item.get("status").asText()));
+					commitFile.setStatus(OperationType.valueOf(item.get("status").asText().toUpperCase()));
 					commitFiles.add(commitFile);
 				}
 			}
@@ -421,7 +422,7 @@ public class DevGptSearches {
 		List<Commit> commitsAuthor = new ArrayList<>();
 		for (Commit commit : commits) {
 			if(commit.getAuthor().getEmail().equals(contributor.getEmail()) 
-					|| GitRepositoryVersionExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
+					|| GitRepositoryTruckFactorExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
 				commitsAuthor.add(commit);
 			}
 		}
@@ -432,7 +433,7 @@ public class DevGptSearches {
 		List<CommitFile> commitFilesAuthor = new ArrayList<>();
 		for (Commit commit : file.getCommits()) {
 			if(commit.getAuthor().getEmail().equals(contributor.getEmail()) 
-					|| GitRepositoryVersionExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
+					|| GitRepositoryTruckFactorExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
 				commitFilesAuthor.add(commit.getCommitFiles().stream().filter(cf -> cf.getFile().getPath().equals(file.getPath())).findFirst().get());
 				continue;
 			}
@@ -444,9 +445,9 @@ public class DevGptSearches {
 		List<File> files = new ArrayList<>();
 		for (SharedLink sharedLink : sharedLinks) {
 			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
-				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFile().getPath()) 
-						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFile().getRepository().getFullName()))) {
-					files.add(fileLinkAuthor.getAuthorFile().getFile());
+				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath()) 
+						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()))) {
+					files.add(fileLinkAuthor.getAuthorFile().getFileVersion().getFile());
 				}
 			}
 		}

@@ -2,6 +2,7 @@ package br.com.gitanalyzer.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -13,47 +14,54 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryFolderExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
 
 @Service
 public class GitRepositoryVersionService {
-	
+
 	private FileExtractor fileExtractor = new FileExtractor();
 	private CommitExtractor commitExtractor = new CommitExtractor();
 	private ContributorUtils contributorUtils = new ContributorUtils();
-	//private CkMeasuresExtractor ckMeasuresExtractor = new CkMeasuresExtractor();
-	private GitRepositoryVersionExtractor projectVersionExtractor = new GitRepositoryVersionExtractor();
+	private GitRepositoryTruckFactorExtractor projectVersionExtractor = new GitRepositoryTruckFactorExtractor();
+	private GitRepositoryFolderExtractor gitRepositoryFolderExtractor = new GitRepositoryFolderExtractor();
 
 	@Autowired
-	private GitRepositoryVersionRepository repository;
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 	@Autowired
 	private GitRepositoryDependencyService projectDependencyService;
 	@Autowired
-	private GitRepositoryRepository projectRepository;
+	private GitRepositoryRepository gitRepositoryRepository;
+	@Autowired
+	private GitRepositoryService gitRepositoryService;
+	@Autowired
+	private GitRepositoryVersionKnowledgeModelRepository gitRepositoryVersionKnowledgeModelRepository;
 
 	public void remove(Long id) {
-		repository.deleteById(id);
+		gitRepositoryVersionRepository.deleteById(id);
 	}
 
 	public void removeAll() {
-		List<GitRepositoryVersion> versions = repository.findAll();
+		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findAll();
 		List<Long> ids = versions.stream().map(v -> v.getId()).toList();
 
 		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (Long id : ids) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-				repository.deleteById(id);
+				gitRepositoryVersionRepository.deleteById(id);
 			}, executorService);
 			futures.add(future);
 		}
@@ -63,50 +71,90 @@ public class GitRepositoryVersionService {
 
 	@Transactional
 	public void removeFromProject(Long id) {
-		repository.deleteByRepositoryId(id);
+		gitRepositoryVersionRepository.deleteByGitRepositoryId(id);
 	}
 
 	@Transactional
 	public void removeFromProjectsFiltered() {
-		List<GitRepository> projects = projectRepository.findByFilteredTrue();
+		List<GitRepository> projects = gitRepositoryRepository.findByFilteredTrue();
 		List<Long> ids = projects.stream().map(p -> p.getId()).toList();
-		repository.deleteByRepositoryIdIn(ids);
+		gitRepositoryVersionRepository.deleteByGitRepositoryIdIn(ids);
 	}
-	
-	public GitRepositoryVersion extractProjectVersion(GitRepository project) throws IOException {
+
+	public GitRepositoryVersion extractProjectVersion(GitRepository repository) throws IOException {
 		long start = System.currentTimeMillis();
-		System.out.println("EXTRACTING PROJECT VERSION OF "+project.getName());
-		if(project.getCurrentPath().substring(project.getCurrentPath().length() -1).equals("/") == false) {
-			project.setCurrentPath(project.getCurrentPath()+"/");
+		if(repository.getCurrentFolderPath().substring(repository.getCurrentFolderPath().length() -1).equals("/") == false) {
+			repository.setCurrentFolderPath(repository.getCurrentFolderPath()+"/");
 		}
-//		QualityMeasures qualityMeasures = null;
-//		if(project.getMainLanguage() != null && project.getMainLanguage().equals("Java")) {
-//			qualityMeasures = ckMeasuresExtractor.extract(project.getCurrentPath());
-//		}
-		int numberAllFiles = fileExtractor.extractSizeAllFiles(project.getCurrentPath());
-		List<File> files = fileExtractor.extractFilesFromClocFile(project.getCurrentPath(), project.getName());
-		int numberAnalysedFiles = files.size();
-		fileExtractor.getRenamesFiles(project.getCurrentPath(), files);
-		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(project.getCurrentPath());
+		List<File> files = fileExtractor.extractFilesFromClocFile(repository.getCurrentFolderPath(), repository.getName());
+		fileExtractor.getRenamesFiles(repository.getCurrentFolderPath(), files);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(repository.getCurrentFolderPath());
+		Collections.sort(commits, Collections.reverseOrder());
 		Date dateVersion = commits.get(0).getAuthorDate();
 		String versionId = commits.get(0).getSha();
-		int numberAllCommits = commits.size();
-		commits = commitExtractor.extractCommitsFiles(project.getCurrentPath(), commits, files);
+		commitExtractor.extractCommitsFiles(repository.getCurrentFolderPath(), commits, files);
 		commits.removeIf(c -> c.getCommitFiles().size() == 0);
-		commits = commitExtractor.extractCommitsFileAndDiffsOfCommits(project.getCurrentPath(), commits, files);
-		int numberAnalysedCommits = commits.size();
+		commitExtractor.extractCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits, files);
 		List<Contributor> contributors = projectVersionExtractor.extractContributorFromCommits(commits);
-		contributors = projectVersionExtractor.setAlias(contributors, project.getName());
+		contributors = projectVersionExtractor.setAlias(contributors, repository.getName());
 		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
-		int numberAnalysedDevs = contributors.size();
-		CommitUtils.sortCommitsByDate(commits);
 		long end = System.currentTimeMillis();
+		List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
+		GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
 		float sec = (end - start) / 1000F;
-		GitRepositoryVersion projectVersion = new GitRepositoryVersion(numberAnalysedDevs, 
-				numberAllFiles, numberAnalysedFiles, numberAllCommits, numberAnalysedCommits, 
+		GitRepositoryVersion projectVersion = new GitRepositoryVersion(contributors.size(), 
+				files.size(), commits.size(), 
 				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
-				commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(project.getFullName()));
+				commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(repository.getFullName()), gitRepositoryFolder);
 		return projectVersion;
+	}
+
+	@Transactional
+	public GitRepositoryVersion saveGitRepositoryVersion(String repositoryPath) throws Exception {
+		//gitRepositoryService.generateLogFiles(repositoryPath);
+		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
+		System.out.println("BEGIN SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		GitRepositoryVersion gitRepositoryVersion = extractProjectVersion(gitRepository);
+		if(!gitRepositoryVersion.validTruckFactor()) {
+			throw new Exception("GitRepository version not valid");
+		}
+		if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
+			gitRepositoryVersion.setGitRepository(gitRepository);
+			gitRepositoryVersionRepository.save(gitRepositoryVersion);
+		}else {
+			throw new Exception("GitRepository version already extracted");
+		}
+		System.out.println("ENDING SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		return gitRepositoryVersion;
+	}
+
+	public GitRepositoryVersion getGitRepositoryVersionById(Long id) {
+		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionRepository.findById(id).get();
+		List<GitRepositoryVersionKnowledgeModel> models = gitRepositoryVersionKnowledgeModelRepository.findByRepositoryVersionId(gitRepositoryVersion.getId());
+		setTruckFactorsFolders(gitRepositoryVersion.getRootFolder(), models);
+		return gitRepositoryVersion;
+	}
+
+	private void setTruckFactorsFolders(GitRepositoryFolder rootFolder,
+			List<GitRepositoryVersionKnowledgeModel> models) {
+		for (GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel : models) {
+			if((gitRepositoryVersionKnowledgeModel.getFoldersPaths() == null || gitRepositoryVersionKnowledgeModel.getFoldersPaths().isEmpty())
+					&& rootFolder.getPath() == null) {
+				rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+			}
+			if(gitRepositoryVersionKnowledgeModel.getFoldersPaths() != null && 
+					gitRepositoryVersionKnowledgeModel.getFoldersPaths().size() == 1) {
+				String folderPath = gitRepositoryVersionKnowledgeModel.getFoldersPaths().get(0);
+				if(folderPath.equals(rootFolder.getPath())) {
+					rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+				}
+			}
+		}
+		if(rootFolder.getChildren() != null && !rootFolder.getChildren().isEmpty()) {
+			for (GitRepositoryFolder folder: rootFolder.getChildren()) {
+				setTruckFactorsFolders(folder, models);
+			}
+		}
 	}
 
 }

@@ -161,9 +161,9 @@ public class CommitExtractor {
 					if (id.equals(commit.getSha())) {
 						String operation = splited[1];
 						String filePath = splited[3];
-						for (File fileCommitFile : files) {
-							if (fileCommitFile.isFile(filePath)) {
-								commit.getCommitFiles().add(new CommitFile(fileCommitFile, OperationType.getEnumByType(operation)));
+						for (File file : files) {
+							if (file.isFile(filePath)) {
+								commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation)));
 								continue whileFile;
 							}
 						}
@@ -229,7 +229,7 @@ public class CommitExtractor {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public List<Commit> extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.diffFileName);

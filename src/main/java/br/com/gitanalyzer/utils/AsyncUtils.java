@@ -13,7 +13,7 @@ public class AsyncUtils {
 		return Executors.newFixedThreadPool(Constants.numberOfThreadsToCalculateTf);
 	}
 
-	public static ExecutorService getExecutorServiceForDownloadProjects() {
-		return Executors.newFixedThreadPool(Constants.numberOfThreadsToDonwloadProjects);
+	public static ExecutorService getExecutorServiceMax() {
+		return Executors.newFixedThreadPool(Constants.numberOfMaxThreads);
 	}
 }

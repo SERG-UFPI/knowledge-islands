@@ -1,6 +1,5 @@
 package br.com.gitanalyzer.model.entity;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.persistence.Entity;
@@ -16,8 +15,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
-import br.com.gitanalyzer.enums.StageEnum;
+import br.com.gitanalyzer.enums.TruckFactorProcessStageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,14 +35,14 @@ public class TruckFactorProcess {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date endDate;
 	@Enumerated(EnumType.STRING)
-	private StageEnum stage;
+	private TruckFactorProcessStageEnum stage;
 	@OneToOne
 	private TruckFactor truckFactor;
 	@ManyToOne(targetEntity = br.com.gitanalyzer.model.entity.User.class)
 	private User user;
 	private String repositoryUrl;
 
-	public TruckFactorProcess(StageEnum stage, User user, 
+	public TruckFactorProcess(TruckFactorProcessStageEnum stage, User user, 
 			String repositoryUrl) {
 		super();
 		this.stage = stage;
@@ -52,16 +50,16 @@ public class TruckFactorProcess {
 		this.repositoryUrl = repositoryUrl;
 	}
 
-	public TruckFactorProcessDTO toDTO() {
-		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-		return TruckFactorProcessDTO.builder()
-				.repositoryUrl(repositoryUrl)
-				.endDate(endDate!=null?fmt.format(endDate):null)
-				.id(id)
-				.stage(stage.getName())
-				.startDate(startDate!=null?fmt.format(startDate):null)
-				.truckFactor(truckFactor!=null?truckFactor.toDto():null)
-				.user(user.toDTO()).build();
-	}
+//	public TruckFactorProcessDTO toDTO() {
+//		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+//		return TruckFactorProcessDTO.builder()
+//				.repositoryUrl(repositoryUrl)
+//				.endDate(endDate!=null?fmt.format(endDate):null)
+//				.id(id)
+//				.stage(stage.getName())
+//				.startDate(startDate!=null?fmt.format(startDate):null)
+//				.truckFactor(truckFactor!=null?truckFactor.toDto():null)
+//				.user(user.toDTO()).build();
+//	}
 
 }

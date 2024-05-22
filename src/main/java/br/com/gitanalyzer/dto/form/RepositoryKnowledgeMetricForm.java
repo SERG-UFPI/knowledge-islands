@@ -1,8 +1,10 @@
 package br.com.gitanalyzer.dto.form;
 
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 
-import br.com.gitanalyzer.enums.KnowledgeMetric;
+import br.com.gitanalyzer.enums.KnowledgeModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +17,15 @@ import lombok.NoArgsConstructor;
 public class RepositoryKnowledgeMetricForm {
 
 	@NotNull
-	private String path;
+	private String repositoryPath;
 	@NotNull
-	private KnowledgeMetric knowledgeMetric;
+	private KnowledgeModel knowledgeMetric;
+	private List<String> foldersPaths;
+
+	public RepositoryKnowledgeMetricForm(@NotNull String repositoryPath, @NotNull KnowledgeModel knowledgeMetric) {
+		super();
+		this.repositoryPath = repositoryPath;
+		this.knowledgeMetric = knowledgeMetric;
+	}
 
 }

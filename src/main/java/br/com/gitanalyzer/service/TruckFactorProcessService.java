@@ -18,12 +18,12 @@ public class TruckFactorProcessService {
 	@Autowired
 	private UserRepository userRepository;
 
-	public List<TruckFactorProcessDTO> getByUserId(Long id) throws Exception{
-		if(userRepository.existsById(id) == false) {
-			throw new Exception("Usuário com id {"+id+"} não encontrado");
-		}else {
-			List<TruckFactorProcess> processes = repository.findByUserId(id); 
-			return processes.stream().map(p -> p.toDTO()).toList();
-		}
-	}
+//	public List<TruckFactorProcessDTO> getByUserId(Long id) throws Exception{
+//		if(userRepository.existsById(id) == false) {
+//			throw new Exception("Usuário com id {"+id+"} não encontrado");
+//		}else {
+//			List<TruckFactorProcess> processes = repository.findByUserId(id); 
+//			return processes.stream().map(p -> p.toDTO()).toList();
+//		}
+//	}
 }

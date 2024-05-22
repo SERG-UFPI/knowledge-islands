@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import br.com.gitanalyzer.service.UserDetailsServiceImpl;
 import br.com.gitanalyzer.utils.JwtUtils;
-import lombok.extern.slf4j.Slf4j;
 
 public class AuthTokenFilter extends OncePerRequestFilter{
 
@@ -55,7 +54,7 @@ public class AuthTokenFilter extends OncePerRequestFilter{
 		String jwt = jwtUtils.getJwtFromCookies(request);
 		return jwt;
 	}
-	
-//	UserDetails userDetails =
-//			(UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+	//	UserDetails userDetails =
+	//			(UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 }

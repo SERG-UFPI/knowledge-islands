@@ -19,15 +19,21 @@ public class DOA {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private double faModel;
-	private double dlModel;
-	private double acModel;
+	private int fa;
+	private int dl;
+	private int ac;
 	private double doa;
-	public DOA(double faModel, double dlModel, double acModel, double doa) {
+	public DOA(int fa, int dl, int ac, double doa) {
 		super();
-		this.faModel = faModel;
-		this.dlModel = dlModel;
-		this.acModel = acModel;
+		this.fa = fa;
+		this.dl = dl;
+		this.ac = ac;
 		this.doa = doa;
+	}
+	public DOA(int fa, int dl, int ac) {
+		super();
+		this.fa = fa;
+		this.dl = dl;
+		this.ac = ac;
 	}
 }

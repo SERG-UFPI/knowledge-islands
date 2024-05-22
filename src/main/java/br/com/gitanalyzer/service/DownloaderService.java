@@ -56,7 +56,7 @@ public class DownloaderService {
 		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
-				ExecutorService executorService = AsyncUtils.getExecutorServiceForDownloadProjects();
+				ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 				List<CompletableFuture<Void>> futures = new ArrayList<>();
 				for (LanguageEnum language : LanguageEnum.values()) {
 					if(language.equals(LanguageEnum.ALL) == false) {
@@ -109,7 +109,7 @@ public class DownloaderService {
 	}
 
 	private void cloneAndSaveReposOrg(List<ProjectGitHub> projectsInfo, String path) {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForDownloadProjects();
+		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (ProjectGitHub projectInfo : projectsInfo) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -228,12 +228,12 @@ public class DownloaderService {
 				repositories.add(sharedLink.getRepository());
 			}
 		}
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
-					repository.setCurrentPath(cloneProject(CloneRepoForm.builder()
+					repository.setCurrentGitFolderPath(cloneProject(CloneRepoForm.builder()
 							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
 				}catch (Exception e) {
 					e.printStackTrace();
@@ -251,6 +251,7 @@ public class DownloaderService {
 		String projectName = projectService.extractProjectName(form.getCloneUrl());
 		projectName = projectName.replace(".git", "");
 		File file = new File(cloneFolder+projectName);
+		//org.apache.commons.io.FileUtils.deleteDirectory(file);
 		Git git = null;
 		if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
 			git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)

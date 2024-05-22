@@ -2,7 +2,7 @@ package br.com.gitanalyzer.dto.form;
 
 import javax.validation.constraints.NotNull;
 
-import br.com.gitanalyzer.enums.KnowledgeMetric;
+import br.com.gitanalyzer.enums.KnowledgeModel;
 import br.com.gitanalyzer.enums.TimeIntervalTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +21,6 @@ public class HistoryReposTruckFactorForm {
 	@NotNull
 	private TimeIntervalTypeEnum intervalType;
 	@NotNull
-	private KnowledgeMetric knowledgeMetric;
+	private KnowledgeModel knowledgeMetric;
 
 }

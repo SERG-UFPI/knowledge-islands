@@ -1,6 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -9,10 +9,10 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 
-import br.com.gitanalyzer.dto.ContributorDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,26 +28,13 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
-	private Double percentOfFilesAuthored;
-	private int numberFilesAuthor;
 	private boolean active;
-	@ManyToMany(cascade = CascadeType.REMOVE)
-	private Set<File> filesAuthor = new HashSet<>();
+	@JsonIgnore
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
-
-	public Contributor(String name, String email, Double percentOfFilesAuthored) {
-		super();
-		this.name = name;
-		this.email = email;
-		this.percentOfFilesAuthored = percentOfFilesAuthored;
-	}
-
-	public Contributor(String name, String email, GitRepository repository) {
-		super();
-		this.name = name;
-		this.email = email;
-	}
+	@JsonIgnore
+	@OneToMany(mappedBy="contributor", cascade = CascadeType.REMOVE)
+	private List<ContributorVersion> versions;
 
 	public Contributor(String name, String email) {
 		super();
@@ -55,15 +42,10 @@ public class Contributor {
 		this.email = email;
 	}
 
-	public ContributorDTO toDto() {
-		return ContributorDTO.builder()
-				.id(id)
-				.email(email)
-				.name(name)
-				.numberFilesAuthor(numberFilesAuthor)
-				.percentOfFilesAuthored(percentOfFilesAuthored)
-				.active(active)
-				.build();
+	public Contributor(String name, String email, GitRepository repository) {
+		super();
+		this.name = name;
+		this.email = email;
 	}
 
 	@Override

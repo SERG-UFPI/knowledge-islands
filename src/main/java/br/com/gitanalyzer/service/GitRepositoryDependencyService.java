@@ -28,7 +28,7 @@ public class GitRepositoryDependencyService {
 
 	public void getProjectVersionAndSetDependency(Long id) {
 		GitRepositoryVersion version = projectVersionRepository.findById(id).get();
-		getDependenciesProjectVersion(version.getRepository().getFullName());
+		getDependenciesProjectVersion(version.getGitRepository().getFullName());
 	}
 
 	public List<GitRepositoryDependency> getDependenciesProjectVersion(String projectFullName) {

@@ -10,12 +10,12 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 @Repository
 public interface GitRepositoryVersionRepository extends JpaRepository<GitRepositoryVersion, Long>{
 	
-	boolean existsByVersionId(String versionId);
+	boolean existsByVersionIdAndGitRepositoryId(String versionId, Long id);
 	
-	GitRepositoryVersion findFirstByRepositoryIdOrderByDateVersionDesc(Long id);
+	GitRepositoryVersion findFirstByGitRepositoryIdOrderByDateVersionDesc(Long id);
 	
-	Long deleteByRepositoryId(Long id);
+	Long deleteByGitRepositoryId(Long id);
 	
-	void deleteByRepositoryIdIn(List<Long> ids);
+	void deleteByGitRepositoryIdIn(List<Long> ids);
 	
 }

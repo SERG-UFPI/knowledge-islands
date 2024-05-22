@@ -2,6 +2,7 @@ package br.com.gitanalyzer.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +14,7 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	boolean existsByName(String name);
 	GitRepository findByName(String name);
 	List<GitRepository> findByFilteredTrue();
+	@EntityGraph(attributePaths={"gitRepositoryTruckFactors"})
+	GitRepository findByFullName(String fullName);
 
 }

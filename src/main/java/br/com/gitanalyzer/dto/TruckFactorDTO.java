@@ -2,7 +2,7 @@ package br.com.gitanalyzer.dto;
 
 import java.util.List;
 
-import br.com.gitanalyzer.enums.KnowledgeMetric;
+import br.com.gitanalyzer.enums.KnowledgeModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,8 +16,8 @@ public class TruckFactorDTO {
 
 	private Long id;
 	private int truckfactor;
-	private KnowledgeMetric knowledgeMetric;
-	private GitRepositoryVersionDTO projectVersion;
+	private KnowledgeModel knowledgeMetric;
+	private GitRepositoryTruckFactorDTO projectVersion;
 	private List<String> implicatedFiles;
 	private List<ContributorDTO> truckFactorDevelopers;
 

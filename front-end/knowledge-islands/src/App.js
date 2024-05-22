@@ -3,7 +3,7 @@ import Layout from "./components/shared/Layout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
-import TruckFactor from "./pages/TruckFactor"
+import GitRepositoryVersion from "./pages/GitRepositoryVersion"
 import { AuthContextProvider } from "./components/shared/AuthContext";
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import SignUp from "./pages/SignUp";
@@ -28,9 +28,9 @@ function App() {
                 <Home/>
               </ProtectedRoute>
             }></Route>
-            <Route path="/truck-factor" element={
+            <Route path="/git-repository-version" element={
               <ProtectedRoute accessBy="authenticated">
-                <TruckFactor/>
+                <GitRepositoryVersion/>
               </ProtectedRoute>
             }>
             </Route>

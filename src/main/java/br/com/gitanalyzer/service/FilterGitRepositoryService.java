@@ -21,14 +21,13 @@ import br.com.gitanalyzer.enums.FilteredEnum;
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.GitRepositoryVersionExtractor;
+import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.utils.CommitUtils;
 import br.com.gitanalyzer.utils.Constants;
 
 @Service
@@ -46,7 +45,7 @@ public class FilterGitRepositoryService {
 		filterProjectsByInactive(projects);
 		projectRepository.saveAll(projects);
 	}
-	
+
 	public void filterEcoSpring() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> projects = projectRepository.findAll();
 		filterNotSoftwareProjects(projects);
@@ -55,7 +54,7 @@ public class FilterGitRepositoryService {
 	}
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
-		GitRepositoryVersionExtractor projectVersionExtractor = new GitRepositoryVersionExtractor();
+		GitRepositoryTruckFactorExtractor projectVersionExtractor = new GitRepositoryTruckFactorExtractor();
 		List<GitRepositoryVersion> versions = new ArrayList<GitRepositoryVersion>();
 		java.io.File dir = new java.io.File(form.getFolderPath());
 		for (java.io.File fileDir: dir.listFiles()) {
@@ -63,7 +62,7 @@ public class FilterGitRepositoryService {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				GitRepository project = projectService.returnProjectByPath(projectPath);
 				GitRepositoryVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
-				version.setRepository(project);
+				version.setGitRepository(project);
 				versions.add(version);
 			}
 		}
@@ -71,7 +70,7 @@ public class FilterGitRepositoryService {
 		for(var entry: versionMap.entrySet()) {
 			filterProjectBySize(entry.getValue());
 		}
-		List<GitRepository> projects = versions.stream().map(v -> v.getRepository()).toList();
+		List<GitRepository> projects = versions.stream().map(v -> v.getGitRepository()).toList();
 		filterProjectsByAge(projects);
 		for (GitRepository project : projects) {
 			if(project.getLanguage() == null) {
@@ -83,11 +82,11 @@ public class FilterGitRepositoryService {
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
 		for(GitRepositoryVersion version: versions) {
-			if(version.getRepository().isFiltered() == false) {
+			if(version.getGitRepository().isFiltered() == false) {
 				if(filterProjectByCommits(version)) {
-					version.getRepository().setFiltered(true);
-					version.getRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-					projectRepository.save(version.getRepository());
+					version.getGitRepository().setFiltered(true);
+					version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+					projectRepository.save(version.getGitRepository());
 				}
 			}
 		}
@@ -110,8 +109,8 @@ public class FilterGitRepositoryService {
 		int calendarType = Calendar.YEAR;
 		c.add(calendarType, -Constants.intervalYearsProjectConsideredInactivate);
 		for (GitRepository project : projects) {
-			if(project.getDownloadVersionDate() != null && 
-					project.getDownloadVersionDate().before(c.getTime()) && project.isFiltered() == false) {
+			if(project.getDownloadDate() != null && 
+					project.getDownloadDate().before(c.getTime()) && project.isFiltered() == false) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
 				projectRepository.save(project);
@@ -137,17 +136,17 @@ public class FilterGitRepositoryService {
 	private boolean filterProjectByCommits(GitRepositoryVersion version) {
 		FileExtractor fileExtractor = new FileExtractor();
 		CommitExtractor commitExtractor = new CommitExtractor();
-		List<File> files = fileExtractor.extractFilesFromClocFile(version.getRepository().getCurrentPath(), version.getRepository().getName());
-		fileExtractor.getRenamesFiles(version.getRepository().getCurrentPath(), files);
-		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getRepository().getCurrentPath());
-		CommitUtils.sortCommitsByDate(commits);
+		List<File> files = fileExtractor.extractFilesFromClocFile(version.getGitRepository().getCurrentFolderPath(), version.getGitRepository().getName());
+		fileExtractor.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
+		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getGitRepository().getCurrentFolderPath());
+		Collections.sort(commits);
 		commits = getFirst20Commits(commits);
-		commits = commitExtractor.extractCommitsFiles(version.getRepository().getCurrentPath(), commits, files);
+		commits = commitExtractor.extractCommitsFiles(version.getGitRepository().getCurrentFolderPath(), commits, files);
 		int numberOfFiles = files.size();
 		List<File> addedFiles = new ArrayList<File>();
 		for(Commit commit: commits) {
 			for (CommitFile commitFile : commit.getCommitFiles()) {
-				if(commitFile.getOperation().equals(OperationType.ADD)) {
+				if(commitFile.getStatus().equals(OperationType.ADDED)) {
 					addedFiles.add(commitFile.getFile());
 				}
 			}
@@ -175,8 +174,8 @@ public class FilterGitRepositoryService {
 
 	private void filterProjectBySize(List<GitRepositoryVersion> versions) {
 		List<Double> devs = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedDevs())).toList();
-		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAllCommits())).toList();
-		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAllFiles())).toList();
+		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedCommits())).toList();
+		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedFiles())).toList();
 		double[] devsArray = new double[devs.size()];
 		int i=0;
 		for(Double dev: devs) {
@@ -201,9 +200,9 @@ public class FilterGitRepositoryService {
 		double firstQCommits = p.evaluate(commitsArray, 25);
 		double firstQFiles = p.evaluate(filesArray, 25);
 		Set<GitRepository> projects = new HashSet<GitRepository>();
-		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getRepository()).toList());
-		projects.addAll(versions.stream().filter(v -> v.getNumberAllCommits() < firstQCommits).map(v -> v.getRepository()).toList());
-		projects.addAll(versions.stream().filter(v -> v.getNumberAllFiles() < firstQFiles).map(v -> v.getRepository()).toList());
+		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getGitRepository()).toList());
+		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedCommits() < firstQCommits).map(v -> v.getGitRepository()).toList());
+		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedFiles() < firstQFiles).map(v -> v.getGitRepository()).toList());
 		projects.stream().forEach(pr -> pr.setFilteredReason(FilteredEnum.SIZE));
 		projects.stream().forEach(pr -> pr.setFiltered(true));
 		for (GitRepository project : projects) {

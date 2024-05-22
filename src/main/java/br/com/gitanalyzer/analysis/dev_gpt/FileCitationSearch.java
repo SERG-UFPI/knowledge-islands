@@ -11,7 +11,6 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.github_openai.FileCitation;
 import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
-import br.com.gitanalyzer.service.SharedLinkService;
 import br.com.gitanalyzer.utils.AsyncUtils;
 
 public class FileCitationSearch {
@@ -19,7 +18,7 @@ public class FileCitationSearch {
 	public static List<FileCitation> getFilesFromFilesCitations(String token) {
 		try {
 			//String json = DevGptSearches.getGithubGraphqlFileBlame("OtavioCury", "knowledge-islands", "main", "src/main/java/br/com/gitanalyzer/api/AuthController.java");
-			List<SharedLink> sharedLinks = SharedLinkService.getFileSharedLinks(token);
+			List<SharedLink> sharedLinks = null;//SharedLinkService.getFileSharedLinks(token);
 			List<String> repos = new ArrayList<>();
 			for (SharedLink sharedLink : sharedLinks) {
 				if(!repos.contains(sharedLink.getRepository().getFullName())) {
@@ -56,19 +55,19 @@ public class FileCitationSearch {
 			for (SharedLink sharedLink : sharedLinks) {
 				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
 					File file = filesSharedLinks.stream().filter(f -> 
-					f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFile().getRepository().getFullName()) 
-					&& f.getPath().equals(fileLinkAuthor.getAuthorFile().getFile().getPath())).findFirst().get();
-					fileLinkAuthor.getAuthorFile().setFile(file);
+					f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()) 
+					&& f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath())).findFirst().get();
+					fileLinkAuthor.getAuthorFile().getFileVersion().setFile(file);
 				}
 			}
 			sharedLinks = sharedLinks.stream().filter(s -> s.getFilesLinkAuthor() != null && s.getFilesLinkAuthor().size() > 0).toList();
 			for (SharedLink sharedLink: sharedLinks) {
 				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
 					try {
-						Commit commitThatAddedLink = DevGptSearches.getCommitThatAddedLink(fileLinkAuthor.getAuthorFile().getFile(), sharedLink.getLink());
+						Commit commitThatAddedLink = DevGptSearches.getCommitThatAddedLink(fileLinkAuthor.getAuthorFile().getFileVersion().getFile(), sharedLink.getLink());
 						sharedLink.setCommitThatAddedTheLink(commitThatAddedLink);
 						CommitFile commitFile = commitThatAddedLink.getCommitFiles().stream()
-								.filter(cf -> cf.getFile().getPath().equals(fileLinkAuthor.getAuthorFile().getFile().getPath())).findFirst().get();
+								.filter(cf -> cf.getFile().getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath())).findFirst().get();
 						List<String> codes = DevGptSearches.getCodesFromConversation(sharedLink.getConversation().getConversationTurns());
 						fileLinkAuthor.setLinesCopied(DevGptSearches.getLinesCopied(codes, commitFile.getAddedLines()));
 					}catch (Exception e) {
@@ -79,7 +78,7 @@ public class FileCitationSearch {
 			sharedLinks = sharedLinks.stream().filter(s -> s.getCommitThatAddedTheLink() != null).toList();
 			for (SharedLink sharedLink : sharedLinks) {
 				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
-					List<CommitFile> commitFiles = DevGptSearches.getAllCommitFilesOfAuthor(fileLinkAuthor.getAuthorFile().getFile(), 
+					List<CommitFile> commitFiles = DevGptSearches.getAllCommitFilesOfAuthor(fileLinkAuthor.getAuthorFile().getFileVersion().getFile(), 
 							sharedLink.getCommitThatAddedTheLink().getAuthor());
 				}
 			}

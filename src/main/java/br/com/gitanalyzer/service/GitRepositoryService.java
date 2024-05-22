@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
@@ -37,13 +38,15 @@ import br.com.gitanalyzer.utils.Constants;
 public class GitRepositoryService {
 
 	@Autowired
-	private GitRepositoryRepository projectRepository;
+	private GitRepositoryRepository repository;
 	@Value("${configuration.project-logs.path}")
 	private String projectLogsFolder;
+	@Value("${configuration.permanent-clone.path}")
+	private String permanentClonePath;
 
 	public GitRepository returnProjectByPath(String projectPath) {
 		String projectName = extractProjectName(projectPath);
-		GitRepository project = projectRepository.findByName(projectName);
+		GitRepository project = repository.findByName(projectName);
 		return project;
 	}
 
@@ -203,7 +206,7 @@ public class GitRepositoryService {
 
 	public Object setProjectsMainLanguage() {
 		HashMap<String, String> nameLanguage = new HashMap<String, String>();
-		List<GitRepository> projetos = projectRepository.findAll();
+		List<GitRepository> projetos = repository.findAll();
 		List<String[]> projectsFile = null;
 		try (CSVReader reader = new CSVReader(new FileReader("/home/otavio/Desktop/shell_scripts/rep-info-new.csv"))) {
 			projectsFile = reader.readAll();
@@ -222,7 +225,7 @@ public class GitRepositoryService {
 					break;
 				}
 			}
-			projectRepository.save(project);
+			repository.save(project);
 		}
 		return null;
 	}
@@ -295,16 +298,16 @@ public class GitRepositoryService {
 		GitRepository project = returnProjectByPath(projectPath);
 		if(project != null && project.getFirstCommitDate() == null) {
 			project.setFirstCommitDate(commitExtractor.getFirstCommitDate(projectPath));
-			projectRepository.save(project);
+			repository.save(project);
 		}
 	}
 
 	public void setDownloadVersionDate(String projectPath) throws IOException {
 		CommitExtractor commitExtractor = new CommitExtractor();
 		GitRepository project = returnProjectByPath(projectPath);
-		if(project != null && project.getDownloadVersionDate() == null) {
-			project.setDownloadVersionDate(commitExtractor.getLastCommitDate(projectPath));
-			projectRepository.save(project);
+		if(project != null && project.getDownloadDate() == null) {
+			project.setDownloadDate(commitExtractor.getLastCommitDate(projectPath));
+			repository.save(project);
 		}
 	}
 
@@ -328,9 +331,9 @@ public class GitRepositoryService {
 	}
 
 	public void returnVersionDownloaded() throws URISyntaxException, IOException, InterruptedException {
-		List<GitRepository> projects = projectRepository.findAll();
+		List<GitRepository> projects = repository.findAll();
 		for (GitRepository project : projects) {
-			checkOutProjectVersion(project.getCurrentPath(), project.getDownloadVersionHash());
+			checkOutProjectVersion(project.getCurrentFolderPath(), project.getDownloadVersionHash());
 		}
 	}
 
@@ -342,6 +345,41 @@ public class GitRepositoryService {
 		pb.redirectErrorStream(true);
 		Process process = pb.start();
 		process.waitFor();
+	}
+
+	public void deleteDownloadedRepos() {
+		try {
+			File directory = new File(permanentClonePath);
+			org.apache.commons.io.FileUtils.deleteDirectory(directory);
+			directory.mkdir();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Transactional
+	public GitRepository saveGitRepository(String repositoryPath) throws IOException {
+		System.out.println("BEGIN SAVING GIT REPOSITORY: "+repositoryPath);
+		String projectName = extractProjectName(repositoryPath);
+		GitRepository gitRepository = null;
+		if(repository.existsByName(projectName)) {
+			gitRepository = repository.findByName(projectName);
+		}else {
+			try {
+				gitRepository = new GitRepository(projectName, repositoryPath, 
+						extractProjectFullName(repositoryPath), getCurrentRevisionHash(repositoryPath));
+			} catch (Exception e) {
+				gitRepository = new GitRepository(projectName, repositoryPath, 
+						null, getCurrentRevisionHash(repositoryPath));
+			}
+			repository.save(gitRepository);
+		}
+		System.out.println("ENDING SAVING GIT REPOSITORY: "+repositoryPath);
+		return gitRepository;
+	}
+
+	public void removeAll() {
+		repository.deleteAll();
 	}
 
 }

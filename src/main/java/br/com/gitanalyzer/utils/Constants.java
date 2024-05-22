@@ -65,9 +65,9 @@ public class Constants {
 	public static int intervalYearsProjectConsideredInactivate = 1;
 	public static int intervalYearsProjectAgeFilter = 2;
 	
+	public static int numberOfMaxThreads = 12;
 	public static int numberOfThreadsToGenerateLogsFiles = 9;
 	public static int numberOfThreadsToCalculateTf = 7;
-	public static int numberOfThreadsToDonwloadProjects = 4;
 	
 	public static String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
 	

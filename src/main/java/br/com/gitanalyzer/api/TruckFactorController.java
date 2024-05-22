@@ -15,11 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.dto.TruckFactorDTO;
-import br.com.gitanalyzer.dto.TruckFactorProcessDTO;
-import br.com.gitanalyzer.dto.form.CloneRepoForm;
+import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm3;
 import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
 import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
+import br.com.gitanalyzer.model.entity.TruckFactor;
 import br.com.gitanalyzer.service.TruckFactorService;
 
 @RestController
@@ -45,16 +44,31 @@ public class TruckFactorController {
 		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
 
-	@PostMapping("clone-and-truck-factor")
-	public ResponseEntity<TruckFactorProcessDTO> cloneAndTruckFactor(@RequestBody CloneRepoForm form) throws Exception{
-		return ResponseEntity.ok(service.cloneAndCalculateTruckFactor(form));
+	@PostMapping("save-truck-factor")
+	public ResponseEntity<TruckFactor> saveTruckFactor(@RequestBody Long idGitRepositoryVersionKnowledgeModel){
+		try {
+			return ResponseEntity.ok(service.saveTruckFactor(idGitRepositoryVersionKnowledgeModel));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
-	@PostMapping("repo-truck-factor")
-	public ResponseEntity<TruckFactorDTO> directoryTruckFactorAnalyzes(@RequestBody RepositoryKnowledgeMetricForm form){
+	@PostMapping("save-full-truck-factor")
+	public ResponseEntity<TruckFactor> generateTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
-			return ResponseEntity.ok(service.generateTruckFactorProject(form));
-		} catch (IOException | GitAPIException e) {
+			return ResponseEntity.ok(service.generateTruckFactorRepository(form));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@PostMapping("generate-logs-repo-truck-factor")
+	public ResponseEntity<TruckFactor> generateLogsTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
+		try {
+			return ResponseEntity.ok(service.generateLogsTruckFactorRepository(form));
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;

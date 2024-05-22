@@ -20,6 +20,6 @@ public class TruckFactorProcessController {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getProcessesByUserId(@PathVariable("id") Long id) throws Exception{
-		return ResponseEntity.ok(service.getByUserId(id));
+		return null;//ResponseEntity.ok(service.getByUserId(id));
 	}
 }

@@ -25,7 +25,7 @@ public class FileLinkAuthor {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToOne(cascade = {CascadeType.PERSIST})
 	private AuthorFile authorFile;
 	@ElementCollection
 	private List<String> linesCopied;

@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class TruckFactorAnalysisDTO {
 
 	private TruckFactorDTO truckFactor;
-	private GitRepositoryVersionDTO projectVersion;
-	private ProjectDTO project;
+	private GitRepositoryTruckFactorDTO projectVersion;
+	private GitRepositoryDTO project;
 }

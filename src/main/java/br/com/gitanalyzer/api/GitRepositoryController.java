@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,27 +20,34 @@ import br.com.gitanalyzer.service.GitRepositoryService;
 
 @RestController
 @RequestMapping("/api/git-repository")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class GitRepositoryController {
 
 	@Autowired
-	private GitRepositoryService projectService;
+	private GitRepositoryService gitRepositoryService;
 	@Autowired
 	private FilterGitRepositoryService filterProjectService;
-	
+
+	@PostMapping("delete-downloaded-repos")
+	public ResponseEntity<?> deleteDownloadedRepos() throws IOException{
+		gitRepositoryService.deleteDownloadedRepos();
+		return ResponseEntity.ok("");
+	}
+
 	@PostMapping("set-download-version-date")
 	public ResponseEntity<?> setDownloadVersionDate(@RequestBody String folderPath) throws IOException{
-		projectService.setProjectDatesFolder(folderPath);
+		gitRepositoryService.setProjectDatesFolder(folderPath);
 		return ResponseEntity.ok("");
 	}
 
 	@PostMapping("/set-languages")
 	public ResponseEntity<?> setProjectLanguages(){
-		return ResponseEntity.ok(projectService.setProjectsMainLanguage());
+		return ResponseEntity.ok(gitRepositoryService.setProjectsMainLanguage());
 	}
 
 	@PostMapping("/create-folder-project-log")
 	public ResponseEntity<?> createFolderProjectLog(@RequestBody GenerateFolderProjectLogDTO form) throws IOException{
-		return ResponseEntity.ok(projectService.createFolderProjectLogs(form));
+		return ResponseEntity.ok(gitRepositoryService.createFolderProjectLogs(form));
 	}
 
 	@PostMapping("/filter-projects-folder")
@@ -55,14 +64,14 @@ public class GitRepositoryController {
 
 	@PostMapping("/extract-version")
 	public ResponseEntity<?> extractVersion(@RequestBody String folderPath){
-		projectService.extractVersion(folderPath);
+		gitRepositoryService.extractVersion(folderPath);
 		return ResponseEntity.status(HttpStatus.OK).body("Extraction finished");
 	}
 
 	@PostMapping("generate-linguist-file")
 	public ResponseEntity<?> generateLinguistFile(@RequestBody String projectPath){
 		try {
-			projectService.generateFileLists(projectPath);
+			gitRepositoryService.generateFileLists(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -73,7 +82,7 @@ public class GitRepositoryController {
 	@PostMapping("/generate-commit-file")
 	public ResponseEntity<?> generateCommitFile(@RequestBody String projectPath){
 		try {
-			projectService.generateCommitFile(projectPath);
+			gitRepositoryService.generateCommitFile(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -84,7 +93,7 @@ public class GitRepositoryController {
 	@PostMapping("/generate-commit-file-folder")
 	public ResponseEntity<?> generateCommitFileFolder(@RequestBody String projectPath){
 		try {
-			projectService.generateCommitFileFolder(projectPath);
+			gitRepositoryService.generateCommitFileFolder(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -95,7 +104,7 @@ public class GitRepositoryController {
 	@PostMapping("/generate-commitFile-file")
 	public ResponseEntity<?> generateCommitFileFile(@RequestBody String projectPath){
 		try {
-			projectService.generateCommitFileFile(projectPath);
+			gitRepositoryService.generateCommitFileFile(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -106,7 +115,7 @@ public class GitRepositoryController {
 	@PostMapping("/generate-cloc-file")
 	public ResponseEntity<?> generateClocFile(@RequestBody String projectPath){
 		try {
-			projectService.generateClocFile(projectPath);
+			gitRepositoryService.generateClocFile(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -117,7 +126,7 @@ public class GitRepositoryController {
 	@PostMapping("/generate-logs-folder")
 	public ResponseEntity<?> generateLogsFolder(@RequestBody String projectPath){
 		try {
-			projectService.generateLogFilesFolder(projectPath);
+			gitRepositoryService.generateLogFilesFolder(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -125,10 +134,10 @@ public class GitRepositoryController {
 		return null;
 	}
 
-	@PostMapping("/generate-logs-project")
+	@PostMapping("/generate-logs-repository")
 	public ResponseEntity<?> generateLogFiles(@RequestBody String projectPath){
 		try {
-			projectService.generateLogFiles(projectPath);
+			gitRepositoryService.generateLogFiles(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (URISyntaxException | IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -139,23 +148,39 @@ public class GitRepositoryController {
 	@PostMapping("/saveFirstDateCommit")
 	public ResponseEntity<?> setFirstDateFolder(@RequestBody String projectPath){
 		try {
-			projectService.setFirstDateProject(projectPath);
+			gitRepositoryService.setFirstDateProject(projectPath);
 			return ResponseEntity.status(HttpStatus.OK).body("");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
+
 	@PostMapping("/return-version-downloaded")
 	public ResponseEntity<?> returnVersionDownloaded(){
 		try {
-			projectService.returnVersionDownloaded();
+			gitRepositoryService.returnVersionDownloaded();
 			return ResponseEntity.ok("");
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@PostMapping("/save-git-repository")
+	public ResponseEntity<?> saveGitRepository(@RequestBody String repositoryPath){
+		try {
+			return ResponseEntity.ok(gitRepositoryService.saveGitRepository(repositoryPath));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@DeleteMapping("/all")
+	public ResponseEntity<?> removeAll(){
+		gitRepositoryService.removeAll();
+		return ResponseEntity.ok("Ok");
 	}
 
 }

@@ -41,7 +41,7 @@ public class SharedLink {
 	private ChatgptConversation conversation;
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Commit commitThatAddedTheLink;
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(mappedBy="sharedLink", cascade = CascadeType.REMOVE)
 	private List<FileLinkAuthor> filesLinkAuthor;
 	@Enumerated(EnumType.STRING)
 	private SharedLinkSourceType type;
@@ -56,6 +56,11 @@ public class SharedLink {
 		super();
 		this.link = link;
 		this.textMatchFragment = textMatchFragment;
+	}
+	
+	public void addFileLinkAuthor(FileLinkAuthor fileLinkAuthor) {
+		fileLinkAuthor.setSharedLink(this);
+		filesLinkAuthor.add(fileLinkAuthor);
 	}
 	public SharedLink(String link, String textMatchFragment, ChatgptConversation conversation, String openAiFullJson) {
 		super();

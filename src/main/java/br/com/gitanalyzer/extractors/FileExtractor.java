@@ -11,6 +11,7 @@ import java.util.Map;
 
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.utils.Constants;
 
 public class FileExtractor {
@@ -111,7 +112,6 @@ public class FileExtractor {
 
 
 	public List<File> extractFilesFromClocFile(String path, String projectName) {
-
 		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
 		String arrayHomebrewCask[]  = new String[] {"Casks/"};
@@ -122,7 +122,6 @@ public class FileExtractor {
 		if (Constants.projectPatterns.containsKey(projectName)) {
 			patterns = Constants.projectPatterns.get(projectName);
 		}
-
 		List<File> files = new ArrayList<File>();
 		String strLineCloc;
 		String clocListPath = path+Constants.clocFileName;
@@ -132,7 +131,6 @@ public class FileExtractor {
 			whileFile: while ((strLineCloc = brCloc.readLine()) != null) {
 				String[] splitedLine = strLineCloc.split(";");
 				String filePath = splitedLine[0];
-				File file = null;
 				if (patterns != null) {
 					for (String startPattern : patterns) {
 						if (filePath.startsWith(startPattern) == true) {
@@ -140,15 +138,13 @@ public class FileExtractor {
 						}
 					}
 				}
-				file = new File(filePath);
 				if (splitedLine.length > 1) {
 					String fileSizeString = splitedLine[2];
 					if (fileSizeString != null && fileSizeString.equals("") == false) {
-						file.setSize(Integer.parseInt(fileSizeString));
+						int size = Integer.parseInt(fileSizeString);
+						File file = new File(filePath, size);
+						files.add(file);
 					}
-				}
-				if(file.getSize() != 0) {
-					files.add(file);
 				}
 			}
 			brCloc.close();
@@ -167,7 +163,7 @@ public class FileExtractor {
 			while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				String operation = splited[1];
-				if (operation.equals(OperationType.REN.getOperationType())) {
+				if (operation.equals(OperationType.RENAMED.name())) {
 					String oldPath = splited[2];
 					String fileName = splited[3];
 					newOldName.put(oldPath, fileName);
@@ -187,4 +183,7 @@ public class FileExtractor {
 		}
 	}
 
+	public void getBlameOfFile(GitRepository repository, File file) {
+
+	}
 }

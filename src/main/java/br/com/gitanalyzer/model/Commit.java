@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
@@ -19,7 +21,7 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Commit {
+public class Commit implements Comparable<Commit>{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,10 +39,10 @@ public class Commit {
 	private Date committerDate;
 	@Transient
 	private Contributor committer;
-	@Column(length=500)
+	@Column(length=1000)
 	private String message;
 
-	@Transient
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<CommitFile> commitFiles = new ArrayList<CommitFile>();
 
 	public Commit(Contributor author, Date date, String externalId, String message) {
@@ -58,6 +60,11 @@ public class Commit {
 	}
 
 	public Commit() {
+	}
+
+	@Override
+	public int compareTo(Commit other) {
+		return this.authorDate.compareTo(other.getAuthorDate());
 	}
 
 }

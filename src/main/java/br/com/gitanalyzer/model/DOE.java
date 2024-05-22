@@ -19,12 +19,13 @@ public class DOE {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private double adds;
-	private double fa;
-	private double numDays;
-	private double size;
+	private int adds;
+	private int fa;
+	private int numDays;
+	private int size;
 	private double doe;
-	public DOE(double adds, double fa, double numDays, double size, double doe) {
+	
+	public DOE(int adds, int fa, int numDays, int size, double doe) {
 		super();
 		this.adds = adds;
 		this.fa = fa;
@@ -32,5 +33,11 @@ public class DOE {
 		this.size = size;
 		this.doe = doe;
 	}
-	
+
+	public DOE(int adds, int fa, int numDays) {
+		super();
+		this.adds = adds;
+		this.fa = fa;
+		this.numDays = numDays;
+	}
 }
