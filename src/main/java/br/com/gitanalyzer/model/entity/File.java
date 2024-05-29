@@ -31,14 +31,23 @@ public class File{
 	private Long id;
 	@Column(nullable=false)
 	private String path;
+	@JsonIgnore
 	private String name;
+	@JsonIgnore
 	private String sha;
+	@JsonIgnore
 	private String url;
+	@JsonIgnore
 	private String htmlUrl;
+	@JsonIgnore
 	private String downloadUrl;
+	@JsonIgnore
 	private String gitUrl;
+	@JsonIgnore
 	private String contentEncoded;
+	@JsonIgnore
 	private String contentDecoded;
+	@JsonIgnore
 	private String encoding;
 	@JsonIgnore
 	@Transient

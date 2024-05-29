@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useContext } from "react";
 import AuthContext from "./AuthContext";
 import logo from "../../assets/images/logo.png"
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const Layout = ({ children }) => {
     const { user, logout } = useContext(AuthContext);
@@ -12,7 +13,7 @@ const Layout = ({ children }) => {
     }
     return (
         <>
-            <Navbar bg="dark" variant="dark">
+            <Navbar bg="light" >
                 <Navbar.Brand as={Link} style={{ marginLeft: "3%" }} to={path} width="40" height="30" className="d-inline-block align-top">
                     <img
                         alt=""
@@ -21,7 +22,7 @@ const Layout = ({ children }) => {
                         height="30"
                         className="d-inline-block align-top"
                     />{' '}
-                    Knowledge Islands</Navbar.Brand>
+                    <b>Knowledge Islands</b></Navbar.Brand>
                 <Nav className="ms-auto">
                     {user && <Nav.Link>{user?.email}</Nav.Link>}
                     {!user && (
@@ -37,7 +38,7 @@ const Layout = ({ children }) => {
                 </Nav>
                 {user && (
                     <Button style={{ marginRight: "1%" }} variant="outline-success" type="button" onClick={() => { logout() }}>
-                        Logout
+                        Logout <LogoutIcon/>
                     </Button>
                 )}
             </Navbar>

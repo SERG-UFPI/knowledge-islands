@@ -8,6 +8,7 @@ import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutl
 import axios from "axios";
 import ContributorPaginatedTable from "../components/ContributorPaginatedTable";
 import ContributorVersionPaginatedTable from "../components/ContributorVersionPaginatedTable";
+import FileVersionPaginatedTable from '../components/FileVersionPaginatedTable';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -22,6 +23,8 @@ import {
 } from '@mui/x-tree-view/TreeItem2';
 import { TreeItem2Icon } from '@mui/x-tree-view/TreeItem2Icon';
 import { TreeItem2Provider } from '@mui/x-tree-view/TreeItem2Provider';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import FilePaginatedTable from '../components/FilePaginatedTable';
 
 
 const GitRepositoryVersion = () => {
@@ -35,6 +38,7 @@ const GitRepositoryVersion = () => {
     useEffect(() => {
         axios.get(`http://localhost:8080/api/git-repository-version/${id}`, { withCredentials: true })
             .then(response => {
+                console.log(response.data);
                 setGitRepositoryVersion(response.data);
                 const updatedItemsRepo = [...itemsRepo, response.data.rootFolder];
                 setSelectedItems(response.data.rootFolder.id);
@@ -84,7 +88,6 @@ const GitRepositoryVersion = () => {
             publicAPI,
         } = useTreeItem2({ id, itemId, children, label, disabled, rootRef: ref });
         const item = publicAPI.getItem(itemId);
-        console.log(item);
         return (
             <TreeItem2Provider itemId={itemId}>
                 <TreeItem2Root {...getRootProps(other)}>
@@ -95,7 +98,7 @@ const GitRepositoryVersion = () => {
 
                         <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
                             <TreeItem2Label {...getLabelProps()} />
-                            <Chip icon={<GroupsIcon />} label={"TF=" + item.truckFactor?.truckFactor} />
+                            <Chip color="primary" icon={<GroupsIcon />} label={<span style={{ fontWeight: 'bold' }}>{"Truck Factor=" + item.truckFactor?.truckFactor}</span>} />
                         </Box>
 
                     </CustomTreeItemContent>
@@ -106,13 +109,15 @@ const GitRepositoryVersion = () => {
     });
     return (
         <>
-            <Modal size="xl" show={showModal} onHide={handleClose}> 
+            <Modal size="xl" show={showModal} onHide={handleClose}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Truck Factor of '{truckFactorSelected?.label}'</Modal.Title>
+                    <Modal.Title>'{truckFactorSelected?.label}' details</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <p><b>Truck Factor: </b>{truckFactorSelected?.truckFactor.truckFactor}</p>
                     <ContributorVersionPaginatedTable contributorsVersions={truckFactorSelected?.truckFactor?.contributors} />
+                    <br />
+                    <FileVersionPaginatedTable filesVersions={truckFactorSelected?.files} />
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleClose}>
@@ -164,7 +169,7 @@ const GitRepositoryVersion = () => {
             <br />
             <Button variant="primary" type="button" disabled={selectedItems.length === 0}
                 onClick={handleShow}>
-                See Truck Factor Details
+                <VisibilityIcon /> See Details
             </Button>
             <br /><br />
             <Accordion>
@@ -174,6 +179,14 @@ const GitRepositoryVersion = () => {
                     </Accordion.Header>
                     <Accordion.Body>
                         <ContributorPaginatedTable gitRepositoryVersion={gitRepositoryVersion} />
+                    </Accordion.Body>
+                </Accordion.Item>
+                <Accordion.Item eventKey="1">
+                    <Accordion.Header>
+                        Files
+                    </Accordion.Header>
+                    <Accordion.Body>
+                        <FilePaginatedTable files={gitRepositoryVersion?.files} />
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

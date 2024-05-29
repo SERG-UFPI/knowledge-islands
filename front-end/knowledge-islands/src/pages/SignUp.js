@@ -54,7 +54,7 @@ const SignUp = () => {
                     {loading && (
                             <SpinnerLoading />
                         )}
-                        <Form>
+                        <Form onSubmit={signup}>
                             <Form.Group className="mb-3" controlId="formBasicsName">
                                 <Form.Label><b>Name</b></Form.Label>
                                 <Form.Control ref={name} type="text" required />
@@ -72,7 +72,7 @@ const SignUp = () => {
                                 <Form.Control ref={password} type="password" required />
                             </Form.Group>
                             <div className="d-grid">
-                                <Button variant="primary" type="submit" onClick={signup} disabled={buttonDisable}>
+                                <Button variant="primary" type="submit" disabled={buttonDisable}>
                                     Sign up
                                 </Button>
                             </div>

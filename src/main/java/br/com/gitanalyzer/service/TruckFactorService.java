@@ -22,7 +22,6 @@ import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
 import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
 import br.com.gitanalyzer.enums.GitRepositoryVersionProcessStageEnum;
 import br.com.gitanalyzer.enums.KnowledgeModel;
-import br.com.gitanalyzer.enums.TruckFactorProcessStageEnum;
 import br.com.gitanalyzer.extractors.HistoryCommitsExtractor;
 import br.com.gitanalyzer.model.entity.ContributorVersion;
 import br.com.gitanalyzer.model.entity.File;
@@ -33,11 +32,9 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionProcess;
 import br.com.gitanalyzer.model.entity.TruckFactor;
-import br.com.gitanalyzer.model.entity.TruckFactorProcess;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionProcessRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
-import br.com.gitanalyzer.repository.TruckFactorProcessRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 
@@ -54,8 +51,6 @@ public class TruckFactorService {
 	private TruckFactorRepository truckFactorRepository;
 	@Autowired
 	private GitRepositoryService gitRepositoryService;
-	@Autowired
-	private TruckFactorProcessRepository truckFactorProcessRepository; 
 	@Autowired
 	private DownloaderService downloaderService;
 	@Autowired
@@ -81,14 +76,10 @@ public class TruckFactorService {
 		}
 	}
 
+	@Transactional
 	public void setProcessStage(GitRepositoryVersionProcess process, GitRepositoryVersionProcessStageEnum stage) {
 		process.setStage(stage);
 		gitRepositoryVersionProcessRepository.save(process);
-	}
-
-	public void setProcessStage(TruckFactorProcess process, TruckFactorProcessStageEnum stage) {
-		process.setStage(stage);
-		truckFactorProcessRepository.save(process);
 	}
 
 	public TruckFactor generateLogsTruckFactorRepository(RepositoryKnowledgeMetricForm form) throws Exception {

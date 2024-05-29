@@ -53,31 +53,32 @@ const Home = () => {
             {error ? <Alert variant="danger">{error}</Alert> : null}
             {success ? <Alert variant="success">{success}</Alert> : null}
             <Card >
-                <br />
-                <Row>
-                    <Col className="col-md-8 offset-md-2">
-                        {loading && (
-                            <SpinnerLoading />
-                        )}
-                        <Form>
-                            <Form.Group className="mb-3" controlId="formBasicsUrl">
-                                <Form.Label>GitHub Url Repository</Form.Label>
-                                <Form.Control ref={url} type="text" required onChange={changeUrl} />
-                            </Form.Group>
-                            <Form.Group className="mb-3" controlId="formBasicsBranch">
-                                <Form.Label>Branch</Form.Label>
-                                <Form.Control ref={branch} type="text" />
-                            </Form.Group>
-                            <div className="d-grid">
-                                <Button variant="primary" type="submit" disabled={!urlValid || buttonDisable}
-                                    onClick={createGitRepositoryVersionProcess}>
-                                    Analyze
-                                </Button>
-                            </div>
-                        </Form>
-                    </Col>
-                </Row>
-                <br />
+                <Card.Body>
+                    <Card.Title>Start repository analysis</Card.Title>
+                    <br/>
+                    <Row>
+                        <Col className="col-md-7 offset-md-2">
+                            {loading && (
+                                <SpinnerLoading />
+                            )}
+                            <Form onSubmit={createGitRepositoryVersionProcess}>
+                                <Form.Group className="mb-3" controlId="formBasicsUrl">
+                                    <Form.Label>GitHub URL</Form.Label>
+                                    <Form.Control ref={url} type="text" required onChange={changeUrl} />
+                                </Form.Group>
+                                <Form.Group className="mb-3" controlId="formBasicsBranch">
+                                    <Form.Label>Branch</Form.Label>
+                                    <Form.Control ref={branch} type="text" />
+                                </Form.Group>
+                                <div className="d-grid">
+                                    <Button variant="primary" type="submit" disabled={!urlValid || buttonDisable}>
+                                        Analyze
+                                    </Button>
+                                </div>
+                            </Form>
+                        </Col>
+                    </Row>
+                </Card.Body>
             </Card>
             <GitRepositoryVersionProcess key={gitRepositoryVersionProcessState} />
         </>

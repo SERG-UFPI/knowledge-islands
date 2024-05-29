@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.model.entity;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -10,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -32,6 +34,8 @@ public class ContributorVersion implements Comparable<ContributorVersion>{
 	private Set<File> filesAuthor = new HashSet<>();
 	@ManyToOne
 	private Contributor contributor;
+	@Transient
+	private List<String> filesAuthorPath;
 	public ContributorVersion(Contributor contributor) {
 		super();
 		this.contributor = contributor;

@@ -20,7 +20,7 @@ const Index = () => {
               <br /><br />
               <i>Cury, Otávio, et al. "Source code expert identification: Models and application." Information and Software Technology (2024): 107445.</i>
               <br /><br />
-              This tool is being developed in <a href="https://github.com/OtavioCury/knowledge-islands">github.com/OtavioCury/git-analyzer</a>
+              This tool is being developed in <a href="https://github.com/OtavioCury/knowledge-islands">github.com/OtavioCury/knowledge-islands</a>
             </Card.Text>
           </Card.Body>
         </Card>

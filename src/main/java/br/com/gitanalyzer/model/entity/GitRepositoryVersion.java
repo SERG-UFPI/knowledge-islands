@@ -43,7 +43,6 @@ public class GitRepositoryVersion {
 	private GitRepository gitRepository;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Contributor> contributors;
-	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<File> files;
 	@JsonIgnore

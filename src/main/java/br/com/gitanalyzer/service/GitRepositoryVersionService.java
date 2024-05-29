@@ -18,7 +18,9 @@ import br.com.gitanalyzer.extractors.GitRepositoryFolderExtractor;
 import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.model.entity.ContributorVersion;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.entity.FileVersion;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
@@ -140,19 +142,42 @@ public class GitRepositoryVersionService {
 		for (GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel : models) {
 			if((gitRepositoryVersionKnowledgeModel.getFoldersPaths() == null || gitRepositoryVersionKnowledgeModel.getFoldersPaths().isEmpty())
 					&& rootFolder.getPath() == null) {
-				rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+				setRootFolderTruckFactorInfo(gitRepositoryVersionKnowledgeModel, rootFolder);
 			}
 			if(gitRepositoryVersionKnowledgeModel.getFoldersPaths() != null && 
 					gitRepositoryVersionKnowledgeModel.getFoldersPaths().size() == 1) {
 				String folderPath = gitRepositoryVersionKnowledgeModel.getFoldersPaths().get(0);
 				if(folderPath.equals(rootFolder.getPath())) {
-					rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+					setRootFolderTruckFactorInfo(gitRepositoryVersionKnowledgeModel, rootFolder);
 				}
 			}
 		}
 		if(rootFolder.getChildren() != null && !rootFolder.getChildren().isEmpty()) {
 			for (GitRepositoryFolder folder: rootFolder.getChildren()) {
 				setTruckFactorsFolders(folder, models);
+			}
+		}
+	}
+
+	private void setRootFolderTruckFactorInfo(GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel, GitRepositoryFolder rootFolder) {
+		rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+		Collections.sort(gitRepositoryVersionKnowledgeModel.getFiles());
+		rootFolder.setFiles(gitRepositoryVersionKnowledgeModel.getFiles().stream().limit(20).toList());
+		for (FileVersion fileVersion : rootFolder.getFiles()) {
+			forContributor: for (ContributorVersion contributor : gitRepositoryVersionKnowledgeModel.getContributors()) {
+				if(contributor.getContributor().isActive()) {
+					for (File file: contributor.getFilesAuthor()) {
+						if(file.isFile(fileVersion.getFile().getPath())) {
+							fileVersion.setNumberActiveAuthor(fileVersion.getNumberActiveAuthor()+1);
+							continue forContributor;
+						}
+					}
+				}
+			}
+		}
+		for (ContributorVersion contributorVersion : rootFolder.getTruckFactor().getContributors()) {
+			if(contributorVersion.getFilesAuthor() != null && contributorVersion.getFilesAuthor().size() > 0) {
+				contributorVersion.setFilesAuthorPath(contributorVersion.getFilesAuthor().stream().map(f -> f.getPath()).toList());
 			}
 		}
 	}

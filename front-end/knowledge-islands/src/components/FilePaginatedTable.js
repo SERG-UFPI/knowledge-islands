@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { Table, Button } from "react-bootstrap";
 
-const ContributorPaginatedTable = ({ gitRepositoryVersion }) => {
+const FilePaginatedTable = ({ files }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const totalItems = gitRepositoryVersion?.contributors.length || 0;
+    const totalItems = files?.length || 0;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentItems = gitRepositoryVersion?.contributors.slice(startIndex, endIndex);
-    
+    const currentItems = files?.slice(startIndex, endIndex);
     const handlePreviousPage = () => {
         setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
     };
@@ -24,17 +23,13 @@ const ContributorPaginatedTable = ({ gitRepositoryVersion }) => {
             <Table striped bordered hover>
                 <thead>
                     <tr style={{ textAlign: "center" }}>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Active</th>
+                        <th>Path</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {currentItems?.map((contributor, id) => (
+                    {currentItems?.map((file, id) => (
                         <tr key={id} style={{ textAlign: "center" }}>
-                            <td>{contributor.name}</td>
-                            <td>{contributor.email}</td>
-                            <td>{contributor.active ? "Yes" : "No"}</td>
+                            <td>{file.path}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -52,4 +47,4 @@ const ContributorPaginatedTable = ({ gitRepositoryVersion }) => {
     );
 };
 
-export default ContributorPaginatedTable;
+export default FilePaginatedTable;

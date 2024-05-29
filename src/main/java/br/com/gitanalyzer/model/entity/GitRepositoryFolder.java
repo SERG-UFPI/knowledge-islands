@@ -33,6 +33,8 @@ public class GitRepositoryFolder {
 	private boolean folder;
 	@Transient
 	private TruckFactor truckFactor;
+	@Transient
+	private List<FileVersion> files;
 
 	public GitRepositoryFolder() {
 		super();
