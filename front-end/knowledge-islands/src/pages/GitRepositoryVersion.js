@@ -26,31 +26,29 @@ import { TreeItem2Provider } from '@mui/x-tree-view/TreeItem2Provider';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FilePaginatedTable from '../components/FilePaginatedTable';
 
-
 const GitRepositoryVersion = () => {
     const location = useLocation();
     const [showModal, setShowModal] = useState(false);
-    const [selectedItems, setSelectedItems] = useState([]);
-    const [gitRepositoryVersion, setGitRepositoryVersion] = useState(null);
-    const [itemsRepo, setItemsRepo] = useState([]);
+    const [gitRepositoryVersion, setGitRepositoryVersion] = useState(location?.state?.gitRepositoryVersion);
+    const [itemsRepo, setItemsRepo] = useState([]); // Initialize itemsRepo with an empty array
+    const [selectedItems, setSelectedItems] = useState(gitRepositoryVersion?.rootFolder?.id);
     const [truckFactorSelected, setTruckFactorSelected] = useState(null);
-    let id = location?.state?.id;
+    
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/git-repository-version/${id}`, { withCredentials: true })
-            .then(response => {
-                console.log(response.data);
-                setGitRepositoryVersion(response.data);
-                const updatedItemsRepo = [...itemsRepo, response.data.rootFolder];
-                setSelectedItems(response.data.rootFolder.id);
-                setItemsRepo(updatedItemsRepo);
-            });
-    }, []);
+        if (gitRepositoryVersion) {
+            setItemsRepo([gitRepositoryVersion.rootFolder]);
+            setSelectedItems(gitRepositoryVersion.rootFolder.id);
+        }
+    }, [gitRepositoryVersion]);
+
     const handleSelectedItemsChange = (event, ids) => {
         setSelectedItems(ids);
     };
+
     const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
         padding: theme.spacing(0.5, 1),
     }));
+
     function findById(id, nodes) {
         for (const node of nodes) {
             if (node.id === id) {
@@ -65,7 +63,9 @@ const GitRepositoryVersion = () => {
         }
         return null;
     }
+
     const handleClose = () => setShowModal(false);
+
     const handleShow = () => {
         if (selectedItems === itemsRepo[0].id) {
             setTruckFactorSelected(itemsRepo[0]);
@@ -74,6 +74,15 @@ const GitRepositoryVersion = () => {
         }
         setShowModal(true);
     };
+
+    const colorShades = ['#ff9900', '#ffad33', '#ffc266', '#ffe0b3'];
+
+    const getTruckFactorColor = (truckFactor) => {
+        const maxFactor = 10; // Assuming the truck factor ranges from 0 to 10
+        const index = Math.min(Math.floor((truckFactor / maxFactor) * colorShades.length), colorShades.length - 1);
+        return colorShades[index];
+    };
+
     const CustomTreeItem = React.forwardRef(function CustomTreeItem(props, ref) {
         const { id, itemId, label, disabled, children, ...other } = props;
 
@@ -88,6 +97,9 @@ const GitRepositoryVersion = () => {
             publicAPI,
         } = useTreeItem2({ id, itemId, children, label, disabled, rootRef: ref });
         const item = publicAPI.getItem(itemId);
+        const truckFactor = item?.truckFactor?.truckFactor;
+        const backgroundColor = getTruckFactorColor(truckFactor);
+
         return (
             <TreeItem2Provider itemId={itemId}>
                 <TreeItem2Root {...getRootProps(other)}>
@@ -98,7 +110,7 @@ const GitRepositoryVersion = () => {
 
                         <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
                             <TreeItem2Label {...getLabelProps()} />
-                            <Chip color="primary" icon={<GroupsIcon />} label={<span style={{ fontWeight: 'bold' }}>{"Truck Factor=" + item.truckFactor?.truckFactor}</span>} />
+                            <Chip style={{ backgroundColor }} icon={<GroupsIcon />} label={<span style={{ fontWeight: 'bold' }}>{"Truck Factor=" + truckFactor}</span>} />
                         </Box>
 
                     </CustomTreeItemContent>
@@ -107,6 +119,7 @@ const GitRepositoryVersion = () => {
             </TreeItem2Provider>
         );
     });
+
     return (
         <>
             <Modal size="xl" show={showModal} onHide={handleClose}>

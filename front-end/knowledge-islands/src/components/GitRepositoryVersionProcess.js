@@ -5,11 +5,12 @@ import AuthContext from "./shared/AuthContext";
 import { Table, Button, Card } from "react-bootstrap";
 import { EyeFill } from "react-bootstrap-icons";
 import { useNavigate } from "react-router-dom";
-
+import SpinnerLoading from "../components/shared/SpinnerLoading";
 
 const GitRepositoryVersionProcess = () => {
     const { user } = useContext(AuthContext);
     const [processes, setProcesses] = useState([]);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const url = `http://localhost:8080/api/git-repository-version-process/user/${user.id}`;
     useEffect(() => {
@@ -26,8 +27,17 @@ const GitRepositoryVersionProcess = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const detailsGitRepositoryVersion = event => {
-        navigate("/git-repository-version", { state: { id: event } });
+    const detailsGitRepositoryVersion = async(event) => {
+        try {
+            setLoading(true);
+            await axios.get(`http://localhost:8080/api/git-repository-version/${event}`, { withCredentials: true })
+            .then(response => {
+                navigate("/git-repository-version", { state: { gitRepositoryVersion: response.data } });
+            });
+        } catch (error) {
+        } finally {
+            setLoading(false);
+        }
     };
     return (
         <>
@@ -38,10 +48,13 @@ const GitRepositoryVersionProcess = () => {
                     <Card.Body>
                         <Card.Title>Repositories</Card.Title>
                         <br />
+                        {loading && (
+                            <SpinnerLoading />
+                        )}
                         <Table striped bordered hover >
                             <thead>
                                 <tr style={{ textAlign: "center" }}>
-                                    <th>GitHub Repository URL</th>
+                                    <th>GitHub URL</th>
                                     <th>Start Date</th>
                                     <th>Stage</th>
                                     <th>Details</th>
@@ -54,7 +67,7 @@ const GitRepositoryVersionProcess = () => {
                                         <td>{process.startDate}</td>
                                         <td>{process.stage}</td>
                                         <td>
-                                            <Button disabled={process.stage === 'Extraction finished' ? false : true}
+                                            <Button disabled={process.stage === 'Process finished' ? false : true}
                                                 onClick={() => detailsGitRepositoryVersion(process.idGitRepositoryVersion)} type="button">
                                                 <EyeFill />
                                             </Button>

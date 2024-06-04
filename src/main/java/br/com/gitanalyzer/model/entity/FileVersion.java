@@ -9,12 +9,10 @@ import javax.persistence.Transient;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 public class FileVersion implements Comparable<FileVersion>{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,4 +30,9 @@ public class FileVersion implements Comparable<FileVersion>{
 	public int compareTo(FileVersion other) {
 		return Double.compare(other.totalKnowledge, this.totalKnowledge);
 	}
+	public FileVersion() {
+		super();
+		this.file = new File();
+	}
+
 }

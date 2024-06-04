@@ -1,7 +1,7 @@
 import { Button, Col, Row, Form, Card, Alert } from "react-bootstrap";
 import GitRepositoryVersionProcess from "../components/GitRepositoryVersionProcess";
 import AuthContext from "../components/shared/AuthContext";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { useRef } from "react";
 import SpinnerLoading from "../components/shared/SpinnerLoading";
@@ -20,6 +20,17 @@ const Home = () => {
         const urlRegEx = new RegExp('^(https:\/\/)?(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/([a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+)(\.git)?$');
         setUrlValid(urlRegEx.test(event.target.value));
     };
+
+    useEffect(() => {
+        if (success) {
+            const timer = setTimeout(() => {
+                setSuccess("");
+            }, 5000); // Change 5000 to the number of milliseconds you want the alert to be displayed
+
+            return () => clearTimeout(timer);
+        }
+    }, [success]);
+
     const createGitRepositoryVersionProcess = async (event) => {
         event.preventDefault();
         setLoading(true);
@@ -31,11 +42,9 @@ const Home = () => {
         };
         setGitRepositoryVersionProcessState(gitRepositoryVersionProcessState + 1);
         try {
-            axios.post("http://localhost:8080/api/git-repository-version-process/start-git-repository-version-process", form)
-                .then(response => {
-                    setSuccess("Data extraction initiated");
-                    setGitRepositoryVersionProcessState(gitRepositoryVersionProcessState + 1);
-                });
+            await axios.post("http://localhost:8080/api/git-repository-version-process/start-git-repository-version-process", form);
+            setSuccess("Repository analysis process started");
+            setGitRepositoryVersionProcessState(gitRepositoryVersionProcessState + 1);
         } catch (error) {
             setError(error.response.data.message);
         } finally {
@@ -45,7 +54,8 @@ const Home = () => {
             branch.current.value = "";
             setUrlValid(false);
         }
-    }
+    };
+
     return (
         <>
             <br />
@@ -72,7 +82,7 @@ const Home = () => {
                                 </Form.Group>
                                 <div className="d-grid">
                                     <Button variant="primary" type="submit" disabled={!urlValid || buttonDisable}>
-                                        Analyze
+                                        Start Analysis
                                     </Button>
                                 </div>
                             </Form>

@@ -48,4 +48,8 @@ public class GitRepositoryVersionProcessService {
 		return process;
 	}
 
+	public void removeAll() {
+		repository.deleteAll();
+	}
+
 }

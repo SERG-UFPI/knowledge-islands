@@ -6,8 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum GitRepositoryVersionProcessStageEnum {
-	INITIALIZED("Process initialized"), DOWNLOADING("Downloading repository"), 
-	EXTRACTING_DATA("Extracting history data"), EXTRACTION_FINISHED("Extraction finished");
+	INITIALIZED("Process started"), DOWNLOADING("Downloading repository"), 
+	EXTRACTING_DATA("Extracting history data"), EXTRACTION_FINISHED("Process finished");
 
 	private String name;
 }
+

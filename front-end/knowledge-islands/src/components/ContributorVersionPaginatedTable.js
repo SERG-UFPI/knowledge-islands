@@ -102,7 +102,7 @@ const ContributorVersionPaginatedTable = ({ contributorsVersions }) => {
                                         ))}
                                 </th>
                                 <th>Active</th>
-                                <th>See authored files</th>
+                                <th>Authored files</th>
                             </tr>
                         </thead>
                         <tbody>
