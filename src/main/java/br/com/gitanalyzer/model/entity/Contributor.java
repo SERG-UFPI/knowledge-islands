@@ -42,12 +42,6 @@ public class Contributor {
 		this.email = email;
 	}
 
-	public Contributor(String name, String email, GitRepository repository) {
-		super();
-		this.name = name;
-		this.email = email;
-	}
-
 	@Override
 	public int hashCode() {
 		return Objects.hash(email, name);

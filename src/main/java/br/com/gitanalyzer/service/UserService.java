@@ -15,9 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.dto.SignupRequestDTO;
+import br.com.gitanalyzer.enums.RoleEnum;
 import br.com.gitanalyzer.model.entity.Role;
 import br.com.gitanalyzer.model.entity.User;
-import br.com.gitanalyzer.model.enums.RoleEnum;
 import br.com.gitanalyzer.repository.RoleRepository;
 import br.com.gitanalyzer.repository.UserRepository;
 import net.bytebuddy.utility.RandomString;

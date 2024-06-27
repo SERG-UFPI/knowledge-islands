@@ -11,6 +11,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import br.com.gitanalyzer.model.github_openai.enums.ChatgptUserAgent;
@@ -34,5 +35,7 @@ public class ConversationTurn {
 	private String fullText;
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<PromptCode> codes;
+	@ManyToOne
+	private ChatgptConversation conversation;
 	private Long createTime;
 }

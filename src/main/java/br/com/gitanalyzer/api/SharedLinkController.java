@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.gitanalyzer.exceptions.NoCommitForFileException;
 import br.com.gitanalyzer.service.SharedLinkService;
 
 @RestController
@@ -23,21 +24,24 @@ public class SharedLinkController {
 
 	@PostMapping("/create-file-shared-links-full")
 	public ResponseEntity<?> createFileSharedLinksFull() throws Exception{
-		return ResponseEntity.ok(service.saveFileSharedLinkFull());
+		service.saveFileSharedLinkFull();
+		return ResponseEntity.ok("Shared links downloaded");
 	}
-	
+
 	@PostMapping("/create-file-shared-links")
 	public ResponseEntity<?> createFileSharedLinks() throws Exception{
 		return ResponseEntity.ok(service.saveFileSharedLink());
 	}
-	
+
 	@PostMapping("/create-repos-file-shared-links")
 	public ResponseEntity<?> createReposFileSharedLinks() throws Exception{
-		return ResponseEntity.ok(service.saveReposFileSharedLinks());
+		service.saveReposFileSharedLinks();
+		return ResponseEntity.ok("Shared links downloaded");
 	}
-	
+
 	@PostMapping("/set-commits-of-files")
-	public ResponseEntity<?> setCommitsOfFiles() throws NoHeadException, IOException, GitAPIException{
+	public ResponseEntity<?> setCommitsOfFiles() throws NoHeadException, IOException, GitAPIException, NoCommitForFileException{
 		return ResponseEntity.ok(service.setCommitsOfFilesSharedLinks());
 	}
+
 }

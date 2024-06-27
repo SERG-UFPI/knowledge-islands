@@ -33,7 +33,7 @@ public class TruckFactor {
 	@OneToOne
 	private GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel;
 	@JsonIgnore
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@ManyToMany(cascade = {CascadeType.PERSIST})
 	private List<FileVersion> implicatedFiles;
 	private double timeToCalculate;
 

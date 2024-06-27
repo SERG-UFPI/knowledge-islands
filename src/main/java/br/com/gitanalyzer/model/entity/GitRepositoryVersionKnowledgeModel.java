@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.gitanalyzer.enums.KnowledgeModel;
+import br.com.gitanalyzer.model.AuthorFile;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -43,6 +44,9 @@ public class GitRepositoryVersionKnowledgeModel {
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<FileVersion> files;
 	@JsonIgnore
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<AuthorFile> authorsFiles;
+	@JsonIgnore
 	@ManyToOne
 	private GitRepositoryVersion repositoryVersion;
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
@@ -58,9 +62,10 @@ public class GitRepositoryVersionKnowledgeModel {
 		this.repositoryVersion = repositoryVersion;
 		this.knowledgeModel = knowledgeModel;
 		this.foldersPaths = foldersPaths;
-		date = new Date();
-		contributors = new ArrayList<>();
-		files = new ArrayList<>();
+		this.date = new Date();
+		this.contributors = new ArrayList<>();
+		this.files = new ArrayList<>();
+		this.authorsFiles = new ArrayList<>(); 
 	}
 
 	public GitRepositoryVersionKnowledgeModel() {

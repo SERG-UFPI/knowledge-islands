@@ -14,5 +14,6 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	GitRepository findByName(String name);
 	List<GitRepository> findByFilteredTrue();
 	GitRepository findByFullName(String fullName);
+	List<GitRepository> findByNameEndingWith(String suffix);
 
 }

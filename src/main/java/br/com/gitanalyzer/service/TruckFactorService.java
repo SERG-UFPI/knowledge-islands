@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,9 @@ import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionProcess;
+import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.TruckFactor;
+import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionProcessRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
@@ -57,6 +60,10 @@ public class TruckFactorService {
 	private GitRepositoryVersionProcessRepository gitRepositoryVersionProcessRepository;
 	@Autowired
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
+	@Autowired
+	private SharedLinkService sharedLinkService;
+	@Value("${configuration.permanent-clone.path}")
+	private String cloneFolder;
 
 	@Async
 	@Transactional
@@ -82,7 +89,7 @@ public class TruckFactorService {
 		gitRepositoryVersionProcessRepository.save(process);
 	}
 
-	public TruckFactor generateLogsTruckFactorRepository(RepositoryKnowledgeMetricForm form) throws Exception {
+	public List<TruckFactor> generateLogsTruckFactorRepository(RepositoryKnowledgeMetricForm form) throws Exception {
 		gitRepositoryService.generateLogFiles(form.getRepositoryPath());
 		return generateTruckFactorRepository(form);
 	}
@@ -114,42 +121,52 @@ public class TruckFactorService {
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
 		return truckFactor;
 	}
+	
+	public Object cloneCloneLogsTruckFactor() throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
+		downloaderService.cloneRepositoriesWithSharedLinks();
+		gitRepositoryService.generateLogFilesFolder(cloneFolder);
+		directoriesTruckFactorAnalyzes(new RepositoryKnowledgeMetricForm(cloneFolder, KnowledgeModel.DOE));
+		return null;
+	}
 
-	@Transactional
-	public TruckFactor generateTruckFactorRepository(RepositoryKnowledgeMetricForm repo)
+	public List<TruckFactor> generateTruckFactorRepository(RepositoryKnowledgeMetricForm repo)
 			throws Exception {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryVersion(repo.getRepositoryPath());
-		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelService.
-				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths()));
-		TruckFactor truckFactor = saveTruckFactor(gitRepositoryVersionKnowledgeModel.getId());
-		return truckFactor;
+		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
+		models.add(gitRepositoryVersionKnowledgeModelService.
+				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), false)));
+		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
+				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
+			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
+			boolean analysisSharedLink = sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
+			if(analysisSharedLink) {
+				models.add(gitRepositoryVersionKnowledgeModelService.
+						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
+			}
+		}
+		List<TruckFactor> truckFactors = new ArrayList<>();
+		for(GitRepositoryVersionKnowledgeModel model: models) {
+			truckFactors.add(saveTruckFactor(model.getId()));
+		}
+		return truckFactors;
 	}
 
 	public void directoriesTruckFactorAnalyzes(RepositoryKnowledgeMetricForm request) throws IOException, NoHeadException, GitAPIException{
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForTf();
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(request.getRepositoryPath());
-		for (java.io.File fileDir: dir.listFiles()) {
+		for (java.io.File fileDir : dir.listFiles()) {
 			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
+				String projectPath = fileDir.getAbsolutePath() + "/";
 				GitRepository project = gitRepositoryService.returnProjectByPath(projectPath);
-				if(project != null && project.isFiltered() == false) {
-					CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-						try {
-							RepositoryKnowledgeMetricForm repo = new RepositoryKnowledgeMetricForm(projectPath, request.getKnowledgeMetric());
-							generateTruckFactorRepository(repo);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}finally {
-							executorService.shutdown();
-						}
-					}, executorService);
-					futures.add(future);
+				if (project != null && !project.isFiltered()) {
+					try {
+						RepositoryKnowledgeMetricForm repo = new RepositoryKnowledgeMetricForm(projectPath, request.getKnowledgeMetric());
+						generateTruckFactorRepository(repo);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		executorService.shutdown();
 	}
 
 	protected List<FileVersion> getCoverageFiles(List<ContributorVersion> contributorsVersion, List<FileVersion> filesVersion) {
@@ -228,7 +245,7 @@ public class TruckFactorService {
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeTruckFactor(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(
-						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths()));
+						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths(), false));
 		saveTruckFactor(gitRepositoryVersionKnowledgeModel.getId());
 		return gitRepositoryVersionKnowledgeModel;
 	}
@@ -258,5 +275,9 @@ public class TruckFactorService {
 				getAllFolders(child, allFolders);
 			}
 		}
+	}
+
+	public void removeAll() {
+		truckFactorRepository.deleteAll();
 	}
 }

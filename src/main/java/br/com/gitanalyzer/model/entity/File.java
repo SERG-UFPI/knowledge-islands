@@ -29,19 +29,25 @@ public class File{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(nullable=false)
+	@Column(nullable=false, length=500)
 	private String path;
 	@JsonIgnore
+	@Column(length=500)
 	private String name;
 	@JsonIgnore
+	@Column(length=500)
 	private String sha;
 	@JsonIgnore
+	@Column(length=500)
 	private String url;
 	@JsonIgnore
+	@Column(length=500)
 	private String htmlUrl;
 	@JsonIgnore
+	@Column(length=500)
 	private String downloadUrl;
 	@JsonIgnore
+	@Column(length=500)
 	private String gitUrl;
 	@JsonIgnore
 	private String contentEncoded;

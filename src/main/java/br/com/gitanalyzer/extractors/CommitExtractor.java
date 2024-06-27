@@ -22,7 +22,7 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.utils.Constants;
 
 public class CommitExtractor {
-	
+
 	private List<Date> getDatesOfProject(String projectPath) throws IOException{
 		List<Date> dates = new ArrayList<Date>();
 		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
@@ -45,7 +45,7 @@ public class CommitExtractor {
 		br.close();
 		return dates;
 	}
-	
+
 	public Date getLastCommitDate(String projectPath) throws IOException {
 		List<Date> dates = getDatesOfProject(projectPath);
 		if(dates != null && dates.size() > 0) {
@@ -111,14 +111,16 @@ public class CommitExtractor {
 			while ((strLine = br.readLine()) != null) {
 				try {
 					String[] commitSplited = strLine.split(";");
-					if(commitSplited.length == 5) {
+					if(commitSplited.length >= 4) {
 						String idCommit = commitSplited[0];
 						String authorName = commitSplited[1];
 						String authorEmail = commitSplited[2];
-						if(authorName != null && authorEmail != null 
-								&& !authorEmail.contains(Constants.noreply)) {
+						if(authorName != null && authorEmail != null) {
 							String time = commitSplited[3];
-							String message = commitSplited[4];
+							String message = null;
+							if(commitSplited.length == 5) {
+								message = commitSplited[4];
+							}
 							Contributor contributorCommit = null;
 							for (Contributor contributor : contributors) {
 								if(contributor.getName().equals(authorName)
@@ -229,7 +231,7 @@ public class CommitExtractor {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public List<Commit> extractCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits, List<File> files) {
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.diffFileName);

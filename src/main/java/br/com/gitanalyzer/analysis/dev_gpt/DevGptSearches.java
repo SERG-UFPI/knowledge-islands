@@ -6,9 +6,6 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -37,9 +34,6 @@ import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.PromptCode;
-import br.com.gitanalyzer.model.entity.SharedLink;
-import br.com.gitanalyzer.model.github_openai.FileCitation;
-import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
 import br.com.gitanalyzer.model.github_openai.enums.ChatgptUserAgent;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
@@ -49,7 +43,7 @@ public class DevGptSearches {
 
 	public static void main(String[] args) throws Exception {
 		String token = args[0];
-		List<FileCitation> fileCitations = FileCitationSearch.getFilesFromFilesCitations(token);
+		//List<FileCitation> fileCitations = FileCitationSearch.getFilesFromFilesCitations(token);
 		//		List<CommitCitation> commitCitations = CommitCitationSearch.getFilesFromCommitsCitations(token);
 		//		int numberOfFiles = 1252;
 		//		for (CommitCitation commitCitation : commitCitations) {
@@ -247,7 +241,7 @@ public class DevGptSearches {
 								}
 								conversationTurn.setFullText(fullContent);
 							}
-							conversation.getConversationTurns().add(conversationTurn);
+							conversation.addConversationTurn(conversationTurn);
 						}
 					}
 				}
@@ -441,16 +435,16 @@ public class DevGptSearches {
 		return commitFilesAuthor;
 	}
 
-	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
-		List<File> files = new ArrayList<>();
-		for (SharedLink sharedLink : sharedLinks) {
-			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
-				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath()) 
-						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()))) {
-					files.add(fileLinkAuthor.getAuthorFile().getFileVersion().getFile());
-				}
-			}
-		}
-		return files;
-	}
+//	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
+//		List<File> files = new ArrayList<>();
+//		for (SharedLink sharedLink : sharedLinks) {
+//			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
+//				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath()) 
+//						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()))) {
+//					files.add(fileLinkAuthor.getAuthorFile().getFileVersion().getFile());
+//				}
+//			}
+//		}
+//		return files;
+//	}
 }

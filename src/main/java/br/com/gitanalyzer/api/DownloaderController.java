@@ -46,7 +46,7 @@ public class DownloaderController {
 	}
 	
 	@PostMapping("clone-shared-links-repositories")
-	public ResponseEntity<?> cloneSharedLinkRepositories() throws InvalidRemoteException, TransportException, GitAPIException{
+	public ResponseEntity<?> cloneSharedLinkRepositories() throws InvalidRemoteException, TransportException, GitAPIException, URISyntaxException, IOException, InterruptedException{
 		return ResponseEntity.ok(service.cloneRepositoriesWithSharedLinks());
 	}
 

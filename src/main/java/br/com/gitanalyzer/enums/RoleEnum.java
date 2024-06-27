@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model.enums;
+package br.com.gitanalyzer.enums;
 
 public enum RoleEnum {
 

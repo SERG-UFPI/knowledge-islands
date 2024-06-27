@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.gitanalyzer.exceptions.NoCommitForRepositoryException;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.GitRepositoryFolderExtractor;
@@ -28,6 +29,7 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
+import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
 
@@ -50,12 +52,15 @@ public class GitRepositoryVersionService {
 	private GitRepositoryService gitRepositoryService;
 	@Autowired
 	private GitRepositoryVersionKnowledgeModelRepository gitRepositoryVersionKnowledgeModelRepository;
+	@Autowired
+	private SharedLinkRepository sharedLinkRepository;
 
 	public void remove(Long id) {
 		gitRepositoryVersionRepository.deleteById(id);
 	}
 
 	public void removeAll() {
+		sharedLinkRepository.deleteAll();
 		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findAll();
 		List<Long> ids = versions.stream().map(v -> v.getId()).toList();
 
@@ -83,7 +88,7 @@ public class GitRepositoryVersionService {
 		gitRepositoryVersionRepository.deleteByGitRepositoryIdIn(ids);
 	}
 
-	public GitRepositoryVersion extractProjectVersion(GitRepository repository) throws IOException {
+	public GitRepositoryVersion extractProjectVersion(GitRepository repository) throws IOException, NoCommitForRepositoryException {
 		long start = System.currentTimeMillis();
 		if(repository.getCurrentFolderPath().substring(repository.getCurrentFolderPath().length() -1).equals("/") == false) {
 			repository.setCurrentFolderPath(repository.getCurrentFolderPath()+"/");
@@ -91,24 +96,43 @@ public class GitRepositoryVersionService {
 		List<File> files = fileExtractor.extractFilesFromClocFile(repository.getCurrentFolderPath(), repository.getName());
 		fileExtractor.getRenamesFiles(repository.getCurrentFolderPath(), files);
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(repository.getCurrentFolderPath());
-		Collections.sort(commits, Collections.reverseOrder());
-		Date dateVersion = commits.get(0).getAuthorDate();
-		String versionId = commits.get(0).getSha();
-		commitExtractor.extractCommitsFiles(repository.getCurrentFolderPath(), commits, files);
-		commits.removeIf(c -> c.getCommitFiles().size() == 0);
-		commitExtractor.extractCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits, files);
-		List<Contributor> contributors = projectVersionExtractor.extractContributorFromCommits(commits);
-		contributors = projectVersionExtractor.setAlias(contributors, repository.getName());
-		contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
-		long end = System.currentTimeMillis();
-		List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
-		GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
-		float sec = (end - start) / 1000F;
-		GitRepositoryVersion projectVersion = new GitRepositoryVersion(contributors.size(), 
-				files.size(), commits.size(), 
-				dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
-				commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(repository.getFullName()), gitRepositoryFolder);
-		return projectVersion;
+		if(commits != null && !commits.isEmpty()) {
+			Collections.sort(commits, Collections.reverseOrder());
+			Date dateVersion = commits.get(0).getAuthorDate();
+			String versionId = commits.get(0).getSha();
+			for(Commit commit: commits) {
+				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
+					System.err.println();
+				}
+			}
+			commitExtractor.extractCommitsFiles(repository.getCurrentFolderPath(), commits, files);
+			for(Commit commit: commits) {
+				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
+					System.err.println();
+				}
+			}
+			commits.removeIf(c -> c.getCommitFiles().size() == 0);
+			for(Commit commit: commits) {
+				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
+					System.err.println();
+				}
+			}
+			commitExtractor.extractCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits, files);
+			List<Contributor> contributors = projectVersionExtractor.extractContributorFromCommits(commits);
+			contributors = projectVersionExtractor.setAlias(contributors, repository.getName());
+			contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
+			long end = System.currentTimeMillis();
+			List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
+			GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
+			float sec = (end - start) / 1000F;
+			GitRepositoryVersion projectVersion = new GitRepositoryVersion(contributors.size(), 
+					files.size(), commits.size(), 
+					dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
+					commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(repository.getFullName()), gitRepositoryFolder);
+			return projectVersion;
+		}else {
+			throw new NoCommitForRepositoryException(repository.getFullName());
+		}
 	}
 
 	@Transactional

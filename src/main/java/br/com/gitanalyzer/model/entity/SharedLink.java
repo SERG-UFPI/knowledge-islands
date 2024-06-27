@@ -16,6 +16,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
 import br.com.gitanalyzer.model.github_openai.enums.SharedLinkSourceType;
@@ -26,7 +28,7 @@ import lombok.Data;
 @Entity
 @AllArgsConstructor
 public class SharedLink {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -37,9 +39,10 @@ public class SharedLink {
 	@Lob
 	@Column(columnDefinition="TEXT")
 	private String openAiFullJson;
+	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private ChatgptConversation conversation;
-	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToOne(cascade = {CascadeType.PERSIST})
 	private Commit commitThatAddedTheLink;
 	@OneToMany(mappedBy="sharedLink", cascade = CascadeType.REMOVE)
 	private List<FileLinkAuthor> filesLinkAuthor;
@@ -57,7 +60,7 @@ public class SharedLink {
 		this.link = link;
 		this.textMatchFragment = textMatchFragment;
 	}
-	
+
 	public void addFileLinkAuthor(FileLinkAuthor fileLinkAuthor) {
 		fileLinkAuthor.setSharedLink(this);
 		filesLinkAuthor.add(fileLinkAuthor);

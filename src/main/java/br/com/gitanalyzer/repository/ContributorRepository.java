@@ -8,4 +8,5 @@ import br.com.gitanalyzer.model.entity.Contributor;
 @Repository
 public interface ContributorRepository extends JpaRepository<Contributor, Long>{
 
+	boolean existsByEmail(String email);
 }

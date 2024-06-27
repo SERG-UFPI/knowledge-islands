@@ -2,12 +2,14 @@ package br.com.gitanalyzer.api;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm3;
 import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
 import br.com.gitanalyzer.dto.form.RepositoryKnowledgeMetricForm;
 import br.com.gitanalyzer.model.entity.TruckFactor;
@@ -55,7 +56,7 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("save-full-truck-factor")
-	public ResponseEntity<TruckFactor> generateTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
+	public ResponseEntity<List<TruckFactor>> generateTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
 			return ResponseEntity.ok(service.generateTruckFactorRepository(form));
 		} catch (Exception e) {
@@ -65,7 +66,7 @@ public class TruckFactorController {
 	}
 
 	@PostMapping("generate-logs-repo-truck-factor")
-	public ResponseEntity<TruckFactor> generateLogsTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
+	public ResponseEntity<List<TruckFactor>> generateLogsTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
 		try {
 			return ResponseEntity.ok(service.generateLogsTruckFactorRepository(form));
 		} catch (Exception e) {
@@ -92,5 +93,11 @@ public class TruckFactorController {
 			e.printStackTrace();
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
+	}
+	
+	@DeleteMapping("/all")
+	public ResponseEntity<?> removeAll(){
+		service.removeAll();
+		return ResponseEntity.ok("Ok");
 	}
 }

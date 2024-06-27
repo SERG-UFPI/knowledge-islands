@@ -67,7 +67,7 @@ public class Constants {
 	
 	public static int numberOfMaxThreads = 12;
 	public static int numberOfThreadsToGenerateLogsFiles = 9;
-	public static int numberOfThreadsToCalculateTf = 7;
+	public static int numberOfThreadsToCalculateTf = 5;
 	
 	public static String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
 	
@@ -75,7 +75,7 @@ public class Constants {
 	public static String chatGptShare = "https://chat.openai.com/share/";
 	
 	public static String openAiJsonStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\" crossorigin=\"anonymous\">";
-	public static String openAiJsonEnd = "</script><script>";
+	public static String openAiJsonEnd = "</script><script nonce=";
 	public static String openAiCodeJsonDelimiter = "```";
 	
 	public static String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";

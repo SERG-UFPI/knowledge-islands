@@ -20,11 +20,11 @@ import lombok.Data;
 @Entity
 @AllArgsConstructor
 public class ChatgptConversation {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(mappedBy = "conversation", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<ConversationTurn> conversationTurns;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createTime;
@@ -34,4 +34,9 @@ public class ChatgptConversation {
 	public ChatgptConversation() {
 		conversationTurns = new ArrayList<>();
 	}
+	
+	public void addConversationTurn(ConversationTurn turn) {
+        turn.setConversation(this);
+        conversationTurns.add(turn);
+    }
 }

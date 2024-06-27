@@ -9,6 +9,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jgit.api.BlameCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.blame.BlameResult;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.Repository;
+
 import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
@@ -123,6 +131,7 @@ public class FileExtractor {
 			patterns = Constants.projectPatterns.get(projectName);
 		}
 		List<File> files = new ArrayList<File>();
+		List<File> filesWithoutSize = new ArrayList<File>();
 		String strLineCloc;
 		String clocListPath = path+Constants.clocFileName;
 		try {
@@ -144,12 +153,39 @@ public class FileExtractor {
 						int size = Integer.parseInt(fileSizeString);
 						File file = new File(filePath, size);
 						files.add(file);
+					}else {
+						filesWithoutSize.add(new File(filePath));
 					}
+				}else {
+					filesWithoutSize.add(new File(filePath));
 				}
 			}
 			brCloc.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		if(!filesWithoutSize.isEmpty()) {
+			Git git = null;
+			Repository repository = null;
+			try {
+				git = Git.open(new java.io.File(path));
+				repository = git.getRepository();
+				for (File file : filesWithoutSize) {
+					if (file.getSize() == 0) {
+						BlameCommand blameCommand = new BlameCommand(repository);
+						blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
+						blameCommand.setFilePath(file.getPath());
+						BlameResult blameResult = blameCommand.call();
+						RawText rawText = blameResult.getResultContents();
+						file.setSize(rawText.size());
+						if(file.getSize() > 0) {
+							files.add(file);
+						}
+					}
+				}
+			} catch (IOException | GitAPIException e1) {
+				e1.printStackTrace();
+			}
 		}
 		return files;
 	}

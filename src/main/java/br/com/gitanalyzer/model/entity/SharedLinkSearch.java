@@ -1,6 +1,6 @@
 package br.com.gitanalyzer.model.entity;
 
-import java.util.Collection;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,30 +9,31 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
-import br.com.gitanalyzer.enums.RoleEnum;
+import br.com.gitanalyzer.model.github_openai.enums.SharedLinkSourceType;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Entity
 @Data
-@Builder
+@Entity
 @AllArgsConstructor
-@NoArgsConstructor
-@Table(name="roles")
-public class Role {
+public class SharedLinkSearch {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date date;
 	@Enumerated(EnumType.STRING)
-	@Column(length = 20)
-	private RoleEnum name;
-	@ManyToMany(mappedBy = "roles")
-	private Collection<User> users;
+	private SharedLinkSourceType searchType;
+	@Column(length = 500)
+	private String searchCall;
+	private int totalNumberOfItems;
+	public SharedLinkSearch() {
+		super();
+		this.date = new Date();
+	}
 
 }

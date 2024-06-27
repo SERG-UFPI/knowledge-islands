@@ -15,6 +15,7 @@ import javax.json.JsonValue;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -220,11 +221,11 @@ public class DownloaderService {
 	}
 
 	@Transactional
-	public String cloneRepositoriesWithSharedLinks() {
+	public String cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<SharedLink> sharedLinks = sharedLinkRepository.findByRepositoryNotNull();
 		List<GitRepository> repositories = new ArrayList<GitRepository>();
 		for (SharedLink sharedLink : sharedLinks) {
-			if(!repositories.stream().anyMatch(g -> g.getFullName().equals(sharedLink.getRepository().getFullName()))) {
+			if(!repositories.stream().anyMatch(g -> g.getId().equals(sharedLink.getRepository().getId()))) {
 				repositories.add(sharedLink.getRepository());
 			}
 		}
@@ -233,7 +234,7 @@ public class DownloaderService {
 		for (GitRepository repository : repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
-					repository.setCurrentGitFolderPath(cloneProject(CloneRepoForm.builder()
+					repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
 							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
 				}catch (Exception e) {
 					e.printStackTrace();
@@ -243,6 +244,12 @@ public class DownloaderService {
 		}
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 		executorService.shutdown();
+		for (GitRepository gitRepository : repositories) {
+			String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
+			if(currentFolderPath.endsWith("RepeatedRepo")) {
+				gitRepository.setName(gitRepository.getName()+"RepeatedRepo");
+			}
+		}
 		gitRepositoryRepository.saveAll(repositories);
 		return "Downloads finished in "+cloneFolder;
 	}
@@ -253,15 +260,33 @@ public class DownloaderService {
 		File file = new File(cloneFolder+projectName);
 		//org.apache.commons.io.FileUtils.deleteDirectory(file);
 		Git git = null;
-		if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
-			git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-					.setBranch(form.getBranch()) 
-					.call();
-		}else {
-			git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-					.call();
+		try {
+			if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
+				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+						.setBranch(form.getBranch()) 
+						.call();
+			}else {
+				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+						.call();
+			}
+		}catch(JGitInternalException e) {
+			projectName = projectName+"RepeatedRepo";
+			file = new File(cloneFolder+projectName);
+			if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
+				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+						.setBranch(form.getBranch()) 
+						.call();
+			}else {
+				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
+						.call();
+			}
+		}catch(TransportException e) {
+			System.out.println(form.getCloneUrl());
+			e.printStackTrace();
 		}
-		return git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
+		String path = git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
+		git.close();
+		return path;
 	}
 
 }
