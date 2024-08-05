@@ -36,7 +36,6 @@ import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.model.entity.SharedLink;
-import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
 import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryFolderRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
@@ -90,7 +89,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 			}
 			files.forEach(f -> filesVersion.add(new FileVersion(f)));
 		}
-		List<SharedLink> sharedLinks = form.isWithSharedLinks() ? gitRepositoryVersion.getGitRepository().getSharedLinks():null;
+		List<SharedLink> sharedLinks = null;//form.isWithSharedLinks() ? gitRepositoryVersion.getGitRepository().getSharedLinks():null;
 		List<ContributorVersion> contributorsVersion = new ArrayList<>();
 		gitRepositoryVersion.getContributors().stream().forEach(c -> contributorsVersion.add(new ContributorVersion(c)));
 		for(ContributorVersion contributorVersion: contributorsVersion) {
@@ -120,18 +119,18 @@ public class GitRepositoryVersionKnowledgeModelService {
 	private AuthorFile getNewAuthorFileFromSharedLink(List<SharedLink> sharedLinks, ContributorVersion contributorVersion, FileVersion fileVersion, 
 			AuthorFile authorFile) {
 		for (SharedLink sharedLink : sharedLinks) {
-			if(sharedLink.getCommitThatAddedTheLink() != null && sharedLink.getCommitThatAddedTheLink().getAuthor().getId().equals(contributorVersion.getContributor().getId())) {
-				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
-					if(fileVersion.getFile().isFile(fileLinkAuthor.getFile().getPath())) {
-						int newAdds = authorFile.getDoe().getAdds()-fileLinkAuthor.getLinesCopied().size();
-						double newDoeValue = new DoeUtils().getDOE(newAdds, 
-								authorFile.getDoe().getFa(), authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize());
-						DOE newDoe = new DOE(newAdds, authorFile.getDoe().getFa(), 
-								authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize(), newDoeValue);
-						return new AuthorFile(authorFile.getAuthorVersion(), authorFile.getFileVersion(), newDoe);
-					}
-				}
-			}
+//			if(sharedLink.getCommitThatAddedTheLink() != null && sharedLink.getCommitThatAddedTheLink().getAuthor().getId().equals(contributorVersion.getContributor().getId())) {
+//				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
+//					if(fileVersion.getFile().isFile(fileLinkAuthor.getFile().getPath())) {
+//						int newAdds = authorFile.getDoe().getAdds()-fileLinkAuthor.getLinesCopied().size();
+//						double newDoeValue = new DoeUtils().getDOE(newAdds, 
+//								authorFile.getDoe().getFa(), authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize());
+//						DOE newDoe = new DOE(newAdds, authorFile.getDoe().getFa(), 
+//								authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize(), newDoeValue);
+//						return new AuthorFile(authorFile.getAuthorVersion(), authorFile.getFileVersion(), newDoe);
+//					}
+//				}
+//			}
 		}
 		return null;
 	}

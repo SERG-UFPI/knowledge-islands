@@ -30,7 +30,13 @@ public class SharedLinkController {
 
 	@PostMapping("/create-file-shared-links")
 	public ResponseEntity<?> createFileSharedLinks() throws Exception{
-		return ResponseEntity.ok(service.saveFileSharedLink());
+		return ResponseEntity.ok(service.saveFileSharedLinks());
+	}
+
+	@PostMapping("/set-conversation-shared-links")
+	public ResponseEntity<?> setConversationSharedLinks() throws Exception{
+		service.setConversationSharedLinks();
+		return ResponseEntity.ok("Finished");
 	}
 
 	@PostMapping("/create-repos-file-shared-links")

@@ -32,8 +32,8 @@ import br.com.gitanalyzer.dto.form.DownloaderPerLanguageForm;
 import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.ProjectGitHub;
 import br.com.gitanalyzer.model.entity.SharedLink;
-import br.com.gitanalyzer.model.github_openai.ProjectGitHub;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
@@ -222,13 +222,7 @@ public class DownloaderService {
 
 	@Transactional
 	public String cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
-		List<SharedLink> sharedLinks = sharedLinkRepository.findByRepositoryNotNull();
-		List<GitRepository> repositories = new ArrayList<GitRepository>();
-		for (SharedLink sharedLink : sharedLinks) {
-			if(!repositories.stream().anyMatch(g -> g.getId().equals(sharedLink.getRepository().getId()))) {
-				repositories.add(sharedLink.getRepository());
-			}
-		}
+		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNull();
 		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {

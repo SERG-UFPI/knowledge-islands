@@ -10,7 +10,8 @@ import br.com.gitanalyzer.model.entity.SharedLink;
 @Repository
 public interface SharedLinkRepository extends JpaRepository<SharedLink, Long> {
 
-	List<SharedLink> findByRepositoryNotNull();
-	List<SharedLink> findByRepositoryId(Long id);
+	SharedLink findByLink(String link);
+	List<SharedLink> findByConversationIsNullAndErrorIsNull();
+	List<SharedLink> findByConversationIsNotNull();
 
 }

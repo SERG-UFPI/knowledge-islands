@@ -68,7 +68,8 @@ public class File{
 	@JsonIgnore
 	@OneToMany(mappedBy="file", cascade = CascadeType.REMOVE)
 	private List<FileVersion> versions;
-
+	private String language;
+	
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<String>();
 		paths.add(this.path);

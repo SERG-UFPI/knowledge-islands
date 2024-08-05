@@ -24,14 +24,11 @@ public class ErrorLog {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@Column(length = 500)
-	private String artifact;
-	@Column(length = 500)
 	private String message;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date date;
-	public ErrorLog(String artifact, String message, Date date) {
+	public ErrorLog(String message, Date date) {
 		super();
-		this.artifact = artifact;
 		this.message = message;
 		this.date = date;
 	}

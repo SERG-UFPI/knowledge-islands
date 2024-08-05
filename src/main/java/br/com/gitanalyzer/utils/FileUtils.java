@@ -18,18 +18,12 @@ public class FileUtils {
 		alias.add("javascript");
 		alias.add("java");
 		alias.add("typescript");
-//		alias.add("csharp");
-//		alias.add("cpp");
-//		alias.add("c");
-//		alias.add("php");
-//		alias.add("ruby");
-//		alias.add("go");
-//		alias.add("shell");
-//		alias.add("rust");
-//		alias.add("kotlin");
-//		alias.add("r");
-//		alias.add("swift");
-//		alias.add("lua");
+		alias.add("csharp");
+		alias.add("cpp");
+		alias.add("c");
+		alias.add("php");
+		alias.add("ruby");
+		alias.add("shell");
 		return alias;
 	}
 

@@ -34,7 +34,7 @@ import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.PromptCode;
-import br.com.gitanalyzer.model.github_openai.enums.ChatgptUserAgent;
+import br.com.gitanalyzer.model.enums.ChatgptUserAgent;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
 

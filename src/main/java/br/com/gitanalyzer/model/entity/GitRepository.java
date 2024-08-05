@@ -44,8 +44,6 @@ public class GitRepository {
 	@JsonIgnore
 	@OneToMany(mappedBy="gitRepository", cascade = CascadeType.REMOVE)
 	private List<GitRepositoryVersion> gitRepositoryVersion;
-	@OneToMany(mappedBy="repository", cascade = CascadeType.REMOVE)
-	private List<SharedLink> sharedLinks;
 	@Enumerated(EnumType.STRING)
 	private FilteredEnum filteredReason;
 	private String defaultBranch;

@@ -32,9 +32,7 @@ import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionProcess;
-import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.TruckFactor;
-import br.com.gitanalyzer.model.github_openai.FileLinkAuthor;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionProcessRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
@@ -135,15 +133,15 @@ public class TruckFactorService {
 		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
 		models.add(gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), false)));
-		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
-				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
-			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
-			boolean analysisSharedLink = sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
-			if(analysisSharedLink) {
-				models.add(gitRepositoryVersionKnowledgeModelService.
-						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
-			}
-		}
+//		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
+//				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
+//			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
+//			boolean analysisSharedLink = false;//sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
+//			if(analysisSharedLink) {
+//				models.add(gitRepositoryVersionKnowledgeModelService.
+//						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
+//			}
+//		}
 		List<TruckFactor> truckFactors = new ArrayList<>();
 		for(GitRepositoryVersionKnowledgeModel model: models) {
 			truckFactors.add(saveTruckFactor(model.getId()));

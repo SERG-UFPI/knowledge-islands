@@ -12,7 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import br.com.gitanalyzer.model.github_openai.enums.SharedLinkSourceType;
+import br.com.gitanalyzer.model.enums.SharedLinkSourceType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

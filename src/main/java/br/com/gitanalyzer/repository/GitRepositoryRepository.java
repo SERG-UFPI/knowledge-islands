@@ -3,6 +3,7 @@ package br.com.gitanalyzer.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import br.com.gitanalyzer.model.entity.GitRepository;
@@ -15,5 +16,11 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	List<GitRepository> findByFilteredTrue();
 	GitRepository findByFullName(String fullName);
 	List<GitRepository> findByNameEndingWith(String suffix);
+
+	@Query("SELECT DISTINCT gr FROM GitRepository gr " +
+			"JOIN GitRepositoryFile grf ON grf.gitRepository = gr " +
+			"JOIN SharedLink sl ON sl MEMBER OF grf.sharedLinks " +
+			"WHERE sl.conversation IS NOT NULL")
+	List<GitRepository> findAllWithSharedLinkConversationNotNull();
 
 }

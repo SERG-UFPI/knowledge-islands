@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model.github_openai;
+package br.com.gitanalyzer.model.entity;
 	
 import lombok.AllArgsConstructor;
 import lombok.Data;

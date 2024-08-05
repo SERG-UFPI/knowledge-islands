@@ -1,42 +1,40 @@
-package br.com.gitanalyzer.model.github_openai;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.SharedLink;
+import br.com.gitanalyzer.model.Commit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @Entity
 @AllArgsConstructor
-public class FileLinkAuthor {
-
+public class SharedLinkCommit {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-//	@OneToOne
-//	private AuthorFile authorFile;
 	@ElementCollection
 	private List<String> linesCopied;
-	@ManyToOne
-	private SharedLink sharedLink;
 	@OneToOne
-	private File file;
-	private boolean dataExtracted;
+	private SharedLink sharedLink;
+	@OneToOne(cascade = {CascadeType.PERSIST})
+	private Commit commitThatAddedTheLink;
 
-	public FileLinkAuthor() {
-	//	this.authorFile = new AuthorFile();
+	public SharedLinkCommit() {
 		this.linesCopied = new ArrayList<>();
 	}
 
+	public SharedLinkCommit(SharedLink sharedLink) {
+		super();
+		this.sharedLink = sharedLink;
+	}
 }
