@@ -33,7 +33,6 @@ import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.ProjectGitHub;
-import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
@@ -50,8 +49,6 @@ public class DownloaderService {
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private GitRepositoryService projectService;
-	@Autowired
-	private SharedLinkRepository sharedLinkRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
@@ -222,26 +219,28 @@ public class DownloaderService {
 
 	@Transactional
 	public String cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
-		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNull();
-		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
+		//		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+		//		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
-			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-				try {
-					repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
-							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
-				}catch (Exception e) {
-					e.printStackTrace();
-				}
-			}, executorService);
-			futures.add(future);
+			//			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+			try {
+				repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
+						.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+			//			}, executorService);
+			//			futures.add(future);
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		executorService.shutdown();
+		//		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		//		executorService.shutdown();
 		for (GitRepository gitRepository : repositories) {
-			String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
-			if(currentFolderPath.endsWith("RepeatedRepo")) {
-				gitRepository.setName(gitRepository.getName()+"RepeatedRepo");
+			if(gitRepository.getCurrentFolderPath() != null) {
+				String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
+				if(currentFolderPath.endsWith("RepeatedRepo")) {
+					gitRepository.setName(gitRepository.getName()+"RepeatedRepo");
+				}
 			}
 		}
 		gitRepositoryRepository.saveAll(repositories);
@@ -251,8 +250,19 @@ public class DownloaderService {
 	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException, IOException {
 		String projectName = projectService.extractProjectName(form.getCloneUrl());
 		projectName = projectName.replace(".git", "");
-		File file = new File(cloneFolder+projectName);
-		//org.apache.commons.io.FileUtils.deleteDirectory(file);
+		Git git = cloneProjectFromFile(projectName, 0, form);
+		String path = git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
+		git.close();
+		return path;
+	}
+
+	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form) {
+		File file = null;
+		if(repeatedNumber != 0) {
+			file = new File(cloneFolder+projectName+"RepeatedRepo"+repeatedNumber);
+		}else {
+			file = new File(cloneFolder+projectName);
+		}
 		Git git = null;
 		try {
 			if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
@@ -264,23 +274,15 @@ public class DownloaderService {
 						.call();
 			}
 		}catch(JGitInternalException e) {
-			projectName = projectName+"RepeatedRepo";
-			file = new File(cloneFolder+projectName);
-			if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
-				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-						.setBranch(form.getBranch()) 
-						.call();
-			}else {
-				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-						.call();
-			}
-		}catch(TransportException e) {
+			System.out.println(form.getCloneUrl());
+			e.printStackTrace();
+			repeatedNumber = repeatedNumber+1;
+			git = cloneProjectFromFile(projectName, repeatedNumber, form);
+		}catch(GitAPIException e) {
 			System.out.println(form.getCloneUrl());
 			e.printStackTrace();
 		}
-		String path = git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
-		git.close();
-		return path;
+		return git;
 	}
 
 }

@@ -22,5 +22,11 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 			"JOIN SharedLink sl ON sl MEMBER OF grf.sharedLinks " +
 			"WHERE sl.conversation IS NOT NULL")
 	List<GitRepository> findAllWithSharedLinkConversationNotNull();
+	
+	@Query("SELECT DISTINCT gr FROM GitRepository gr " +
+			"JOIN GitRepositoryFile grf ON grf.gitRepository = gr " +
+			"JOIN SharedLink sl ON sl MEMBER OF grf.sharedLinks " +
+			"WHERE sl.conversation IS NOT NULL and gr.cloneUrl is NOT NULL and gr.currentFolderPath is NULL")
+	List<GitRepository> findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
 
 }

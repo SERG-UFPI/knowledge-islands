@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,6 @@ import br.com.gitanalyzer.repository.GitRepositoryFileRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.repository.SharedLinkSearchRepository;
-import br.com.gitanalyzer.repository.TruckFactorRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
@@ -61,36 +61,11 @@ public class SharedLinkService {
 	@Autowired
 	private FileRepository fileRepository;
 	@Autowired
-	private TruckFactorRepository truckFactorRepository;
-	@Autowired
 	private SharedLinkRepository sharedLinkRepository;
 	@Autowired
 	private SharedLinkSearchRepository sharedLinkSearchRepository;
 	@Value("${configuration.github.token}")
 	private String token;
-
-	public void saveFileSharedLinkFull() throws Exception{
-		List<GitRepository> gitRepositories = new ArrayList<>(); 
-		List<SharedLink> sharedLinks = saveFileSharedLinks();
-		//		for (SharedLink sharedLink : sharedLinks) {
-		//			if(!gitRepositories.stream().anyMatch(g -> g.getFullName().equals(sharedLink.getRepository().getFullName()))) {
-		//				gitRepositories.add(sharedLink.getRepository());
-		//			}
-		//		}
-		saveGitRepositoriesFromApi(gitRepositories);
-	}
-
-	public void saveReposFileSharedLinks() throws InterruptedException, IOException {
-		List<GitRepository> gitRepositories = new ArrayList<>(); 
-		List<SharedLink> sharedLinks = repository.findAll();
-		//		for (SharedLink sharedLink : sharedLinks) {
-		//			if(!gitRepositories.stream().anyMatch(g -> g.getFullName().equals(sharedLink.getRepository().getFullName()))) {
-		//				gitRepositories.add(sharedLink.getRepository());
-		//			}
-		//		}
-		saveGitRepositoriesFromApi(gitRepositories);
-		validateAndRemoveRepositories();
-	}
 
 	@Transactional
 	private void validateAndRemoveRepositories() {
@@ -111,7 +86,8 @@ public class SharedLinkService {
 	}
 
 	@Transactional
-	public List<GitRepository> saveGitRepositoriesFromApi(List<GitRepository> repositories) throws InterruptedException, IOException{
+	public List<GitRepository> saveGitRepositoriesApi() throws InterruptedException, IOException{
+		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNull();
 		ObjectMapper objectMapper = new ObjectMapper();
 		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -123,11 +99,11 @@ public class SharedLinkService {
 								Constants.githubApiBaseUrl+"/repos/"+gitRepository.getFullName()};
 						String content = GitHubCall.generalCall(command);
 						JsonNode rootNode = objectMapper.readTree(content);
-						gitRepository.setPrivateRepository(rootNode.get("private").asBoolean());
-						gitRepository.setCloneUrl(rootNode.get("clone_url").asText());
-						gitRepository.setLanguage(rootNode.get("language").asText());
-						gitRepository.setDefaultBranch(rootNode.get("default_branch").asText());
-						gitRepository.setSize(rootNode.get("size").asInt());
+						gitRepository.setPrivateRepository(rootNode.get("private")!=null?rootNode.get("private").asBoolean():false);
+						gitRepository.setCloneUrl(rootNode.get("clone_url")!=null?rootNode.get("clone_url").asText():null);
+						gitRepository.setLanguage(rootNode.get("language")!=null?rootNode.get("language").asText():null);
+						gitRepository.setDefaultBranch(rootNode.get("default_branch")!=null?rootNode.get("default_branch").asText():null);
+						gitRepository.setSize(rootNode.get("size")!=null?rootNode.get("size").asInt():0);
 						gitRepositoryRepository.save(gitRepository);
 					}
 				}catch (Exception e) {
@@ -259,7 +235,16 @@ public class SharedLinkService {
 													sharedLink.setType(SharedLinkSourceType.FILE);
 													repository.save(sharedLink);
 												}
-												gitRepositoryFile.getSharedLinks().add(new SharedLinkCommit(sharedLink));
+												boolean present = false;
+												for (SharedLinkCommit sharedLinkCommit : gitRepositoryFile.getSharedLinks()) {
+													if(sharedLinkCommit.getSharedLink().getLink().equals(link)) {
+														present = true;
+														break;
+													}
+												}
+												if(present == false) {
+													gitRepositoryFile.getSharedLinks().add(new SharedLinkCommit(sharedLink));
+												}
 											}
 										}
 									}
@@ -471,6 +456,78 @@ public class SharedLinkService {
 			}
 		}
 		return codes;
+	}
+
+	@Transactional
+	public Object numberSharedLinksPerLanguage() {
+		//		int sum = 0;
+		//		List<String> languages = fileRepository.findDistinctLanguages();
+		//		for (String language : languages) {
+		//			System.out.println("========= "+language+" =========");
+		//			List<String> links = new ArrayList<>();
+		//			List<GitRepositoryFile> gitRepositoryFiles = gitRepositoryFileRepository.findByFileLanguage(language);
+		//			int numFiles = 0;
+		//			for (GitRepositoryFile gitRepositoryFile : gitRepositoryFiles) {
+		//				boolean possuiSharedLink = false;
+		//				for (SharedLinkCommit sharedLinkCommit : gitRepositoryFile.getSharedLinks()) {
+		//					if(!links.contains(sharedLinkCommit.getSharedLink().getLink()) && sharedLinkCommit.getSharedLink().getConversation() != null) {
+		//						links.add(sharedLinkCommit.getSharedLink().getLink());
+		//						possuiSharedLink = true;
+		//					}
+		//				}
+		//				if(possuiSharedLink == true) {
+		//					numFiles++;
+		//				}
+		//			}
+		//			System.out.println("Number of files: "+numFiles);
+		//			System.out.println("Number of shared links: "+links.size());
+		//			sum = sum+links.size();
+		//			System.out.println();
+		//		}
+		//		System.out.println(sum);
+
+		List<Integer> distributionOfFiles = new ArrayList<>();
+		List<Integer> distributionOfSharedLinks = new ArrayList<>();
+		List<GitRepositoryFile> files = gitRepositoryFileRepository.findAll();
+		List<GitRepository> repos = gitRepositoryRepository.findAll();
+		for(GitRepository repo: repos) {
+			List<GitRepositoryFile> filesRepo = files.stream().filter(f -> f.getGitRepository().getId().equals(repo.getId())).toList();
+			int numValidFiles = 0;
+			for (GitRepositoryFile file : filesRepo) {
+				int numValidLinks = 0;
+				boolean validFile = false;
+				for (SharedLinkCommit sharedLinkCommit : file.getSharedLinks()) {
+					if(sharedLinkCommit.getSharedLink().getConversation() != null) {
+						validFile = true;
+						numValidLinks++;
+					}
+				}
+				if(validFile == true) {
+					distributionOfSharedLinks.add(numValidLinks);
+					numValidFiles++;
+				}
+			}
+			if(numValidFiles > 0) {
+				distributionOfFiles.add(numValidFiles);
+			}
+		}
+		System.out.println("=== Distribution stats of files per repo ===");
+		getStatistcsOfList(distributionOfFiles);
+		System.out.println("=== Distribution stats of shared links per repo===");
+		getStatistcsOfList(distributionOfSharedLinks);
+		return null;
+	}
+
+	private void getStatistcsOfList(List<Integer> distribution) {
+		distribution = distribution.stream().sorted().toList();
+		DescriptiveStatistics stats = new DescriptiveStatistics();
+		distribution.forEach(d -> stats.addValue(d));
+		double median = stats.getPercentile(50);
+		double q1 = stats.getPercentile(25);
+		double q3 = stats.getPercentile(75);
+		System.out.println("Median: " + median);
+		System.out.println("First Quartile (Q1): " + q1);
+		System.out.println("Third Quartile (Q3): " + q3);
 	}
 
 }

@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.errors.NoHeadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,12 +23,11 @@ public class SharedLinkController {
 	@Autowired
 	private SharedLinkService service;
 
-	@PostMapping("/create-file-shared-links-full")
-	public ResponseEntity<?> createFileSharedLinksFull() throws Exception{
-		service.saveFileSharedLinkFull();
-		return ResponseEntity.ok("Shared links downloaded");
+	@PostMapping("/save-git-repositories-api")
+	public ResponseEntity<?> saveGitRepositoriesApi() throws Exception{
+		return ResponseEntity.ok(service.saveGitRepositoriesApi());
 	}
-
+	
 	@PostMapping("/create-file-shared-links")
 	public ResponseEntity<?> createFileSharedLinks() throws Exception{
 		return ResponseEntity.ok(service.saveFileSharedLinks());
@@ -39,15 +39,14 @@ public class SharedLinkController {
 		return ResponseEntity.ok("Finished");
 	}
 
-	@PostMapping("/create-repos-file-shared-links")
-	public ResponseEntity<?> createReposFileSharedLinks() throws Exception{
-		service.saveReposFileSharedLinks();
-		return ResponseEntity.ok("Shared links downloaded");
-	}
-
 	@PostMapping("/set-commits-of-files")
 	public ResponseEntity<?> setCommitsOfFiles() throws NoHeadException, IOException, GitAPIException, NoCommitForFileException{
 		return ResponseEntity.ok(service.setCommitsOfFilesSharedLinks());
+	}
+
+	@GetMapping("/number_shared_links_per_language")
+	public ResponseEntity<?> numberSharedLinksPerLanguage() throws NoHeadException, IOException, GitAPIException, NoCommitForFileException{
+		return ResponseEntity.ok(service.numberSharedLinksPerLanguage());
 	}
 
 }
