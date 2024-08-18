@@ -1,7 +1,8 @@
 # Knowledge-Islands
-This tool is used to check the concentration of knowledge in software projects. The tool uses a combination of shell scripts to extract data from projects.
+This tool is used to check the concentration of knowledge in software projects. The tool uses a combination of shell scripts to extract data from projects, therefore a Linux environment is necessary.
 
 ## Prerequisites for use
+### Back end
 1. You have to install rugged and [github-linguist](https://github.com/github-linguist/linguist) gems in your system-wide ruby.<br/>
    On Ubuntu:<br/>
    `sudo apt-get install build-essential cmake pkg-config libicu-dev zlib1g-dev libcurl4-openssl-dev libssl-dev ruby-dev`<br/>
@@ -9,6 +10,10 @@ This tool is used to check the concentration of knowledge in software projects. 
    `sudo /usr/bin/ruby -S gem install rugged`
 2. You have to install [Cloc](https://github.com/AlDanial/cloc#install-via-package-manager)<br/>
    `sudo apt install cloc`
+### Front end
+1. Ensure you have [Node.js](https://nodejs.org/en) installed, which includes npm (Node Package Manager).
+2. Navigate to the 'front-end' directory and run `npm install` to install all necessary dependencies.
+3. Use `npm start` to start the development server and `npm run build` to create a production build of the project. 
 
 ## Main endpoints
 For now, the application's endpoints can be used locally to extract data and compute project truck factors.
