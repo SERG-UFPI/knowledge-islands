@@ -16,12 +16,14 @@ This tool is used to check the concentration of knowledge in software projects. 
 3. Use `npm start` to start the development server and `npm run build` to create a production build of the project. 
 
 ## Main endpoints
-For now, the application's endpoints can be used locally to extract data and compute project truck factors.
+The application's endpoints can be used locally to extract data and compute project truck factors.
 The main endpoints to achieve these goals are:
-1. '/api/project/generate-logs-folder/': this endpoint receives the root path of a .git repository, and generates .log files for computing the project's truck factor
-2. '/api/project/repo-truck-factor/': this endpoint receives the root path of a .git repository with .log files already generated, and computes and saves data about the truck factor of that repository
+1. '/api/downloader/clone-repository': Clones a public repository into the folder specified by the 'configuration.permanent-clone.path' property in the 'application.properties' file.
+2. '/api/git-repository/generate-logs-repository/': Accepts the root path of a .git repository and generates .log files necessary for calculating the project's Truck Factor.
+3. '/api/truck-factor/save-full-truck-factor/': Takes the root path of a .git repository with pre-generated .log files and calculates and saves the repository's Truck Factor.
+4. '/api/git-repository-version-process/start-git-repository-version-process/': Combines the functionalities of the previous endpoints: cloning the repository, generating log files, and calculating and saving the Truck Factor.
 
-In the same controllers are endpoints to perform the same tasks in folders with several repositories.
+The same controllers also include endpoints for performing these tasks on folders containing multiple repositories.
    
 ## References
 <a id="1" href="https://dl.acm.org/doi/abs/10.1145/3544902.3546243">[1]</a> Cury, Otávio, et al. "Identifying Source Code File Experts." Proceedings of the 16th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement. 2022.<br/>
