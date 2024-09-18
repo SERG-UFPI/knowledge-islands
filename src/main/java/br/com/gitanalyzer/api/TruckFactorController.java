@@ -24,7 +24,7 @@ import br.com.gitanalyzer.service.TruckFactorService;
 
 @RestController
 @RequestMapping("/api/truck-factor")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class TruckFactorController {
 
 	@Autowired

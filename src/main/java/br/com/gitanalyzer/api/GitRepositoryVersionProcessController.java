@@ -17,7 +17,7 @@ import br.com.gitanalyzer.service.GitRepositoryVersionProcessService;
 
 @RestController
 @RequestMapping("/api/git-repository-version-process")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class GitRepositoryVersionProcessController {
 	@Autowired
 	private GitRepositoryVersionProcessService service;

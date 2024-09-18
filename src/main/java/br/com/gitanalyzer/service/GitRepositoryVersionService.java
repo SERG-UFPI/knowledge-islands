@@ -32,8 +32,10 @@ import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.ContributorUtils;
+import lombok.extern.log4j.Log4j2;
 
 @Service
+@Log4j2
 public class GitRepositoryVersionService {
 
 	private FileExtractor fileExtractor = new FileExtractor();
@@ -100,23 +102,8 @@ public class GitRepositoryVersionService {
 			Collections.sort(commits, Collections.reverseOrder());
 			Date dateVersion = commits.get(0).getAuthorDate();
 			String versionId = commits.get(0).getSha();
-			for(Commit commit: commits) {
-				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
-					System.err.println();
-				}
-			}
 			commitExtractor.extractCommitsFiles(repository.getCurrentFolderPath(), commits, files);
-			for(Commit commit: commits) {
-				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
-					System.err.println();
-				}
-			}
 			commits.removeIf(c -> c.getCommitFiles().size() == 0);
-			for(Commit commit: commits) {
-				if(commit.getSha().equals("649a6fabbc6e2249c0e6b0633d005cabd8040e67")) {
-					System.err.println();
-				}
-			}
 			commitExtractor.extractCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits, files);
 			List<Contributor> contributors = projectVersionExtractor.extractContributorFromCommits(commits);
 			contributors = projectVersionExtractor.setAlias(contributors, repository.getName());
@@ -125,11 +112,10 @@ public class GitRepositoryVersionService {
 			List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
 			GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
 			float sec = (end - start) / 1000F;
-			GitRepositoryVersion projectVersion = new GitRepositoryVersion(contributors.size(), 
+			return new GitRepositoryVersion(contributors.size(), 
 					files.size(), commits.size(), 
 					dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
 					commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(repository.getFullName()), gitRepositoryFolder);
-			return projectVersion;
 		}else {
 			throw new NoCommitForRepositoryException(repository.getFullName());
 		}
@@ -137,11 +123,10 @@ public class GitRepositoryVersionService {
 
 	@Transactional
 	public GitRepositoryVersion saveGitRepositoryVersion(String repositoryPath) throws Exception {
-		//gitRepositoryService.generateLogFiles(repositoryPath);
 		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
-		System.out.println("BEGIN SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+repositoryPath);
 		GitRepositoryVersion gitRepositoryVersion = extractProjectVersion(gitRepository);
-		if(!gitRepositoryVersion.validTruckFactor()) {
+		if(!gitRepositoryVersion.validGitRepositoryVersion()) {
 			throw new Exception("GitRepository version not valid");
 		}
 		if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
@@ -150,7 +135,7 @@ public class GitRepositoryVersionService {
 		}else {
 			throw new Exception("GitRepository version already extracted");
 		}
-		System.out.println("ENDING SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+repositoryPath);
 		return gitRepositoryVersion;
 	}
 

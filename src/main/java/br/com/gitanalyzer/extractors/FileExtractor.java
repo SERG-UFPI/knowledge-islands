@@ -44,18 +44,19 @@ public class FileExtractor {
 
 	public List<File> extractFileList(String path, String fileListName, String projectName) {
 		try {
+			Map<String, String[]> projectPatterns  = new HashMap<>();
 			String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 			String arrayHomebrew[]  = new String[] {"Library/Formula/"};
 			String arrayHomebrewCask[]  = new String[] {"Casks/"};
 
 			List<File> files = new ArrayList<File>();
 			String fileListfullPath = path+fileListName;
-			Constants.projectPatterns.put("linux", arrayLinux);
-			Constants.projectPatterns.put("homebrew", arrayHomebrew);
-			Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
+			projectPatterns.put("linux", arrayLinux);
+			projectPatterns.put("homebrew", arrayHomebrew);
+			projectPatterns.put("homebrew-cask", arrayHomebrewCask);
 			String patterns[] = null;
-			if (Constants.projectPatterns.containsKey(projectName)) {
-				patterns = Constants.projectPatterns.get(projectName);
+			if (projectPatterns.containsKey(projectName)) {
+				patterns = projectPatterns.get(projectName);
 			}
 			FileInputStream fstream = new FileInputStream(fileListfullPath);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -120,15 +121,16 @@ public class FileExtractor {
 
 
 	public List<File> extractFilesFromClocFile(String path, String projectName) {
+		Map<String, String[]> projectPatterns  = new HashMap<>();
 		String arrayLinux[]  = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String arrayHomebrew[]  = new String[] {"Library/Formula/"};
 		String arrayHomebrewCask[]  = new String[] {"Casks/"};
-		Constants.projectPatterns.put("linux", arrayLinux);
-		Constants.projectPatterns.put("homebrew", arrayHomebrew);
-		Constants.projectPatterns.put("homebrew-cask", arrayHomebrewCask);
+		projectPatterns.put("linux", arrayLinux);
+		projectPatterns.put("homebrew", arrayHomebrew);
+		projectPatterns.put("homebrew-cask", arrayHomebrewCask);
 		String patterns[] = null;
-		if (Constants.projectPatterns.containsKey(projectName)) {
-			patterns = Constants.projectPatterns.get(projectName);
+		if (projectPatterns.containsKey(projectName)) {
+			patterns = projectPatterns.get(projectName);
 		}
 		List<File> files = new ArrayList<File>();
 		List<File> filesWithoutSize = new ArrayList<File>();

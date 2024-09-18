@@ -20,7 +20,7 @@ import br.com.gitanalyzer.service.GitRepositoryService;
 
 @RestController
 @RequestMapping("/api/git-repository")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class GitRepositoryController {
 
 	@Autowired
@@ -125,13 +125,8 @@ public class GitRepositoryController {
 
 	@PostMapping("/generate-logs-folder")
 	public ResponseEntity<?> generateLogsFolder(@RequestBody String projectPath){
-		try {
-			gitRepositoryService.generateLogFilesFolder(projectPath);
-			return ResponseEntity.status(HttpStatus.OK).body("");
-		} catch (URISyntaxException | IOException | InterruptedException e) {
-			e.printStackTrace();
-		}
-		return null;
+		gitRepositoryService.generateLogFilesFolder(projectPath);
+		return ResponseEntity.status(HttpStatus.OK).body("");
 	}
 
 	@PostMapping("/generate-logs-repository")

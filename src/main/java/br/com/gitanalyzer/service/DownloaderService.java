@@ -34,8 +34,8 @@ import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.ProjectGitHub;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
+import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.SystemUtil;
 
 @Service
@@ -153,7 +153,7 @@ public class DownloaderService {
 		String cloneUrl = projectInfo.getCloneUrl();
 		String branch = projectInfo.getDefault_branch();
 		File folder = new File(path+projectInfo.getName()+"/");
-		if(folder.exists() == false) {
+		if(!folder.exists()) {
 			Git.cloneRepository()
 			.setURI(cloneUrl)
 			.setDirectory(new File(path+projectInfo.getName()+"/"))
@@ -220,26 +220,26 @@ public class DownloaderService {
 	@Transactional
 	public String cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-		//		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
-		//		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
-			//			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-			try {
-				repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
-						.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
-			}catch (Exception e) {
-				e.printStackTrace();
-			}
-			//			}, executorService);
-			//			futures.add(future);
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
+							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+			}, executorService);
+			futures.add(future);
 		}
-		//		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		//		executorService.shutdown();
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 		for (GitRepository gitRepository : repositories) {
 			if(gitRepository.getCurrentFolderPath() != null) {
 				String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
-				if(currentFolderPath.endsWith("RepeatedRepo")) {
-					gitRepository.setName(gitRepository.getName()+"RepeatedRepo");
+				if(currentFolderPath.endsWith(Constants.repeatedRepoSuffix)) {
+					gitRepository.setName(gitRepository.getName()+Constants.repeatedRepoSuffix);
 				}
 			}
 		}

@@ -14,7 +14,7 @@ import br.com.gitanalyzer.service.HistoryCommitsService;
 
 @RestController
 @RequestMapping("/api/history-commits")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class HistoryCommits {
 
 	@Autowired

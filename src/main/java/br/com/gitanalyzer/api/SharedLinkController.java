@@ -17,12 +17,18 @@ import br.com.gitanalyzer.service.SharedLinkService;
 
 @RestController
 @RequestMapping("/api/shared-link")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class SharedLinkController {
 
 	@Autowired
 	private SharedLinkService service;
-
+	
+	@PostMapping("/create-shared-link-full")
+	public ResponseEntity<?> createSharedLinkFull() throws Exception{
+		service.createSharedLinkFull();
+		return ResponseEntity.ok("Finished");
+	}
+	
 	@PostMapping("/save-git-repositories-api")
 	public ResponseEntity<?> saveGitRepositoriesApi() throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoriesApi());
@@ -37,11 +43,6 @@ public class SharedLinkController {
 	public ResponseEntity<?> setConversationSharedLinks() throws Exception{
 		service.setConversationSharedLinks();
 		return ResponseEntity.ok("Finished");
-	}
-
-	@PostMapping("/set-commits-of-files")
-	public ResponseEntity<?> setCommitsOfFiles() throws NoHeadException, IOException, GitAPIException, NoCommitForFileException{
-		return ResponseEntity.ok(service.setCommitsOfFilesSharedLinks());
 	}
 
 	@GetMapping("/number_shared_links_per_language")

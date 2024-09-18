@@ -15,7 +15,7 @@ import br.com.gitanalyzer.service.GitRepositoryVersionKnowledgeModelService;
 
 @RestController
 @RequestMapping("/api/git-repository-version-knowledge-model")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class GitRepositoryVersionKnowledgeModelController {
 
 	@Autowired

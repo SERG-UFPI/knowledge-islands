@@ -12,7 +12,7 @@ import br.com.gitanalyzer.service.UserService;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class UserController {
 
 	@Autowired

@@ -33,8 +33,10 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
+import lombok.extern.log4j.Log4j2;
 
 @Service
+@Log4j2
 public class GitRepositoryService {
 
 	@Autowired
@@ -99,7 +101,7 @@ public class GitRepositoryService {
 
 	public void generateLogFiles(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		System.out.println("======= Generating logs from "+name+" =======");
+		log.info("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
 		generateCommitFile(projectPath);
 		generateCommitFileFile(projectPath);
@@ -249,11 +251,11 @@ public class GitRepositoryService {
 		//		}
 	}
 
-	public void generateLogFilesFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
+	public void generateLogFilesFolder(String folderPath) {
 		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
-		System.out.println("======= Generating logs from folder "+folderPath+" =======");
+		log.info("======= Generating logs from folder "+folderPath+" =======");
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
@@ -269,7 +271,7 @@ public class GitRepositoryService {
 		}
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 		executorService.shutdown();
-		System.out.println("======= End generating logs from folder "+folderPath+" =======");
+		log.info("======= End generating logs from folder "+folderPath+" =======");
 	}
 
 	public void generateLogFilesFolderWithoutCloc(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -359,7 +361,7 @@ public class GitRepositoryService {
 
 	@Transactional
 	public GitRepository saveGitRepository(String repositoryPath) throws IOException {
-		System.out.println("BEGIN SAVING GIT REPOSITORY: "+repositoryPath);
+		log.info("BEGIN SAVING GIT REPOSITORY: "+repositoryPath);
 		String projectName = extractProjectName(repositoryPath);
 		GitRepository gitRepository = null;
 		if(repository.existsByName(projectName)) {
@@ -374,7 +376,7 @@ public class GitRepositoryService {
 			}
 			repository.save(gitRepository);
 		}
-		System.out.println("ENDING SAVING GIT REPOSITORY: "+repositoryPath);
+		log.info("ENDING SAVING GIT REPOSITORY: "+repositoryPath);
 		return gitRepository;
 	}
 

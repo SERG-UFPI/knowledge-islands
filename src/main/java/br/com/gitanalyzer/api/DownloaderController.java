@@ -22,7 +22,7 @@ import br.com.gitanalyzer.service.DownloaderService;
 
 @RestController
 @RequestMapping("/api/downloader")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${configuration.allowed.origin}", allowCredentials = "true")
 public class DownloaderController {
 
 	@Autowired

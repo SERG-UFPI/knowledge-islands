@@ -3,16 +3,14 @@ package br.com.gitanalyzer.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Constants {
-	
+
 	public static final String pathInputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv");
 	public static final String pathScriptMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/predictionScript.R");
 	public static final String pathOutputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/output.csv");
-	
+
 	public static final String pathCommitFilesLog = new String("/home/otavio/estudo_ihealth/ihealth/commitFilesLog.csv");
 	public static final String pathCommitFilesFrequencyLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesFrequencyLog.csv");
 
@@ -57,31 +55,31 @@ public class Constants {
 	public static final double thresholdMantainerDOA = 3.293;
 
 	public static final int quantKnowledgedDevsByFile = 3;
-	
+
 	public static final double thresholdPercentExpert = 0.01;
 
-	public static Map<String, String[]> projectPatterns  = new HashMap<String, String[]>();
-	
-	public static int intervalYearsProjectConsideredInactivate = 1;
-	public static int intervalYearsProjectAgeFilter = 2;
-	
-	public static int numberOfMaxThreads = 12;
-	public static int numberOfThreadsToGenerateLogsFiles = 9;
-	public static int numberOfThreadsToCalculateTf = 5;
-	
-	public static String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
-	
-	public static String noreply = ".noreply";
-	public static String chatGptShare = "https://chat.openai.com/share/";
-	
-	public static String openAiJsonStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\" crossorigin=\"anonymous\">";
-	public static String openAiJsonEnd = "</script><script nonce=";
-	public static String openAiCodeJsonDelimiter = "```";
-	
-	public static String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
-	
-	public static String githubApiBaseUrl = "https://api.github.com";
-	
+	public static final int intervalYearsProjectConsideredInactivate = 1;
+	public static final int intervalYearsProjectAgeFilter = 2;
+
+	public static final int numberOfMaxThreads = 12;
+	public static final int numberOfThreadsToGenerateLogsFiles = 9;
+	public static final int numberOfThreadsToCalculateTf = 5;
+
+	public static final String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
+
+	public static final String noreply = ".noreply";
+	public static final String chatGptShare = "https://chat.openai.com/share/";
+
+	public static final String openAiJsonStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\" crossorigin=\"anonymous\">";
+	public static final String openAiJsonEnd = "</script><script nonce=";
+	public static final String openAiCodeJsonDelimiter = "```";
+
+	public static final String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
+
+	public static final String githubApiBaseUrl = "https://api.github.com";
+
+	public static final String repeatedRepoSuffix = "RepeatedRepo";
+
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");

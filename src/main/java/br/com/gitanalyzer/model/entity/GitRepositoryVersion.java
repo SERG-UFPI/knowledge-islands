@@ -96,10 +96,10 @@ public class GitRepositoryVersion {
 	//				.build();
 	//	}
 
-	public boolean validTruckFactor() {
+	public boolean validGitRepositoryVersion() {
 		return this.getContributors() != null && this.getCommits() != null && 
-				this.getFiles() != null && this.getContributors().size() > 0 && 
-				this.getCommits().size() > 0 && this.getFiles().size() > 0;
+				this.getFiles() != null && !this.getContributors().isEmpty() && 
+				!this.getCommits().isEmpty() && !this.getFiles().isEmpty();
 	}
 
 }

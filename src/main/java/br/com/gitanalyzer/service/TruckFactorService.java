@@ -58,8 +58,6 @@ public class TruckFactorService {
 	private GitRepositoryVersionProcessRepository gitRepositoryVersionProcessRepository;
 	@Autowired
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
-	@Autowired
-	private SharedLinkService sharedLinkService;
 	@Value("${configuration.permanent-clone.path}")
 	private String cloneFolder;
 
@@ -119,13 +117,6 @@ public class TruckFactorService {
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
 		return truckFactor;
 	}
-	
-	public Object cloneCloneLogsTruckFactor() throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
-		downloaderService.cloneRepositoriesWithSharedLinks();
-		gitRepositoryService.generateLogFilesFolder(cloneFolder);
-		directoriesTruckFactorAnalyzes(new RepositoryKnowledgeMetricForm(cloneFolder, KnowledgeModel.DOE));
-		return null;
-	}
 
 	public List<TruckFactor> generateTruckFactorRepository(RepositoryKnowledgeMetricForm repo)
 			throws Exception {
@@ -133,15 +124,15 @@ public class TruckFactorService {
 		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
 		models.add(gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), false)));
-//		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
-//				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
-//			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
-//			boolean analysisSharedLink = false;//sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
-//			if(analysisSharedLink) {
-//				models.add(gitRepositoryVersionKnowledgeModelService.
-//						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
-//			}
-//		}
+		//		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
+		//				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
+		//			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
+		//			boolean analysisSharedLink = false;//sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
+		//			if(analysisSharedLink) {
+		//				models.add(gitRepositoryVersionKnowledgeModelService.
+		//						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
+		//			}
+		//		}
 		List<TruckFactor> truckFactors = new ArrayList<>();
 		for(GitRepositoryVersionKnowledgeModel model: models) {
 			truckFactors.add(saveTruckFactor(model.getId()));
