@@ -1,0 +1,50 @@
+version: "3.7"
+services:
+  app:
+    image: amslimaa/knowledge-islands:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=prod
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ".m2:/root/.m2"
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}  
+      - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - FRONT_URL=${FRONT_URL}
+      - JWT_COOKIE_NAME=${JWT_COOKIE_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_COOKIE=${OPENAI_COOKIE}
+      - PERMANENT_PROJECTS_FOLDER=${PERMANENT_PROJECTS_FOLDER}
+      - PROJECTS_LOGS=${PROJECTS_LOGS}
+      - TMP_PROJECTS_FOLDER=${TMP_PROJECTS_FOLDER}
+      - TOKEN_GITHUB=${TOKEN_GITHUB}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+  
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data  # Volume persistente para os dados do banco
+    environment:
+      POSTGRES_PASSWORD: example
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "9090:8080"
+      
+volumes:
+  db-data:
+    driver: local
