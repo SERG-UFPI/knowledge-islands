@@ -17,7 +17,7 @@ export const AuthContextProvider = ({children}) => {
     const navigate = useNavigate();
     const login = async (payload) => {
         try {
-            let apiResponse = await axios.post("http://localhost:8080/api/auth/signin", payload, {
+            let apiResponse = await axios.post(`${process.env.REACT_APP_API_URL}/auth/signin`, payload, {
                 withCredentials: true,
             });
             localStorage.setItem("userProfile", JSON.stringify(apiResponse.data));
@@ -29,7 +29,7 @@ export const AuthContextProvider = ({children}) => {
         }
     };
     const logout = async () => {
-        await axios.post("http://localhost:8080/api/auth/signout", {withCredentials:true});
+        await axios.post(`${process.env.REACT_APP_API_URL}/auth/signout`, {withCredentials:true});
         localStorage.removeItem("userProfile");
         setUser(null);
         navigate("/login");

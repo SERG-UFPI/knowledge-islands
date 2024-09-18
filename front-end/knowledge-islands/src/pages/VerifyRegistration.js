@@ -8,7 +8,7 @@ const VerifyRegistration = () => {
     const [verifyResponse, setVerifyResponse] = useState(true);
     useEffect(() => {
         let code = queryParameters.get("code");
-            axios.get(`http://localhost:8080/api/user/verify`, {params: {
+            axios.get(`${process.env.REACT_APP_API_URL}/user/verify`, {params: {
                 code: code
             }}).then((response) => {
                 setVerifyResponse(response.data);

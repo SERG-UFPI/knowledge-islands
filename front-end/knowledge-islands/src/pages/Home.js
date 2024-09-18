@@ -42,7 +42,7 @@ const Home = () => {
         };
         setGitRepositoryVersionProcessState(gitRepositoryVersionProcessState + 1);
         try {
-            await axios.post("http://localhost:8080/api/git-repository-version-process/start-git-repository-version-process", form);
+            await axios.post(`${process.env.REACT_APP_API_URL}/git-repository-version-process/start-git-repository-version-process`, form);
             setSuccess("Repository analysis process started");
             setGitRepositoryVersionProcessState(gitRepositoryVersionProcessState + 1);
         } catch (error) {

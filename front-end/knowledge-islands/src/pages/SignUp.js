@@ -26,7 +26,7 @@ const SignUp = () => {
             password: password.current.value
         };
         try {
-            await axios.post("http://localhost:8080/api/auth/signup", signUpRequest)
+            await axios.post(`${process.env.REACT_APP_API_URL}/auth/signup`, signUpRequest)
                 .then(response => {
                     setSignUpSuccess(true);
                 });
