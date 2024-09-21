@@ -37,8 +37,10 @@ import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.SystemUtil;
+import lombok.extern.log4j.Log4j2;
 
 @Service
+@Log4j2
 public class DownloaderService {
 
 	@Value("${configuration.permanent-clone.path}")
@@ -70,9 +72,9 @@ public class DownloaderService {
 				}
 				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 				executorService.shutdown();
-				System.out.println("=========== End of project cloning ==================");
+				log.info("=========== End of project cloning ==================");
 			}else {
-				System.out.println("=========== Download "+form.getLanguage().getName()+" project ==================");
+				log.info("=========== Download "+form.getLanguage().getName()+" project ==================");
 				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
 			}
 			projectService.generateCommitFileFolder(form.getPath());
@@ -84,7 +86,7 @@ public class DownloaderService {
 
 	public void downloadPerOrg(DownloaderPerOrgForm form) throws URISyntaxException, InterruptedException {
 		try {
-			System.out.println("=========== download from "+form.getOrg()+" org ==================");
+			log.info("=========== download from "+form.getOrg()+" org ==================");
 			downloaderPerOrg("org:"+form.getOrg(), form);
 			projectService.generateCommitFileFolder(form.getPath());
 			projectService.setProjectDatesFolder(form.getPath());
@@ -122,7 +124,7 @@ public class DownloaderService {
 						gitRepositoryRepository.save(project);
 					}
 				} catch (Exception e) {
-					System.out.println("Failure on clone "+projectInfo.getFullName());
+					log.error("Failure on clone "+projectInfo.getFullName());
 				}
 			}, executorService);
 			futures.add(future);
@@ -134,7 +136,7 @@ public class DownloaderService {
 	private void cloneAndSaveRepos(List<ProjectGitHub> projectsInfo, String path) {
 		for (ProjectGitHub projectInfo : projectsInfo) {
 			try {
-				System.out.println("Cloning " + projectInfo.getFullName());
+				log.info("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
 					String projectPath = path+projectInfo.getName()+"/";
@@ -144,7 +146,7 @@ public class DownloaderService {
 					gitRepositoryRepository.save(project);
 				}
 			} catch (Exception e) {
-				System.out.println("Failure on clone "+projectInfo.getFullName());
+				log.error("Failure on clone "+projectInfo.getFullName());
 			}
 		}
 	}
@@ -274,12 +276,12 @@ public class DownloaderService {
 						.call();
 			}
 		}catch(JGitInternalException e) {
-			System.out.println(form.getCloneUrl());
+			log.error(form.getCloneUrl());
 			e.printStackTrace();
 			repeatedNumber = repeatedNumber+1;
 			git = cloneProjectFromFile(projectName, repeatedNumber, form);
 		}catch(GitAPIException e) {
-			System.out.println(form.getCloneUrl());
+			log.error(form.getCloneUrl());
 			e.printStackTrace();
 		}
 		return git;

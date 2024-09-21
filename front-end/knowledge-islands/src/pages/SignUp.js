@@ -44,6 +44,8 @@ const SignUp = () => {
             {loginError ? <Alert variant="danger" >{error}</Alert> :
                 null}
             <br />
+            <Card >
+            <Card.Body>
             <div align="center">
                 <b><h3>Sign up for Knowledge Islands</h3></b>
             </div>
@@ -89,6 +91,8 @@ const SignUp = () => {
                 }
 
             </Container>
+            </Card.Body>
+            </Card>
         </>
     );
 
