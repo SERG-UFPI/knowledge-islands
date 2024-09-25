@@ -151,10 +151,12 @@ public class FileExtractor {
 				}
 				if (splitedLine.length > 1) {
 					String fileSizeString = splitedLine[2];
-					if (fileSizeString != null && fileSizeString.equals("") == false) {
-						int size = Integer.parseInt(fileSizeString);
-						File file = new File(filePath, size);
-						files.add(file);
+					if (fileSizeString != null && !fileSizeString.equals("")) {
+						if(!fileSizeString.equals("0")) {
+							int size = Integer.parseInt(fileSizeString);
+							File file = new File(filePath, size);
+							files.add(file);
+						}
 					}else {
 						filesWithoutSize.add(new File(filePath));
 					}

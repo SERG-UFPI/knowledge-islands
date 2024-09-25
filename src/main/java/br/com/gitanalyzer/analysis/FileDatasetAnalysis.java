@@ -11,7 +11,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.gitanalyzer.utils.FileUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class FileDatasetAnalysis {
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
@@ -65,22 +67,22 @@ public class FileDatasetAnalysis {
 				}
 			}
 		}
-		System.out.println("======== Types of files ========");
+		log.info("======== Types of files ========");
 		typesOfFiles = typesOfFiles.stream().sorted().toList();
-		typesOfFiles.stream().forEach((f)->{System.out.println(f);});
-		System.out.println("======== Repositories languages ========");
+		typesOfFiles.stream().forEach(f->log.info(f));
+		log.info("======== Repositories languages ========");
 		reposLanguages = reposLanguages.stream().sorted().toList();
-		reposLanguages.stream().forEach((f)->{System.out.println(f);});
-		System.out.println("Number of types of files: "+typesOfFiles.size());
+		reposLanguages.stream().forEach(f->log.info(f));
+		log.info("Number of types of files: "+typesOfFiles.size());
 
 		reposNames = reposNames.stream().distinct().toList();
-		System.out.println("Number of repositories: "+reposNames.size());
+		log.info("Number of repositories: "+reposNames.size());
 
 		filesUrl = filesUrl.stream().distinct().toList();
-		System.out.println("Number of files: "+filesUrl.size());
+		log.info("Number of files: "+filesUrl.size());
 
 		reposLanguages = reposLanguages.stream().distinct().toList();
-		System.out.println("Number of repos languages: "+reposLanguages.size());
+		log.info("Number of repos languages: "+reposLanguages.size());
 		
 		List<String> filesProgramming = new ArrayList<>();
 		for (String fileName : filesName) {
@@ -89,6 +91,6 @@ public class FileDatasetAnalysis {
 				filesProgramming.add(fileName);
 			}
 		}
-		System.out.println("Number of files of programming: "+filesProgramming.size());
+		log.info("Number of files of programming: "+filesProgramming.size());
 	}
 }

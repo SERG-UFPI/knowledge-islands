@@ -4,6 +4,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -108,6 +110,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
+		roundTotalKnowledgeFilesVersion(filesVersion);
 		gitRepositoryVersionKnowledgeModel.setFiles(filesVersion);
 		setContributorTruckFactorData(contributorsVersion, authorFiles, gitRepositoryVersion.getFiles(), form.getKnowledgeMetric(), gitRepositoryVersion.getNumberAnalysedFiles());
 		gitRepositoryVersionKnowledgeModel.setContributors(contributorsVersion);
@@ -115,22 +118,32 @@ public class GitRepositoryVersionKnowledgeModelService {
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
 		return gitRepositoryVersionKnowledgeModel;
 	}
-	
+
+	private void roundTotalKnowledgeFilesVersion(List<FileVersion> filesVersion) {
+		for(FileVersion version: filesVersion) {
+			if(version.getTotalKnowledge() > 0) {
+				BigDecimal bd = BigDecimal.valueOf(version.getTotalKnowledge());
+				BigDecimal rounded = bd.setScale(2, RoundingMode.HALF_UP);
+				version.setTotalKnowledge(rounded.doubleValue());
+			}
+		}
+	}
+
 	private AuthorFile getNewAuthorFileFromSharedLink(List<SharedLink> sharedLinks, ContributorVersion contributorVersion, FileVersion fileVersion, 
 			AuthorFile authorFile) {
 		for (SharedLink sharedLink : sharedLinks) {
-//			if(sharedLink.getCommitThatAddedTheLink() != null && sharedLink.getCommitThatAddedTheLink().getAuthor().getId().equals(contributorVersion.getContributor().getId())) {
-//				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
-//					if(fileVersion.getFile().isFile(fileLinkAuthor.getFile().getPath())) {
-//						int newAdds = authorFile.getDoe().getAdds()-fileLinkAuthor.getLinesCopied().size();
-//						double newDoeValue = new DoeUtils().getDOE(newAdds, 
-//								authorFile.getDoe().getFa(), authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize());
-//						DOE newDoe = new DOE(newAdds, authorFile.getDoe().getFa(), 
-//								authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize(), newDoeValue);
-//						return new AuthorFile(authorFile.getAuthorVersion(), authorFile.getFileVersion(), newDoe);
-//					}
-//				}
-//			}
+			//			if(sharedLink.getCommitThatAddedTheLink() != null && sharedLink.getCommitThatAddedTheLink().getAuthor().getId().equals(contributorVersion.getContributor().getId())) {
+			//				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
+			//					if(fileVersion.getFile().isFile(fileLinkAuthor.getFile().getPath())) {
+			//						int newAdds = authorFile.getDoe().getAdds()-fileLinkAuthor.getLinesCopied().size();
+			//						double newDoeValue = new DoeUtils().getDOE(newAdds, 
+			//								authorFile.getDoe().getFa(), authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize());
+			//						DOE newDoe = new DOE(newAdds, authorFile.getDoe().getFa(), 
+			//								authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize(), newDoeValue);
+			//						return new AuthorFile(authorFile.getAuthorVersion(), authorFile.getFileVersion(), newDoe);
+			//					}
+			//				}
+			//			}
 		}
 		return null;
 	}

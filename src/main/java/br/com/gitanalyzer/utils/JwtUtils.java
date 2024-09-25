@@ -18,8 +18,10 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import lombok.extern.log4j.Log4j2;
 
 @Component
+@Log4j2
 public class JwtUtils {
 
 	@Value("${configuration.app.jwtSecret}")
@@ -58,19 +60,19 @@ public class JwtUtils {
 			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
 			return true;
 		} catch (SignatureException e) {
-			System.out.println("Invalid JWT signature: {}");
+			log.error("Invalid JWT signature: {}");
 			e.printStackTrace();
 		} catch (MalformedJwtException e) {
-			System.out.println("Invalid JWT token: {}");
+			log.error("Invalid JWT token: {}");
 			e.printStackTrace();
 		} catch (ExpiredJwtException e) {
-			System.out.println("JWT token is expired: {}");
+			log.error("JWT token is expired: {}");
 			e.printStackTrace();
 		} catch (UnsupportedJwtException e) {
-			System.out.println("JWT token is unsupported: {}");
+			log.error("JWT token is unsupported: {}");
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			System.out.println("JWT claims string is empty: {}");
+			log.error("JWT claims string is empty: {}");
 			e.printStackTrace();
 		}
 

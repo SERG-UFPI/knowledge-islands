@@ -114,7 +114,7 @@ public class DownloaderService {
 		for (ProjectGitHub projectInfo : projectsInfo) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
-					System.out.println("Cloning " + projectInfo.getFullName());
+					log.info("Cloning " + projectInfo.getFullName());
 					boolean flag = cloneIfNotExists(projectInfo, path);
 					if(flag) {
 						String projectPath = path+projectInfo.getName()+"/";
