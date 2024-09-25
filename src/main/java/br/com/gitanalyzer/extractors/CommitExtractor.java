@@ -20,7 +20,9 @@ import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.utils.Constants;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class CommitExtractor {
 
 	private List<Date> getDatesOfProject(String projectPath) throws IOException{
@@ -74,7 +76,7 @@ public class CommitExtractor {
 	}
 
 	public List<Commit> getCommitsDatesAndHashes(String projectPath){
-		List<Commit> commits = new ArrayList<Commit>();
+		List<Commit> commits = new ArrayList<>();
 		try {
 			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
@@ -97,16 +99,16 @@ public class CommitExtractor {
 			return commits;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+			return new ArrayList<>();
 		}
 	}
 
-	public List<Commit> extractCommitsFromLogFiles(String projectPath) {
-		List<Commit> commits = new ArrayList<Commit>();
-		List<Contributor> contributors = new ArrayList<Contributor>();
+	public List<Commit> extractCommitsFromLogFiles(String projectPath) throws IOException {
+		List<Commit> commits = new ArrayList<>();
+		List<Contributor> contributors = new ArrayList<>();
+		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 		try {
-			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
-			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
 				try {
@@ -143,12 +145,13 @@ public class CommitExtractor {
 					e.printStackTrace();
 				}
 			}
-			br.close();
-			return commits;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+			return new ArrayList<>();
+		} finally {
+			br.close();
 		}
+		return commits;
 	}
 
 	public List<Commit> extractCommitsFiles(String projectPath, List<Commit> commits, List<File> files) {
@@ -311,7 +314,7 @@ public class CommitExtractor {
 							}
 						}	
 					} catch (ArrayIndexOutOfBoundsException e) {
-						System.out.println("Error processing project diff "+e.getMessage());
+						log.info("Error processing project diff "+e.getMessage());
 					}
 				}
 			}

@@ -110,7 +110,7 @@ public class GitRepositoryService {
 
 	public void generateLogFilesWithoutCloc(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		System.out.println("======= Generating logs from "+name+" =======");
+		log.info("======= Generating logs from "+name+" =======");
 		generateFileLists(projectPath);
 		generateCommitFile(projectPath);
 		generateCommitFileFile(projectPath);
@@ -118,14 +118,14 @@ public class GitRepositoryService {
 
 	public void generateCommitFile(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
-		System.out.println("Generating commit file of "+name);
+		log.info("Generating commit file of "+name);
 		String pathCommitScript = GitRepositoryService.class.getResource("/scripts_shell/commit_log_script.sh").toURI().getPath();
 		String command = "sh "+pathCommitScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
 		Process process = pb.start();
 		process.waitFor();
-		System.out.println("End generation commit file");
+		log.info("End generation commit file");
 	}
 
 	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
@@ -154,22 +154,22 @@ public class GitRepositoryService {
 
 	public void generateCommitFileFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		System.out.println("Generating commitFile file of "+name);
+		log.info("Generating commitFile file of "+name);
 		CommitExtractor commitExtractor = new CommitExtractor();
 		commitExtractor.generateCommitFileFile(projectPath);
-		System.out.println("End generation commitFile file");
+		log.info("End generation commitFile file");
 	}
 
 	public void generateClocFile(String projectPath) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(projectPath);
-		System.out.println("Generating cloc file of "+name);
+		log.info("Generating cloc file of "+name);
 		String pathClocScript = GitRepositoryService.class.getResource("/scripts_shell/cloc_script.sh").toURI().getPath();
 		String command = "sh "+pathClocScript+" "+projectPath;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
 		pb.redirectErrorStream(true);
 		Process process = pb.start();
 		process.waitFor();
-		System.out.println("End generation cloc file");
+		log.info("End generation cloc file");
 	}
 
 	public String getCurrentRevisionHash(String projectPath) throws IOException {
@@ -184,7 +184,7 @@ public class GitRepositoryService {
 
 	public void generateFileLists(String path) throws URISyntaxException, IOException, InterruptedException {
 		String name = extractProjectName(path);
-		System.out.println("Generating linguist file of "+name);
+		log.info("Generating linguist file of "+name);
 		String pathRubyScript = GitRepositoryService.class.getResource("/scripts_shell/linguist.rb").toURI().getPath();
 		String command = "ruby "+pathRubyScript+" "+path;
 		ProcessBuilder pb = new ProcessBuilder(new String[]{"bash", "-l", "-c", command});
@@ -203,7 +203,7 @@ public class GitRepositoryService {
 		bw.close();
 		reader.close();
 		fos.close();
-		System.out.println("End generation linguist file");
+		log.info("End generation linguist file");
 	}
 
 	public Object setProjectsMainLanguage() {
@@ -240,13 +240,13 @@ public class GitRepositoryService {
 		//				String projectPath = fileDir.getAbsolutePath()+"/";
 		//				String projectName = projectUtils.extractProjectName(projectPath);
 		//				Project project = projectRepository.findByName(projectName);
-		//				System.out.println("EXTRACTING DATA FROM "+projectName);
+		//				log.info("EXTRACTING DATA FROM "+projectName);
 		//				ProjectVersion version = projectVersionExtractor
 		//						.extractProjectVersionOnlyNumbers(projectPath);
 		//				project.setFirstCommitDate(version.getFirstCommitDate());
 		//				version.setProject(project);
 		//				projectVersionRepository.save(version);
-		//				System.out.println("EXTRACTION FINISHED");
+		//				log.info("EXTRACTION FINISHED");
 		//			}
 		//		}
 	}

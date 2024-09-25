@@ -133,7 +133,7 @@ public class FilterGitRepositoryService {
 		}
 	}
 
-	private boolean filterProjectByCommits(GitRepositoryVersion version) {
+	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
 		FileExtractor fileExtractor = new FileExtractor();
 		CommitExtractor commitExtractor = new CommitExtractor();
 		List<File> files = fileExtractor.extractFilesFromClocFile(version.getGitRepository().getCurrentFolderPath(), version.getGitRepository().getName());
@@ -143,7 +143,7 @@ public class FilterGitRepositoryService {
 		commits = getFirst20Commits(commits);
 		commits = commitExtractor.extractCommitsFiles(version.getGitRepository().getCurrentFolderPath(), commits, files);
 		int numberOfFiles = files.size();
-		List<File> addedFiles = new ArrayList<File>();
+		List<File> addedFiles = new ArrayList<>();
 		for(Commit commit: commits) {
 			for (CommitFile commitFile : commit.getCommitFiles()) {
 				if(commitFile.getStatus().equals(OperationType.ADDED)) {

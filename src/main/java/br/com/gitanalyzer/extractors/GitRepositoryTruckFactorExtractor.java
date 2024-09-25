@@ -1,5 +1,6 @@
 package br.com.gitanalyzer.extractors;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +16,7 @@ public class GitRepositoryTruckFactorExtractor {
 
 	private CommitExtractor commitExtractor = new CommitExtractor();
 
-	public GitRepositoryVersion extractProjectVersionFiltering(String projectPath) {
+	public GitRepositoryVersion extractProjectVersionFiltering(String projectPath) throws IOException {
 		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		List<Contributor> contributors = extractContributorFromCommits(commits);
