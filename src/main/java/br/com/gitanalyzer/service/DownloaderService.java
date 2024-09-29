@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -14,9 +15,7 @@ import javax.json.JsonValue;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,9 @@ import br.com.gitanalyzer.dto.form.DownloaderPerOrgForm;
 import br.com.gitanalyzer.enums.LanguageEnum;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.ProjectGitHub;
+import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.SystemUtil;
@@ -51,6 +52,8 @@ public class DownloaderService {
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private GitRepositoryService projectService;
+	@Autowired
+	private UserRepository userRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
@@ -249,16 +252,23 @@ public class DownloaderService {
 		return "Downloads finished in "+cloneFolder;
 	}
 
-	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException, IOException {
+	public String cloneProject(CloneRepoForm form) {
+		String cloneFolderModified = cloneFolder;
+		if(form.getIdUser() != null) {
+			Optional<User> op = userRepository.findById(form.getIdUser());
+			if(op.isPresent()) {
+				cloneFolderModified = cloneFolderModified+op.get().getUsername().toLowerCase()+"/";
+			}
+		}
 		String projectName = projectService.extractProjectName(form.getCloneUrl());
 		projectName = projectName.replace(".git", "");
-		Git git = cloneProjectFromFile(projectName, 0, form);
+		Git git = cloneProjectFromFile(projectName, 0, form, cloneFolderModified);
 		String path = git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
 		git.close();
 		return path;
 	}
 
-	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form) {
+	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form, String cloneFolder) {
 		File file = null;
 		if(repeatedNumber != 0) {
 			file = new File(cloneFolder+projectName+"RepeatedRepo"+repeatedNumber);
@@ -279,7 +289,7 @@ public class DownloaderService {
 			log.error(form.getCloneUrl());
 			e.printStackTrace();
 			repeatedNumber = repeatedNumber+1;
-			git = cloneProjectFromFile(projectName, repeatedNumber, form);
+			git = cloneProjectFromFile(projectName, repeatedNumber, form, cloneFolder);
 		}catch(GitAPIException e) {
 			log.error(form.getCloneUrl());
 			e.printStackTrace();

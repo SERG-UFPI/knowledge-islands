@@ -51,7 +51,7 @@ const FileVersionPaginatedTable = ({ filesVersions }) => {
                     <Table striped bordered hover>
                         <thead>
                             <tr style={{ textAlign: "center" }}>
-                                <th>Path</th>
+                                <th style={{width: "250px"}}>Path</th>
                                 <th onClick={() => sortFunction("scores")}>
                                     Importance Score{" "}
                                     {sort_Score === "scores" &&

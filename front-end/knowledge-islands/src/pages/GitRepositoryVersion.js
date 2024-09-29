@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import GroupsIcon from '@mui/icons-material/Groups';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { unstable_useTreeItem2 as useTreeItem2 } from '@mui/x-tree-view/useTreeItem2';
 import {
     TreeItem2Content,
@@ -25,8 +26,10 @@ import { TreeItem2Icon } from '@mui/x-tree-view/TreeItem2Icon';
 import { TreeItem2Provider } from '@mui/x-tree-view/TreeItem2Provider';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FilePaginatedTable from '../components/FilePaginatedTable';
+import { useNavigate } from "react-router-dom";
 
 const GitRepositoryVersion = () => {
+    const navigate = useNavigate();
     const location = useLocation();
     const [showModal, setShowModal] = useState(false);
     const [gitRepositoryVersion, setGitRepositoryVersion] = useState(location?.state?.gitRepositoryVersion);
@@ -74,6 +77,8 @@ const GitRepositoryVersion = () => {
         }
         setShowModal(true);
     };
+
+    const handleBack = () =>{navigate("/home");};
 
     const colorShades = ['#ff9900', '#ffad33', '#ffc266', '#ffe0b3'];
 
@@ -127,7 +132,9 @@ const GitRepositoryVersion = () => {
                     <Modal.Title>'{truckFactorSelected?.label}' details</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <p><b>Truck Factor: </b>{truckFactorSelected?.truckFactor.truckFactor}</p>
+                    <ul>
+                    <h4><li><b>Truck Factor: </b>{truckFactorSelected?.truckFactor.truckFactor}</li></h4>
+                    </ul>
                     <ContributorVersionPaginatedTable contributorsVersions={truckFactorSelected?.truckFactor?.contributors} />
                     <br />
                     <FileVersionPaginatedTable filesVersions={truckFactorSelected?.files} />
@@ -143,8 +150,10 @@ const GitRepositoryVersion = () => {
                 <h3>{gitRepositoryVersion?.gitRepository.fullName}</h3>
             </div>
             <Card>
-                <br />
-                <Container>
+                <Card.Body>
+                    <Card.Title>Repository Info</Card.Title>
+                    <Container>
+                    <br />
                     <Row>
                         <Col><b>Version date:</b> {gitRepositoryVersion?.dateVersion}</Col>
                         <Col><b>Version id:</b> {gitRepositoryVersion?.versionId}</Col>
@@ -159,8 +168,9 @@ const GitRepositoryVersion = () => {
                     <Row>
                         <Col><b>Repository Truck Factor:</b> {gitRepositoryVersion?.rootFolder?.truckFactor?.truckFactor}</Col>
                     </Row>
-                </Container>
                 <br />
+                </Container>
+                </Card.Body>
             </Card>
             <br />
             <Card>
@@ -203,6 +213,10 @@ const GitRepositoryVersion = () => {
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
+            <br />
+            <Button variant="primary" type="button" onClick={handleBack}>
+                <ArrowBackIcon /> Go back
+            </Button>
         </>
     );
 };

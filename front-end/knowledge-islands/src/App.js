@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Layout from "./components/shared/Layout";
+import SignupSuccess from "./pages/SignupSuccess";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
@@ -9,8 +10,8 @@ import ProtectedRoute from './components/shared/ProtectedRoute';
 import SignUp from "./pages/SignUp";
 import VerifyRegistration from "./pages/VerifyRegistration";
 
-
 function App() {
+  
   return (
     <div className="App">
       <>
@@ -42,6 +43,11 @@ function App() {
             <Route path="/signup" element={
               <ProtectedRoute accessBy="non-authenticated">
                 <SignUp/>
+              </ProtectedRoute>
+            }></Route>
+            <Route path="/signup-success" element={
+              <ProtectedRoute accessBy="non-authenticated">
+                <SignupSuccess/>
               </ProtectedRoute>
             }></Route>
             <Route path="/" element={

@@ -170,10 +170,19 @@ public class GitRepositoryVersionService {
 
 	private void setRootFolderTruckFactorInfo(GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel, GitRepositoryFolder rootFolder) {
 		rootFolder.setTruckFactor(gitRepositoryVersionKnowledgeModel.getTruckFactor());
+		setNumberActiveAuthorsFiles(gitRepositoryVersionKnowledgeModel);
 		Collections.sort(gitRepositoryVersionKnowledgeModel.getFiles());
 		rootFolder.setFiles(gitRepositoryVersionKnowledgeModel.getFiles().stream().limit(20).toList());
-		for (FileVersion fileVersion : rootFolder.getFiles()) {
-			forContributor: for (ContributorVersion contributor : gitRepositoryVersionKnowledgeModel.getContributors()) {
+		for (ContributorVersion contributorVersion : rootFolder.getTruckFactor().getContributors()) {
+			if(contributorVersion.getFilesAuthor() != null && contributorVersion.getFilesAuthor().size() > 0) {
+				contributorVersion.setFilesAuthorPath(contributorVersion.getFilesAuthor().stream().map(f -> f.getPath()).toList());
+			}
+		}
+	}
+
+	private void setNumberActiveAuthorsFiles(GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel) {
+		for (FileVersion fileVersion : gitRepositoryVersionKnowledgeModel.getFiles()) {
+			forContributor: for (ContributorVersion contributor : gitRepositoryVersionKnowledgeModel.getTruckFactor().getContributors()) {
 				if(contributor.getContributor().isActive()) {
 					for (File file: contributor.getFilesAuthor()) {
 						if(file.isFile(fileVersion.getFile().getPath())) {
@@ -182,11 +191,6 @@ public class GitRepositoryVersionService {
 						}
 					}
 				}
-			}
-		}
-		for (ContributorVersion contributorVersion : rootFolder.getTruckFactor().getContributors()) {
-			if(contributorVersion.getFilesAuthor() != null && contributorVersion.getFilesAuthor().size() > 0) {
-				contributorVersion.setFilesAuthorPath(contributorVersion.getFilesAuthor().stream().map(f -> f.getPath()).toList());
 			}
 		}
 	}
