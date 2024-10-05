@@ -14,11 +14,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.utils.Constants;
 import lombok.extern.log4j.Log4j2;
 

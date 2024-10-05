@@ -13,8 +13,8 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.enums.OperationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

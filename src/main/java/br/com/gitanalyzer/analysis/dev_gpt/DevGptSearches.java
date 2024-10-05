@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
 import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
@@ -35,6 +34,7 @@ import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.PromptCode;
 import br.com.gitanalyzer.model.enums.ChatgptUserAgent;
+import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
 

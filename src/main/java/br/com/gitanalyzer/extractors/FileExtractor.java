@@ -17,9 +17,9 @@ import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.Repository;
 
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.utils.Constants;
 
 public class FileExtractor {

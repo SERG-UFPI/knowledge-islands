@@ -24,6 +24,11 @@ public class FileUtils {
 		alias.add("php");
 		alias.add("ruby");
 		alias.add("shell");
+		alias.add("go");
+		alias.add("nix");
+		alias.add("rust");
+		alias.add("scala");
+		alias.add("kotlin");
 		return alias;
 	}
 

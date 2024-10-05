@@ -22,8 +22,8 @@ import javax.persistence.TemporalType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import br.com.gitanalyzer.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.AuthorFile;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

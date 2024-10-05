@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.enums;
+package br.com.gitanalyzer.model.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

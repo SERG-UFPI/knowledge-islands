@@ -3,7 +3,7 @@ package br.com.gitanalyzer.dto.form;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import br.com.gitanalyzer.enums.LanguageEnum;
+import br.com.gitanalyzer.model.enums.LanguageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

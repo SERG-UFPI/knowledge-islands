@@ -3,7 +3,7 @@ import { Table, Button } from "react-bootstrap";
 
 const FilePaginatedTable = ({ files }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 5;
     const totalItems = files?.length || 0;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -23,7 +23,7 @@ const FilePaginatedTable = ({ files }) => {
             <Table striped bordered hover>
                 <thead>
                     <tr style={{ textAlign: "center" }}>
-                        <th>Path</th>
+                        <th>File Path</th>
                     </tr>
                 </thead>
                 <tbody>

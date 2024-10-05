@@ -2,8 +2,8 @@ package br.com.gitanalyzer.dto.form;
 
 import javax.validation.constraints.NotNull;
 
-import br.com.gitanalyzer.enums.KnowledgeModel;
-import br.com.gitanalyzer.enums.TimeIntervalTypeEnum;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
+import br.com.gitanalyzer.model.enums.TimeIntervalTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

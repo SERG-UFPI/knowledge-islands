@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import br.com.gitanalyzer.model.Commit;
@@ -22,15 +22,15 @@ public class SharedLinkCommit {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@ElementCollection
-	private List<String> linesCopied;
+	@OneToMany(cascade= {CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<CopiedLine> copiedLines;
 	@OneToOne
 	private SharedLink sharedLink;
 	@OneToOne(cascade = {CascadeType.PERSIST})
 	private Commit commitThatAddedTheLink;
 
 	public SharedLinkCommit() {
-		this.linesCopied = new ArrayList<>();
+		this.copiedLines = new ArrayList<>();
 	}
 
 	public SharedLinkCommit(SharedLink sharedLink) {

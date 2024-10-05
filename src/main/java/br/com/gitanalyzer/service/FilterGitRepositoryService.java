@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
-import br.com.gitanalyzer.enums.FilteredEnum;
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
@@ -27,6 +25,8 @@ import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
+import br.com.gitanalyzer.model.enums.FilteredEnum;
+import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.Constants;
 

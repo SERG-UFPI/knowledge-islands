@@ -7,7 +7,7 @@ const FileVersionPaginatedTable = ({ filesVersions }) => {
     const [sort_Order, set_Sort_Order] = useState("desc");
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 5;
     const totalItems = filesVersions.length || 0;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -51,7 +51,7 @@ const FileVersionPaginatedTable = ({ filesVersions }) => {
                     <Table striped bordered hover>
                         <thead>
                             <tr style={{ textAlign: "center" }}>
-                                <th style={{width: "250px"}}>Path</th>
+                                <th style={{width: "250px"}}>File Path</th>
                                 <th onClick={() => sortFunction("scores")}>
                                     Importance Score{" "}
                                     {sort_Score === "scores" &&

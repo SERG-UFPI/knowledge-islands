@@ -8,7 +8,7 @@ const ContributorVersionPaginatedTable = ({ contributorsVersions }) => {
     const [sort_Order, set_Sort_Order] = useState("desc");
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 5;
     const totalItems = contributorsVersions.length || 0;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -128,7 +128,7 @@ const ContributorVersionPaginatedTable = ({ contributorsVersions }) => {
                                                     <Table striped bordered hover>
                                                         <thead>
                                                             <tr style={{ textAlign: "center" }}>
-                                                                <th>Path</th>
+                                                                <th>File Path</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>

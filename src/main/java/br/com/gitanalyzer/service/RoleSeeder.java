@@ -3,8 +3,8 @@ package br.com.gitanalyzer.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.gitanalyzer.enums.RoleEnum;
 import br.com.gitanalyzer.model.entity.Role;
+import br.com.gitanalyzer.model.enums.RoleEnum;
 import br.com.gitanalyzer.repository.RoleRepository;
 
 @Service

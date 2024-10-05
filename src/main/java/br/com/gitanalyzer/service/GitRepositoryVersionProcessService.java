@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.gitanalyzer.dto.GitRepositoryVersionProcessDTO;
 import br.com.gitanalyzer.dto.form.CloneRepoForm;
-import br.com.gitanalyzer.enums.GitRepositoryVersionProcessStageEnum;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionProcess;
 import br.com.gitanalyzer.model.entity.User;
+import br.com.gitanalyzer.model.enums.GitRepositoryVersionProcessStageEnum;
 import br.com.gitanalyzer.repository.GitRepositoryVersionProcessRepository;
 import br.com.gitanalyzer.repository.UserRepository;
 

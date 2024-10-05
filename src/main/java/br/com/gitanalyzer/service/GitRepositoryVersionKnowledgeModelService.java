@@ -23,8 +23,6 @@ import com.opencsv.exceptions.CsvValidationException;
 
 import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm1;
 import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm2;
-import br.com.gitanalyzer.enums.KnowledgeModel;
-import br.com.gitanalyzer.enums.OperationType;
 import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.Commit;
 import br.com.gitanalyzer.model.CommitFile;
@@ -38,6 +36,8 @@ import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.model.entity.SharedLink;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
+import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryFolderRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;

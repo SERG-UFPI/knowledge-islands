@@ -20,7 +20,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.gitanalyzer.dto.GitRepositoryVersionProcessDTO;
-import br.com.gitanalyzer.enums.GitRepositoryVersionProcessStageEnum;
+import br.com.gitanalyzer.model.enums.GitRepositoryVersionProcessStageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

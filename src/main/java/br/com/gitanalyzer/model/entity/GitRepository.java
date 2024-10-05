@@ -18,7 +18,7 @@ import javax.persistence.TemporalType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.gitanalyzer.dto.GitRepositoryDTO;
-import br.com.gitanalyzer.enums.FilteredEnum;
+import br.com.gitanalyzer.model.enums.FilteredEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -89,9 +89,10 @@ public class GitRepository {
 				.build();
 	}
 
-	public GitRepository(String name, String fullName) {
+	public GitRepository(String name, String fullName, boolean privateRepository) {
 		super();
 		this.name = name;
 		this.fullName = fullName;
+		this.privateRepository = privateRepository;
 	}
 }		

@@ -15,7 +15,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import br.com.gitanalyzer.enums.TruckFactorProcessStageEnum;
+import br.com.gitanalyzer.model.enums.TruckFactorProcessStageEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -65,6 +65,7 @@ public class SharedLinkService {
 	private SharedLinkSearchRepository sharedLinkSearchRepository;
 	@Value("${configuration.github.token}")
 	private String token;
+	private Pattern pattern = Pattern.compile(Constants.regexOpenAiRegex);
 
 	@Transactional
 	public List<GitRepository> saveGitRepositoriesApi() throws InterruptedException, IOException{
@@ -150,9 +151,66 @@ public class SharedLinkService {
 		}
 	}
 
+	private void saveFileSharedLinkItem(JsonNode item, String language) {
+		String repositoryLabel = "repository";
+		try {
+			File file = new File();
+			file.setName(item.get("name").asText());
+			file.setPath(item.get("path").asText());
+			file.setSha(item.get("sha").asText());
+			file.setUrl(item.get("url").asText());
+			file.setGitUrl(item.get("git_url").asText());
+			file.setHtmlUrl(item.get("html_url").asText());
+			file.setLanguage(language);	
+			fileRepository.save(file);
+			JsonNode repositoryNode = item.get(repositoryLabel);
+			String repoFullName = repositoryNode.get("full_name").asText();
+			GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
+			if(gitRepository == null) {
+				gitRepository = new GitRepository(repositoryNode.get("name").asText(), 
+						repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
+				gitRepositoryRepository.save(gitRepository);
+			}
+			GitRepositoryFile gitRepositoryFile = new GitRepositoryFile(file, gitRepository);
+			JsonNode matchesNode = item.get("text_matches");
+			if(!matchesNode.isEmpty()) {
+				for (JsonNode matchNode : matchesNode) {
+					String fragment = matchNode.get("fragment").asText();
+					Matcher matcher = pattern.matcher(fragment);
+					while(matcher.find()) {
+						String link = matcher.group();
+						link = link.trim();
+						SharedLink sharedLink = sharedLinkRepository.findByLink(link);
+						if(sharedLink == null) {
+							sharedLink = new SharedLink();
+							sharedLink.setLink(link);
+							sharedLink.setTextMatchFragment(fragment);
+							sharedLink.setType(SharedLinkSourceType.FILE);
+							repository.save(sharedLink);
+						}
+						boolean present = false;
+						for (SharedLinkCommit sharedLinkCommit : gitRepositoryFile.getSharedLinks()) {
+							if(sharedLinkCommit.getSharedLink().getLink().equals(link)) {
+								present = true;
+								break;
+							}
+						}
+						if(!present) {
+							gitRepositoryFile.getSharedLinks().add(new SharedLinkCommit(sharedLink));
+						}
+					}
+				}
+			}
+			gitRepositoryFileRepository.save(gitRepositoryFile);
+		}catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
+	}
+
 	@Transactional
 	public List<SharedLink> saveFileSharedLinks() {
-		Pattern pattern = Pattern.compile(Constants.regexOpenAiRegex);
+		String itemsLabel = "items";
 		int perPage = 100;
 		ObjectMapper objectMapper = new ObjectMapper();
 		List<String> aliases = FileUtils.getProgrammingLanguagesAliasGithub();
@@ -180,67 +238,18 @@ public class SharedLinkService {
 								page = page + 1;
 							}
 						}
-						if(rootNode.get("items") != null && rootNode.get("items").size() > 0) {
-							for (JsonNode item : rootNode.get("items")) {
-								try {
-									File file = new File();
-									file.setName(item.get("name").asText());
-									file.setSha(item.get("sha").asText());
-									file.setPath(item.get("path").asText());
-									file.setUrl(item.get("url").asText());
-									file.setGitUrl(item.get("git_url").asText());
-									file.setHtmlUrl(item.get("html_url").asText());
-									file.setLanguage(language);	
-									fileRepository.save(file);
-									String repoFullName = item.get("repository").get("full_name").asText();
-									GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
-									if(gitRepository == null) {
-										gitRepository = new GitRepository(item.get("repository").get("name").asText(), 
-												item.get("repository").get("full_name").asText());
-										gitRepositoryRepository.save(gitRepository);
-									}
-									GitRepositoryFile gitRepositoryFile = new GitRepositoryFile(file, gitRepository);
-									JsonNode matchesNode = item.get("text_matches");
-									if(!matchesNode.isEmpty()) {
-										for (JsonNode matchNode : matchesNode) {
-											String fragment = matchNode.get("fragment").asText();
-											Matcher matcher = pattern.matcher(fragment);
-											while(matcher.find()) {
-												String link = matcher.group();
-												link = link.trim();
-												SharedLink sharedLink = sharedLinkRepository.findByLink(link);
-												if(sharedLink == null) {
-													sharedLink = new SharedLink();
-													sharedLink.setLink(link);
-													sharedLink.setTextMatchFragment(fragment);
-													sharedLink.setType(SharedLinkSourceType.FILE);
-													repository.save(sharedLink);
-												}
-												boolean present = false;
-												for (SharedLinkCommit sharedLinkCommit : gitRepositoryFile.getSharedLinks()) {
-													if(sharedLinkCommit.getSharedLink().getLink().equals(link)) {
-														present = true;
-														break;
-													}
-												}
-												if(present == false) {
-													gitRepositoryFile.getSharedLinks().add(new SharedLinkCommit(sharedLink));
-												}
-											}
-										}
-									}
-									gitRepositoryFileRepository.save(gitRepositoryFile);
-								}catch (Exception e) {
-									e.printStackTrace();
-								}
+						if(rootNode.get(itemsLabel) != null && rootNode.get(itemsLabel).size() > 0) {
+							for (JsonNode item : rootNode.get(itemsLabel)) {
+								saveFileSharedLinkItem(item, language);
 							}
 						}
 						indexPage++;
 					}else {
-						log.info("Error searching file citation: "+content);
+						log.error("Error searching file citation: "+content);
 					}
 				}catch (Exception e) {
 					e.printStackTrace();
+					log.error(e.getMessage());
 				}
 			}
 		}
