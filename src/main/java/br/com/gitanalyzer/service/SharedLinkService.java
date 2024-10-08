@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.service;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,13 +16,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.gitanalyzer.analysis.dev_gpt.DevGptSearches;
 import br.com.gitanalyzer.analysis.dev_gpt.GitHubCall;
+import br.com.gitanalyzer.exceptions.CommandExecutionException;
 import br.com.gitanalyzer.exceptions.FetchPageException;
+import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
 import br.com.gitanalyzer.exceptions.SharedLinkNoCode;
 import br.com.gitanalyzer.exceptions.SharedLinkNoConversation;
 import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
@@ -63,6 +65,12 @@ public class SharedLinkService {
 	private SharedLinkRepository sharedLinkRepository;
 	@Autowired
 	private SharedLinkSearchRepository sharedLinkSearchRepository;
+	@Autowired
+	private DownloaderService downloaderService;
+	@Autowired
+	private GitRepositoryService gitRepositoryService;
+	@Autowired
+	private GitRepositoryVersionService gitRepositoryVersionService;
 	@Value("${configuration.github.token}")
 	private String token;
 	private Pattern pattern = Pattern.compile(Constants.regexOpenAiRegex);
@@ -125,11 +133,9 @@ public class SharedLinkService {
 				SharedLinkErrorLog errorLog = new SharedLinkErrorLog(SharedLinkFetchError.NOT_FOUND, new ErrorLog(e.getMessage(), new Date()));
 				sharedLink.setError(errorLog);
 			} catch (FetchPageException e) {
-				e.printStackTrace();
 				SharedLinkErrorLog errorLog = new SharedLinkErrorLog(SharedLinkFetchError.FETCH_ERROR, new ErrorLog(e.getMessage(), new Date()));
 				sharedLink.setError(errorLog);
-			} catch (JsonProcessingException e) {
-				e.printStackTrace();
+			} catch (PageJsonProcessingException e) {
 				SharedLinkErrorLog errorLog = new SharedLinkErrorLog(SharedLinkFetchError.JSON_ERROR, new ErrorLog(e.getMessage(), new Date()));
 				sharedLink.setError(errorLog);
 			} catch (SharedLinkNoConversation e) {
@@ -139,6 +145,10 @@ public class SharedLinkService {
 			} catch (SharedLinkNoCode e) {
 				e.printStackTrace();
 				SharedLinkErrorLog errorLog = new SharedLinkErrorLog(SharedLinkFetchError.LINK_NO_CODE, new ErrorLog(e.getMessage(), new Date()));
+				sharedLink.setError(errorLog);
+			} catch (CommandExecutionException e) {
+				e.printStackTrace();
+				SharedLinkErrorLog errorLog = new SharedLinkErrorLog(SharedLinkFetchError.COMMAND_IO_EXCEPTION, new ErrorLog(e.getMessage(), new Date()));
 				sharedLink.setError(errorLog);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -329,10 +339,29 @@ public class SharedLinkService {
 	}
 
 	@Transactional
-	public void createSharedLinkFull() throws InterruptedException, IOException {
+	public void createSharedLinkFull() throws InterruptedException, IOException, URISyntaxException {
 		saveFileSharedLinks();
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
+		List<GitRepository> repositories = downloaderService.cloneRepositoriesWithSharedLinks();
+		List<String> repositoriesPath = new ArrayList<>();
+		repositories.forEach(r -> repositoriesPath.add(r.getCurrentFolderPath()));
+		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (GitRepository gitRepository: repositories) {
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+				} catch (Exception e) {
+					e.printStackTrace();
+					log.error(e.getMessage());
+				}
+			}, executorService);
+			futures.add(future);
+		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 	}
 
 }

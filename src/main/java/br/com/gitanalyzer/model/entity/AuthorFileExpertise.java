@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -9,14 +9,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
-import br.com.gitanalyzer.model.entity.ContributorVersion;
-import br.com.gitanalyzer.model.entity.FileVersion;
-import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import lombok.Data;
 
 @Data
 @Entity
-public class AuthorFile {
+public class AuthorFileExpertise {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,20 +30,20 @@ public class AuthorFile {
 	private GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel;
 	private boolean withGenAi;
 
-	public AuthorFile(ContributorVersion author, FileVersion file) {
+	public AuthorFileExpertise(ContributorVersion author, FileVersion file) {
 		super();
 		this.authorVersion = author;
 		this.fileVersion = file;
 		this.withGenAi = false;
 	}
 
-	public AuthorFile() {
+	public AuthorFileExpertise() {
 		this.fileVersion = new FileVersion();
 		this.authorVersion = new ContributorVersion();
 		this.withGenAi = false;
 	}
 
-	public AuthorFile(ContributorVersion author, FileVersion file, DOE doe) {
+	public AuthorFileExpertise(ContributorVersion author, FileVersion file, DOE doe) {
 		super();
 		this.authorVersion = author;
 		this.fileVersion = file;
@@ -54,11 +51,10 @@ public class AuthorFile {
 		this.withGenAi = false;
 	}
 
-	public AuthorFile(ContributorVersion author, FileVersion file, DOA doa) {
+	public AuthorFileExpertise(ContributorVersion author, FileVersion file, DOA doa) {
 		super();
 		this.authorVersion = author;
 		this.fileVersion = file;
-		this.doa = doa;
 		this.doa = doa;
 		this.withGenAi = false;
 	}

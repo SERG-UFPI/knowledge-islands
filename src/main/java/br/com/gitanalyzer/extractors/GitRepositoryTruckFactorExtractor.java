@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 
-import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 

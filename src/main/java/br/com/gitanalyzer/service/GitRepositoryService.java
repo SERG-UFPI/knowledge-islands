@@ -252,26 +252,35 @@ public class GitRepositoryService {
 	}
 
 	public void generateLogFilesFolder(String folderPath) {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		List<String> repositoriesPaths = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
 		log.info("======= Generating logs from folder "+folderPath+" =======");
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-					try {
-						generateLogFiles(projectPath);
-					} catch (URISyntaxException | IOException | InterruptedException e) {
-						e.printStackTrace();
-					}
-				}, executorService);
-				futures.add(future);
+				repositoriesPaths.add(projectPath);
 			}
+		}
+		generateLogFilesRepositoriesPaths(repositoriesPaths);
+		log.info("======= End generating logs from folder "+folderPath+" =======");
+	}
+
+	public void generateLogFilesRepositoriesPaths(List<String> paths) {
+		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (String repositoryPath: paths) {
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					generateLogFiles(repositoryPath);
+				} catch (URISyntaxException | IOException | InterruptedException e) {
+					e.printStackTrace();
+					log.error(e.getMessage());
+				}
+			}, executorService);
+			futures.add(future);
 		}
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 		executorService.shutdown();
-		log.info("======= End generating logs from folder "+folderPath+" =======");
 	}
 
 	public void generateLogFilesFolderWithoutCloc(String folderPath) throws URISyntaxException, IOException, InterruptedException {

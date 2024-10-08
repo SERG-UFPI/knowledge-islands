@@ -30,6 +30,7 @@ public class ChatgptConversation {
 	private Date createTime;
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date updateTime;
+	private String title;
 
 	public ChatgptConversation() {
 		conversationTurns = new ArrayList<>();

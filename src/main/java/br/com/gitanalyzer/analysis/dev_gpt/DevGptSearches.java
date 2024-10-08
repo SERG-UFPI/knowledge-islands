@@ -17,18 +17,19 @@ import java.util.regex.Pattern;
 import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import br.com.gitanalyzer.exceptions.CommandExecutionException;
 import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
 import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
+import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
 import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
 import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
-import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.CommitFile;
 import br.com.gitanalyzer.model.entity.ChatgptConversation;
+import br.com.gitanalyzer.model.entity.Commit;
+import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.File;
@@ -204,54 +205,66 @@ public class DevGptSearches {
 	//		return contributors;
 	//	}
 
-	public static ChatgptConversation getConversationOfOpenAiJson(String json) throws JsonMappingException, JsonProcessingException {
+	public static ChatgptConversation getConversationOfOpenAiJson(String json) throws PageJsonProcessingException {
 		ObjectMapper objectMapper = new ObjectMapper();
-		JsonNode rootNode = objectMapper.readTree(json);
-		JsonNode dataNode = rootNode.get("props").get("pageProps")
-				.get("serverResponse").get("data");
-		ChatgptConversation conversation = new ChatgptConversation();
-		Date createTime = new java.util.Date(dataNode.get("create_time").asLong()*1000);
-		conversation.setCreateTime(createTime);
-		Date updateTime = new java.util.Date(dataNode.get("update_time").asLong()*1000);
-		conversation.setUpdateTime(updateTime);
-		if(dataNode != null) {
-			JsonNode conversationsNode = dataNode.get("linear_conversation");
-			for (JsonNode node : conversationsNode) {
-				JsonNode messageNode = node.get("message");
-				if(messageNode != null) {
-					JsonNode authorNode = messageNode.get("author");
-					if(authorNode != null && ChatgptUserAgent.getValuesArray().contains(authorNode.get("role").asText())) {
-						ConversationTurn conversationTurn = new ConversationTurn();
-						String agent = authorNode.get("role").asText();
-						ChatgptUserAgent userAgent = ChatgptUserAgent.getByAgent(agent);
-						conversationTurn.setUserAgent(userAgent);
-						Long promptCreateTime = messageNode.get("create_time").asLong();
-						conversationTurn.setCreateTime(promptCreateTime);
-						JsonNode contentParts = messageNode.get("content").get("parts");
-						if(contentParts != null) {
-							for (JsonNode content : contentParts) {
-								String fullContent = content.asText();
-								List<PromptCode> codes = null;
-								if(agent.equals(ChatgptUserAgent.ASSISTANT.getAgent()) && fullContent.contains(Constants.openAiCodeJsonDelimiter)) {
-									codes = getCodesFromOpenAiJson(fullContent);
-									for (PromptCode code : codes) {
-										fullContent = fullContent.replace(code.getCodeFullText(), code.getCodeId());
+		try {
+			JsonNode rootNode = objectMapper.readTree(json);
+			JsonNode dataNode = rootNode.path("state").path("loaderData").path("routes/share.$shareId.($action)").path("serverResponse").path("data");
+			if(!dataNode.isMissingNode()) {
+				ChatgptConversation conversation = new ChatgptConversation();
+				Date createTime = new java.util.Date(dataNode.get("create_time")!=null?dataNode.get("create_time").asLong()*1000:null);
+				conversation.setCreateTime(createTime);
+				Date updateTime = new java.util.Date(dataNode.get("update_time")!=null?dataNode.get("update_time").asLong()*1000:null);
+				conversation.setUpdateTime(updateTime);
+				conversation.setTitle(dataNode.get("title")!=null?dataNode.get("title").asText():"");
+				if(dataNode != null) {
+					JsonNode conversationsNode = dataNode.get("linear_conversation");
+					for (JsonNode node : conversationsNode) {
+						JsonNode messageNode = node.get("message");
+						if(messageNode != null) {
+							JsonNode authorNode = messageNode.get("author");
+							if(authorNode != null && ChatgptUserAgent.getValuesArray().contains(authorNode.get("role").asText())) {
+								ConversationTurn conversationTurn = new ConversationTurn();
+								String agent = authorNode.get("role").asText();
+								ChatgptUserAgent userAgent = ChatgptUserAgent.getByAgent(agent);
+								conversationTurn.setUserAgent(userAgent);
+								Long promptCreateTime = messageNode.get("create_time").asLong();
+								conversationTurn.setCreateTime(promptCreateTime);
+								JsonNode contentParts = messageNode.get("content").get("parts");
+								if(contentParts != null) {
+									for (JsonNode content : contentParts) {
+										String fullContent = content.asText();
+										List<PromptCode> codes = null;
+										if(agent.equals(ChatgptUserAgent.ASSISTANT.getAgent()) && fullContent.contains(Constants.openAiCodeJsonDelimiter)) {
+											int delimiterCount = fullContent.split(Constants.openAiCodeJsonDelimiter, -1).length-1;
+											if(delimiterCount % 2 == 0) {
+												codes = getCodesFromOpenAiJson(fullContent);
+												for (PromptCode code : codes) {
+													fullContent = fullContent.replace(code.getCodeFullText(), code.getCodeId());
+												}
+												conversationTurn.setCodes(codes);
+											}
+										}
+										conversationTurn.setFullText(fullContent);
 									}
-									conversationTurn.setCodes(codes);
+									conversation.addConversationTurn(conversationTurn);
 								}
-								conversationTurn.setFullText(fullContent);
 							}
-							conversation.addConversationTurn(conversationTurn);
 						}
 					}
 				}
+				return conversation;
+			}else {
+				throw new PageJsonProcessingException("Error on server response");
 			}
+		}catch(JsonProcessingException e) {
+			e.printStackTrace();
+			throw new PageJsonProcessingException(e.getMessage());
 		}
-		return conversation;
 	}
 
 	private static List<PromptCode> getCodesFromOpenAiJson(String fullContent) {
-		List<PromptCode> promptCode = new ArrayList<PromptCode>();
+		List<PromptCode> promptCode = new ArrayList<>();
 		Pattern r = Pattern.compile(Constants.openAiCodeJsonDelimiter+".*?"+Constants.openAiCodeJsonDelimiter, 
 				Pattern.DOTALL);
 		Matcher m = r.matcher(fullContent);
@@ -260,11 +273,12 @@ public class DevGptSearches {
 			String codeText = m.group(0).trim();
 			String codeBlock = codeText.replace(Constants.openAiCodeJsonDelimiter, "");
 			String[] words = codeBlock.split("\\s+");
-			String language = words.length > 0 ? words[0]:"";
+			String language = words.length > 0 ? words[0].trim():"";
 			int firstNewlineIndex = codeBlock.indexOf("\n");
 			int lastNewlineIndex = codeBlock.lastIndexOf("\n");
 			if(firstNewlineIndex != -1 && lastNewlineIndex != -1) {
 				codeBlock = codeBlock.substring(firstNewlineIndex+1, lastNewlineIndex);
+				codeBlock = codeBlock.trim();
 				promptCode.add(new PromptCode(language, codeText, codeBlock, PromptCode.startOfCodeBlockId()+codeId));
 				codeId++;
 			}
@@ -272,11 +286,11 @@ public class DevGptSearches {
 		return promptCode;
 	}
 
-	public static String getOpenAiJson(String url) throws SharedLinkNotFoundException, FetchPageException {
-		int errorNotFound = 404; 
-		ObjectMapper objectMapper = new ObjectMapper();
-		String cookie = System.getenv("OPENAI_COOKIE");
+	public static String getOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
 		try {
+			url = "https://chat.openai.com/share/33d48396-192d-4237-b55c-60124783a1eb";
+			ObjectMapper objectMapper = new ObjectMapper();
+			String cookie = System.getenv("OPENAI_COOKIE");
 			String[] command = {"curl", "-L", "-b", cookie, url};
 
 			ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -296,19 +310,20 @@ public class DevGptSearches {
 			if(startIndex != -1 && endIndex != -1) {
 				String json = html.substring(startIndex + Constants.openAiJsonStart.length(), endIndex);
 				JsonNode rootNode = objectMapper.readTree(json);
-				if(rootNode.get("props") != null && rootNode.get("props").get("pageProps") != null 
-						&& rootNode.get("props").get("pageProps").get("statusCode") != null) {
-					int status = rootNode.get("props").get("pageProps").get("statusCode").asInt();
-					if(status == errorNotFound) {
-						throw new SharedLinkNotFoundException(url);
-					}
+				JsonNode errorNode = rootNode.path("state").path("errors").path("root");
+				if(!errorNode.isMissingNode() && errorNode.path("status").asInt() == Constants.pageNotFoundCode) {
+					throw new SharedLinkNotFoundException(url);
 				}
 				return json;
 			}else {
 				throw new FetchPageException(url);
 			}
-		} catch (Exception e) {
-			throw new FetchPageException(url);
+		}catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new PageJsonProcessingException(e.getMessage());
+		}catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+			throw new CommandExecutionException(e.getMessage());
 		}
 	}
 
@@ -422,7 +437,7 @@ public class DevGptSearches {
 		}
 		return commitsAuthor;
 	}
-	
+
 	public static List<CommitFile> getAllCommitFilesOfAuthor(File file, Contributor contributor){
 		List<CommitFile> commitFilesAuthor = new ArrayList<>();
 		for (Commit commit : file.getCommits()) {
@@ -435,16 +450,16 @@ public class DevGptSearches {
 		return commitFilesAuthor;
 	}
 
-//	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
-//		List<File> files = new ArrayList<>();
-//		for (SharedLink sharedLink : sharedLinks) {
-//			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
-//				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath()) 
-//						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()))) {
-//					files.add(fileLinkAuthor.getAuthorFile().getFileVersion().getFile());
-//				}
-//			}
-//		}
-//		return files;
-//	}
+	//	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
+	//		List<File> files = new ArrayList<>();
+	//		for (SharedLink sharedLink : sharedLinks) {
+	//			for (FileLinkAuthor fileLinkAuthor: sharedLink.getFilesLinkAuthor()) {
+	//				if(!files.stream().anyMatch(f -> f.getPath().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getPath()) 
+	//						&& f.getRepository().getFullName().equals(fileLinkAuthor.getAuthorFile().getFileVersion().getFile().getRepository().getFullName()))) {
+	//					files.add(fileLinkAuthor.getAuthorFile().getFileVersion().getFile());
+	//				}
+	//			}
+	//		}
+	//		return files;
+	//	}
 }

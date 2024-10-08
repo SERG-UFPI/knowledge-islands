@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,15 +23,15 @@ public class DOE {
 	private int fa;
 	private int numDays;
 	private int size;
-	private double doe;
+	private double doeValue;
 	
-	public DOE(int adds, int fa, int numDays, int size, double doe) {
+	public DOE(int adds, int fa, int numDays, int size, double doeValue) {
 		super();
 		this.adds = adds;
 		this.fa = fa;
 		this.numDays = numDays;
 		this.size = size;
-		this.doe = doe;
+		this.doeValue = doeValue;
 	}
 
 	public DOE(int adds, int fa, int numDays) {

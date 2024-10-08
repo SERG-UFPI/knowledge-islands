@@ -7,8 +7,6 @@ import java.util.List;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -19,8 +17,7 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 public class JGitUtils {
 	
-	public List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException, AmbiguousObjectException, 
-	IncorrectObjectTypeException { 
+	public List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException { 
 		AnyObjectId currentCommit = repo.resolve(commit.getName()); 
 		AnyObjectId parentCommit = commit.getParentCount() > 0 ? repo.resolve(commit.getParent(0).getName()) : null; 
 		DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE); 

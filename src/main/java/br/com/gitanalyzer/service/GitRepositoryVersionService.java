@@ -17,7 +17,7 @@ import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.extractors.FileExtractor;
 import br.com.gitanalyzer.extractors.GitRepositoryFolderExtractor;
 import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
-import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ContributorVersion;
 import br.com.gitanalyzer.model.entity.File;
@@ -46,8 +46,6 @@ public class GitRepositoryVersionService {
 
 	@Autowired
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
-	@Autowired
-	private GitRepositoryDependencyService projectDependencyService;
 	@Autowired
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
@@ -103,7 +101,7 @@ public class GitRepositoryVersionService {
 			Date dateVersion = commits.get(0).getAuthorDate();
 			String versionId = commits.get(0).getSha();
 			commitExtractor.extractCommitsFiles(repository.getCurrentFolderPath(), commits, files);
-			commits.removeIf(c -> c.getCommitFiles().size() == 0);
+			commits.removeIf(c -> c.getCommitFiles().isEmpty());
 			commitExtractor.extractCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits, files);
 			List<Contributor> contributors = projectVersionExtractor.extractContributorFromCommits(commits);
 			contributors = projectVersionExtractor.setAlias(contributors, repository.getName());
@@ -115,16 +113,20 @@ public class GitRepositoryVersionService {
 			return new GitRepositoryVersion(contributors.size(), 
 					files.size(), commits.size(), 
 					dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
-					commits, files, (double) sec, projectDependencyService.getDependenciesProjectVersion(repository.getFullName()), gitRepositoryFolder);
+					commits, files, (double) sec, gitRepositoryFolder);
 		}else {
 			throw new NoCommitForRepositoryException(repository.getFullName());
 		}
 	}
 
 	@Transactional
-	public GitRepositoryVersion saveGitRepositoryVersion(String repositoryPath) throws Exception {
+	public GitRepositoryVersion saveGitRepositoryAndGitRepositoryVersion(String repositoryPath) throws Exception {
 		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
-		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		return saveGitRepositoryVersion(gitRepository);
+	}
+
+	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
+		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		GitRepositoryVersion gitRepositoryVersion = extractProjectVersion(gitRepository);
 		if(!gitRepositoryVersion.validGitRepositoryVersion()) {
 			throw new Exception("GitRepository version not valid");
@@ -135,7 +137,7 @@ public class GitRepositoryVersionService {
 		}else {
 			throw new Exception("GitRepository version already extracted");
 		}
-		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+repositoryPath);
+		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		return gitRepositoryVersion;
 	}
 

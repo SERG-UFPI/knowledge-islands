@@ -70,7 +70,7 @@ public class Constants {
 	public static final String noreply = ".noreply";
 	public static final String chatGptShare = "https://chat.openai.com/share/";
 
-	public static final String openAiJsonStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\" crossorigin=\"anonymous\">";
+	public static final String openAiJsonStart = "<script nonce=\"\">window.__remixContext = ";
 	public static final String openAiJsonEnd = "</script><script nonce=";
 	public static final String openAiCodeJsonDelimiter = "```";
 
@@ -79,6 +79,8 @@ public class Constants {
 	public static final String githubApiBaseUrl = "https://api.github.com";
 
 	public static final String repeatedRepoSuffix = "RepeatedRepo";
+
+	public static final int pageNotFoundCode = 404;
 
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();

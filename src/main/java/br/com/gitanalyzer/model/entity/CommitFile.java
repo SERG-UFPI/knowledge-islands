@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.List;
 
@@ -13,7 +13,6 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
-import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.enums.OperationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;

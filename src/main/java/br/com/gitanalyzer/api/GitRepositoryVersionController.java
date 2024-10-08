@@ -47,7 +47,7 @@ public class GitRepositoryVersionController {
 
 	@PostMapping("/save-git-repository-version")
 	public ResponseEntity<?> saveGitRepositoryTruckFactor(@RequestBody String repositoryPath) throws Exception{
-		return ResponseEntity.ok(service.saveGitRepositoryVersion(repositoryPath));
+		return ResponseEntity.ok(service.saveGitRepositoryAndGitRepositoryVersion(repositoryPath));
 	}
 
 	@GetMapping("/{id}")

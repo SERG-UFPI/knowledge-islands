@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -22,13 +22,13 @@ public class DOA {
 	private int fa;
 	private int dl;
 	private int ac;
-	private double doa;
-	public DOA(int fa, int dl, int ac, double doa) {
+	private double doaValue;
+	public DOA(int fa, int dl, int ac, double doaValue) {
 		super();
 		this.fa = fa;
 		this.dl = dl;
 		this.ac = ac;
-		this.doa = doa;
+		this.doaValue = doaValue;
 	}
 	public DOA(int fa, int dl, int ac) {
 		super();

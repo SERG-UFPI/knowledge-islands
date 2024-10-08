@@ -14,8 +14,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import br.com.gitanalyzer.model.Commit;
-import br.com.gitanalyzer.model.CommitFile;
+import br.com.gitanalyzer.model.entity.Commit;
+import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.enums.OperationType;
@@ -50,7 +50,7 @@ public class CommitExtractor {
 
 	public Date getLastCommitDate(String projectPath) throws IOException {
 		List<Date> dates = getDatesOfProject(projectPath);
-		if(dates != null && dates.size() > 0) {
+		if(!dates.isEmpty()) {
 			Collections.sort(dates);
 			return dates.get(dates.size()-1);
 		}else {
@@ -60,7 +60,7 @@ public class CommitExtractor {
 
 	public Date getFirstCommitDate(String projectPath) throws IOException {
 		List<Date> dates = getDatesOfProject(projectPath);
-		if(dates != null && dates.size() > 0) {
+		if(!dates.isEmpty()) {
 			Collections.sort(dates);
 			return dates.get(0);
 		}else {

@@ -11,7 +11,6 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import br.com.gitanalyzer.model.Commit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

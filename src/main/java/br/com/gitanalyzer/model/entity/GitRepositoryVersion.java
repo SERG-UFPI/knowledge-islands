@@ -18,7 +18,6 @@ import javax.persistence.TemporalType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import br.com.gitanalyzer.model.Commit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,7 +33,9 @@ public class GitRepositoryVersion {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private int numberAnalysedDevs, numberAnalysedFiles, numberAnalysedCommits;
+	private int numberAnalysedDevs; 
+	private int numberAnalysedFiles;
+	private int numberAnalysedCommits;
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
@@ -64,6 +65,24 @@ public class GitRepositoryVersion {
 	public GitRepositoryVersion(int numberAnalysedDevs, int numberAnalysedFiles, 
 			int numberAnalysedCommits, Date dateVersion, String versionId, List<Contributor> contributors, 
 			List<Commit> commits, List<File> files, Double timeToExtract, List<GitRepositoryDependency> dependencies, GitRepositoryFolder rootFolder) {
+		super();
+		this.numberAnalysedDevs = numberAnalysedDevs;
+		this.numberAnalysedFiles = numberAnalysedFiles;
+		this.numberAnalysedCommits = numberAnalysedCommits;
+		this.dateVersion = dateVersion;
+		this.versionId = versionId;
+		this.contributors = contributors;
+		this.commits = commits;
+		this.files = files;
+		this.timeToExtract = timeToExtract;
+		this.dependencies = dependencies;
+		this.rootFolder = rootFolder;
+		gitRepositoryVersionKnowledgeModel = new ArrayList<>();
+	}
+
+	public GitRepositoryVersion(int numberAnalysedDevs, int numberAnalysedFiles, 
+			int numberAnalysedCommits, Date dateVersion, String versionId, List<Contributor> contributors, 
+			List<Commit> commits, List<File> files, Double timeToExtract, GitRepositoryFolder rootFolder) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAnalysedFiles = numberAnalysedFiles;

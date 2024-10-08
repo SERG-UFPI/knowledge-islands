@@ -1,7 +1,6 @@
 package br.com.gitanalyzer.api;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -45,9 +44,7 @@ public class AuthController {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 		ResponseCookie jwtCookie = jwtuUtils.generateJwtCookie(userDetails);
-		List<String> roles = userDetails.getAuthorities().stream()
-				.map(item -> item.getAuthority())
-				.collect(Collectors.toList());
+		List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority()).toList();
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
 				.body(new UserInfoResponseDTO(userDetails.getId(),

@@ -22,7 +22,6 @@ import javax.persistence.TemporalType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import br.com.gitanalyzer.model.AuthorFile;
 import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,7 +44,7 @@ public class GitRepositoryVersionKnowledgeModel {
 	private List<FileVersion> files;
 	@JsonIgnore
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private List<AuthorFile> authorsFiles;
+	private List<AuthorFileExpertise> authorsFiles;
 	@JsonIgnore
 	@ManyToOne
 	private GitRepositoryVersion repositoryVersion;

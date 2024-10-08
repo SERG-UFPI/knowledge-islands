@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.com.gitanalyzer.dto.form.HistoryReposTruckFactorForm;
-import br.com.gitanalyzer.model.Commit;
+import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.enums.TimeIntervalTypeEnum;
 
 public class HistoryCommitsExtractor {

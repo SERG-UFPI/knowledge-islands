@@ -1,4 +1,4 @@
-package br.com.gitanalyzer.model;
+package br.com.gitanalyzer.model.entity;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +16,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
-import br.com.gitanalyzer.model.entity.Contributor;
 import lombok.Data;
 
 @Data
@@ -41,9 +40,8 @@ public class Commit implements Comparable<Commit>{
 	private Contributor committer;
 	@Column(length=1000)
 	private String message;
-
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private List<CommitFile> commitFiles = new ArrayList<CommitFile>();
+	private List<CommitFile> commitFiles = new ArrayList<>();
 
 	public Commit(Contributor author, Date date, String externalId, String message) {
 		super();

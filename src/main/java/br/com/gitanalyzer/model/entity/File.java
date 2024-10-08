@@ -15,7 +15,6 @@ import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import br.com.gitanalyzer.model.Commit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -64,14 +63,14 @@ public class File{
 	private int size;
 	@JsonIgnore
 	@ElementCollection
-	private List<String> renamePaths = new ArrayList<String>();
+	private List<String> renamePaths = new ArrayList<>();
 	@JsonIgnore
 	@OneToMany(mappedBy="file", cascade = CascadeType.REMOVE)
 	private List<FileVersion> versions;
 	private String language;
 	
 	public boolean isFile(String path) {
-		List<String> paths = new ArrayList<String>();
+		List<String> paths = new ArrayList<>();
 		paths.add(this.path);
 		paths.addAll(renamePaths);
 		return paths.contains(path);

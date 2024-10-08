@@ -223,7 +223,7 @@ public class DownloaderService {
 	}
 
 	@Transactional
-	public String cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
+	public List<GitRepository> cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
 		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -249,7 +249,7 @@ public class DownloaderService {
 			}
 		}
 		gitRepositoryRepository.saveAll(repositories);
-		return "Downloads finished in "+cloneFolder;
+		return repositories;
 	}
 
 	public String cloneProject(CloneRepoForm form) {
