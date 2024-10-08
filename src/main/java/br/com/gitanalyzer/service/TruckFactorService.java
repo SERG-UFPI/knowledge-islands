@@ -69,7 +69,7 @@ public class TruckFactorService {
 			String projectPath = downloaderService.cloneProject(form);
 			setProcessStage(process, GitRepositoryVersionProcessStageEnum.EXTRACTING_DATA);
 			gitRepositoryService.generateLogFiles(projectPath);
-			GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryVersion(projectPath);
+			GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryAndGitRepositoryVersion(projectPath);
 			saveGitRepositoryVersionKnowledgeModelTruckFactorAllFolders(gitRepositoryVersion, KnowledgeModel.DOE);
 			process.setGitRepositoryVersion(gitRepositoryVersion);
 			process.setEndDate(new Date());
@@ -120,7 +120,7 @@ public class TruckFactorService {
 
 	public List<TruckFactor> generateTruckFactorRepository(RepositoryKnowledgeMetricForm repo)
 			throws Exception {
-		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryVersion(repo.getRepositoryPath());
+		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryAndGitRepositoryVersion(repo.getRepositoryPath());
 		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
 		models.add(gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), false)));
