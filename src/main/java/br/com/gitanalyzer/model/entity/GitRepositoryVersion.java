@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -36,15 +37,17 @@ public class GitRepositoryVersion {
 	private int numberAnalysedDevs; 
 	private int numberAnalysedFiles;
 	private int numberAnalysedCommits;
+	private double timeToExtract;
+	private String versionId;
+	private boolean genAiAnalysis;
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
-	private String versionId;
 	@ManyToOne(optional = false)
 	private GitRepository gitRepository;
 	@OneToMany(cascade = CascadeType.ALL)
 	private List<Contributor> contributors;
-	@OneToMany(cascade = CascadeType.ALL)
+	@ManyToMany(cascade = CascadeType.ALL)
 	private List<File> files;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "repositoryVersion")
@@ -57,14 +60,13 @@ public class GitRepositoryVersion {
 	private List<GitRepositoryDependency> dependencies;
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private GitRepositoryFolder rootFolder;
-	private double timeToExtract;
 	@JsonIgnore
 	@OneToMany(mappedBy="gitRepositoryVersion", cascade = CascadeType.REMOVE)
 	private List<GitRepositoryVersionProcess> processes;
 
 	public GitRepositoryVersion(int numberAnalysedDevs, int numberAnalysedFiles, 
 			int numberAnalysedCommits, Date dateVersion, String versionId, List<Contributor> contributors, 
-			List<Commit> commits, List<File> files, Double timeToExtract, List<GitRepositoryDependency> dependencies, GitRepositoryFolder rootFolder) {
+			List<Commit> commits, List<File> files, Double timeToExtract, GitRepositoryFolder rootFolder, boolean genAiAnalysis) {
 		super();
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAnalysedFiles = numberAnalysedFiles;
@@ -75,27 +77,9 @@ public class GitRepositoryVersion {
 		this.commits = commits;
 		this.files = files;
 		this.timeToExtract = timeToExtract;
-		this.dependencies = dependencies;
 		this.rootFolder = rootFolder;
 		gitRepositoryVersionKnowledgeModel = new ArrayList<>();
-	}
-
-	public GitRepositoryVersion(int numberAnalysedDevs, int numberAnalysedFiles, 
-			int numberAnalysedCommits, Date dateVersion, String versionId, List<Contributor> contributors, 
-			List<Commit> commits, List<File> files, Double timeToExtract, GitRepositoryFolder rootFolder) {
-		super();
-		this.numberAnalysedDevs = numberAnalysedDevs;
-		this.numberAnalysedFiles = numberAnalysedFiles;
-		this.numberAnalysedCommits = numberAnalysedCommits;
-		this.dateVersion = dateVersion;
-		this.versionId = versionId;
-		this.contributors = contributors;
-		this.commits = commits;
-		this.files = files;
-		this.timeToExtract = timeToExtract;
-		this.dependencies = dependencies;
-		this.rootFolder = rootFolder;
-		gitRepositoryVersionKnowledgeModel = new ArrayList<>();
+		this.genAiAnalysis = genAiAnalysis;
 	}
 
 	public String getRepositoryLanguage() {

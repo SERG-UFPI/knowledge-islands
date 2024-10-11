@@ -47,5 +47,12 @@ public class CommitFile {
 		this.file = file;
 		this.status = status;
 	}
+	
+	public CommitFile(File file, OperationType status, List<String> addedLines) {
+		super();
+		this.file = file;
+		this.status = status;
+		this.addedLines = addedLines;
+	}
 
 }

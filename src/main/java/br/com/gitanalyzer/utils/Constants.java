@@ -106,4 +106,8 @@ public class Constants {
 		return notProjectSoftwareNames;
 	}
 
+	public static String getFileSeparator() {
+		return java.nio.file.FileSystems.getDefault().getSeparator();
+	}
+
 }

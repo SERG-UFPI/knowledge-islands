@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.util.List;
 
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
+import br.com.gitanalyzer.utils.Constants;
 
 public class GitRepositoryFolderExtractor {
 
 	public GitRepositoryFolder getGitRepositoryFolder(String path, String root, List<String> filesPaths) throws IOException {
-		GitRepositoryFolder gitRepositoryFolder = buildGitRepositoryFolder(path, root, filesPaths);
-		return gitRepositoryFolder;
+		return buildGitRepositoryFolder(path, root, filesPaths);
 	}
 
 	public GitRepositoryFolder buildGitRepositoryFolder(String path, String root, List<String> filesPaths) throws IOException {
@@ -20,7 +20,7 @@ public class GitRepositoryFolderExtractor {
 		}
 		String absolutePath = file.getAbsolutePath();
 		if(file.isDirectory()) {
-			absolutePath = absolutePath+"/";
+			absolutePath = absolutePath+Constants.getFileSeparator();
 		}
 		absolutePath = absolutePath.replace(root, "");
 		GitRepositoryFolder node = new GitRepositoryFolder(file.getName(), absolutePath.isEmpty()?null:absolutePath);

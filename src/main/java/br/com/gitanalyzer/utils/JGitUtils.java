@@ -21,7 +21,7 @@ public class JGitUtils {
 		AnyObjectId currentCommit = repo.resolve(commit.getName()); 
 		AnyObjectId parentCommit = commit.getParentCount() > 0 ? repo.resolve(commit.getParent(0).getName()) : null; 
 		DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE); 
-		df.setBinaryFileThreshold(2 * 1024); //2 MB MAX A FILE
+		//df.setBinaryFileThreshold(2 * 1024); //2 MB MAX A FILE
 		df.setRepository(repo); 
 		df.setDiffComparator(RawTextComparator.DEFAULT); 
 		df.setDetectRenames(true); 

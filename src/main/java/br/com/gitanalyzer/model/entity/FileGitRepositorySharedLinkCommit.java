@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-public class GitRepositoryFile {
+public class FileGitRepositorySharedLinkCommit {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,9 +31,9 @@ public class GitRepositoryFile {
 	@ManyToMany(cascade = {CascadeType.PERSIST})
 	private List<SharedLinkCommit> sharedLinks;
 
-	public GitRepositoryFile(File file, GitRepository gitRepository) {
+	public FileGitRepositorySharedLinkCommit(File file, GitRepository gitRepository) {
 		this.file = file;
-		this.gitRepository = gitRepository; 
+		this.gitRepository = gitRepository;
 		sharedLinks = new ArrayList<>();
 	}
 

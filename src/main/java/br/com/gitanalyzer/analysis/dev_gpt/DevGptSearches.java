@@ -20,13 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.gitanalyzer.exceptions.CommandExecutionException;
-import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
 import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
 import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
-import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
-import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.entity.ChatgptConversation;
 import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.CommitFile;
@@ -286,47 +282,6 @@ public class DevGptSearches {
 		return promptCode;
 	}
 
-	public static String getOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
-		try {
-			url = "https://chat.openai.com/share/33d48396-192d-4237-b55c-60124783a1eb";
-			ObjectMapper objectMapper = new ObjectMapper();
-			String cookie = System.getenv("OPENAI_COOKIE");
-			String[] command = {"curl", "-L", "-b", cookie, url};
-
-			ProcessBuilder processBuilder = new ProcessBuilder(command);
-			Process process = processBuilder.start();
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			StringBuilder content = new StringBuilder();
-			while ((line = reader.readLine()) != null) {
-				content.append(line);
-			}
-
-			process.waitFor();
-			String html = content.toString();
-			int startIndex = html.indexOf(Constants.openAiJsonStart);
-			int endIndex = html.indexOf(Constants.openAiJsonEnd);
-			if(startIndex != -1 && endIndex != -1) {
-				String json = html.substring(startIndex + Constants.openAiJsonStart.length(), endIndex);
-				JsonNode rootNode = objectMapper.readTree(json);
-				JsonNode errorNode = rootNode.path("state").path("errors").path("root");
-				if(!errorNode.isMissingNode() && errorNode.path("status").asInt() == Constants.pageNotFoundCode) {
-					throw new SharedLinkNotFoundException(url);
-				}
-				return json;
-			}else {
-				throw new FetchPageException(url);
-			}
-		}catch (JsonProcessingException e) {
-			e.printStackTrace();
-			throw new PageJsonProcessingException(e.getMessage());
-		}catch (IOException | InterruptedException e) {
-			e.printStackTrace();
-			throw new CommandExecutionException(e.getMessage());
-		}
-	}
-
 	public static File getFileContent(String token, String repoFullName, String filePath) throws Exception {
 		filePath = UriUtils.encodePath(filePath, "UTF-8");
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -425,29 +380,6 @@ public class DevGptSearches {
 			}
 		}
 		throw new LinkNotFoundOnCommitsException(link, file.getPath());
-	}
-
-	public static List<Commit> getAllCommitsOfAuthor(List<Commit> commits, Contributor contributor){
-		List<Commit> commitsAuthor = new ArrayList<>();
-		for (Commit commit : commits) {
-			if(commit.getAuthor().getEmail().equals(contributor.getEmail()) 
-					|| GitRepositoryTruckFactorExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
-				commitsAuthor.add(commit);
-			}
-		}
-		return commitsAuthor;
-	}
-
-	public static List<CommitFile> getAllCommitFilesOfAuthor(File file, Contributor contributor){
-		List<CommitFile> commitFilesAuthor = new ArrayList<>();
-		for (Commit commit : file.getCommits()) {
-			if(commit.getAuthor().getEmail().equals(contributor.getEmail()) 
-					|| GitRepositoryTruckFactorExtractor.checkAliasContributors(contributor, commit.getAuthor())) {
-				commitFilesAuthor.add(commit.getCommitFiles().stream().filter(cf -> cf.getFile().getPath().equals(file.getPath())).findFirst().get());
-				continue;
-			}
-		}
-		return commitFilesAuthor;
 	}
 
 	//	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {

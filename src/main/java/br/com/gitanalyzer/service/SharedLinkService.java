@@ -1,6 +1,8 @@
 package br.com.gitanalyzer.service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,16 +34,16 @@ import br.com.gitanalyzer.model.entity.ChatgptConversation;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
+import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
-import br.com.gitanalyzer.model.entity.GitRepositoryFile;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.entity.SharedLinkErrorLog;
 import br.com.gitanalyzer.model.entity.SharedLinkSearch;
 import br.com.gitanalyzer.model.enums.SharedLinkFetchError;
 import br.com.gitanalyzer.model.enums.SharedLinkSourceType;
+import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.FileRepository;
-import br.com.gitanalyzer.repository.GitRepositoryFileRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.repository.SharedLinkSearchRepository;
@@ -56,8 +59,6 @@ public class SharedLinkService {
 	@Autowired
 	private SharedLinkRepository repository;
 	@Autowired
-	private GitRepositoryFileRepository gitRepositoryFileRepository;
-	@Autowired
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private FileRepository fileRepository;
@@ -71,13 +72,55 @@ public class SharedLinkService {
 	private GitRepositoryService gitRepositoryService;
 	@Autowired
 	private GitRepositoryVersionService gitRepositoryVersionService;
+	@Autowired
+	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 	@Value("${configuration.github.token}")
 	private String token;
 	private Pattern pattern = Pattern.compile(Constants.regexOpenAiRegex);
 
+	public String extractOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+			String cookie = System.getenv("OPENAI_COOKIE");
+			String[] command = {"curl", "-L", "-b", cookie, url};
+
+			ProcessBuilder processBuilder = new ProcessBuilder(command);
+			Process process = processBuilder.start();
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			String line;
+			StringBuilder content = new StringBuilder();
+			while ((line = reader.readLine()) != null) {
+				content.append(line);
+			}
+
+			process.waitFor();
+			String html = content.toString();
+			int startIndex = html.indexOf(Constants.openAiJsonStart);
+			int endIndex = html.indexOf(Constants.openAiJsonEnd);
+			if(startIndex != -1 && endIndex != -1) {
+				String json = html.substring(startIndex + Constants.openAiJsonStart.length(), endIndex);
+				JsonNode rootNode = objectMapper.readTree(json);
+				JsonNode errorNode = rootNode.path("state").path("errors").path("root");
+				if(!errorNode.isMissingNode() && errorNode.path("status").asInt() == Constants.pageNotFoundCode) {
+					throw new SharedLinkNotFoundException(url);
+				}
+				return json;
+			}else {
+				throw new FetchPageException(url);
+			}
+		}catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new PageJsonProcessingException(e.getMessage());
+		}catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+			throw new CommandExecutionException(e.getMessage());
+		}
+	}
+
 	@Transactional
 	public List<GitRepository> saveGitRepositoriesApi() throws InterruptedException, IOException{
-		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNull();
+		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversation();
 		ObjectMapper objectMapper = new ObjectMapper();
 		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -114,7 +157,7 @@ public class SharedLinkService {
 		for (int j = 0; j < sharedLinks.size(); j++) {
 			SharedLink sharedLink = sharedLinks.get(j);
 			try {
-				String json = DevGptSearches.getOpenAiJson(sharedLink.getLink());
+				String json = extractOpenAiJson(sharedLink.getLink());
 				ChatgptConversation conversation = DevGptSearches.getConversationOfOpenAiJson(json);
 				if (conversation.getConversationTurns().isEmpty()) {
 					throw new SharedLinkNoConversation(sharedLink.getLink());
@@ -124,7 +167,7 @@ public class SharedLinkService {
 						conversationTurn.setCodes(conversationTurn.getCodes().stream().filter(c -> c.getLanguage()!=null).toList());
 					}
 				}
-				if(conversation.getConversationTurns().stream().anyMatch(c -> c.getCodes() != null && c.getCodes().size() > 0) == false) {
+				if(conversation.getConversationTurns().stream().noneMatch(c -> c.getCodes() != null && !c.getCodes().isEmpty())) {
 					throw new SharedLinkNoCode(sharedLink.getLink());
 				}
 				sharedLink.setConversation(conversation);
@@ -164,15 +207,6 @@ public class SharedLinkService {
 	private void saveFileSharedLinkItem(JsonNode item, String language) {
 		String repositoryLabel = "repository";
 		try {
-			File file = new File();
-			file.setName(item.get("name").asText());
-			file.setPath(item.get("path").asText());
-			file.setSha(item.get("sha").asText());
-			file.setUrl(item.get("url").asText());
-			file.setGitUrl(item.get("git_url").asText());
-			file.setHtmlUrl(item.get("html_url").asText());
-			file.setLanguage(language);	
-			fileRepository.save(file);
 			JsonNode repositoryNode = item.get(repositoryLabel);
 			String repoFullName = repositoryNode.get("full_name").asText();
 			GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
@@ -181,7 +215,16 @@ public class SharedLinkService {
 						repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
 				gitRepositoryRepository.save(gitRepository);
 			}
-			GitRepositoryFile gitRepositoryFile = new GitRepositoryFile(file, gitRepository);
+			File file = new File();
+			file.setName(item.get("name").asText());
+			file.setPath(item.get("path").asText());
+			file.setSha(item.get("sha").asText());
+			file.setUrl(item.get("url").asText());
+			file.setGitUrl(item.get("git_url").asText());
+			file.setHtmlUrl(item.get("html_url").asText());
+			file.setLanguage(language);
+			fileRepository.save(file);
+			FileGitRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileGitRepositorySharedLinkCommit(file, gitRepository);
 			JsonNode matchesNode = item.get("text_matches");
 			if(!matchesNode.isEmpty()) {
 				for (JsonNode matchNode : matchesNode) {
@@ -198,20 +241,11 @@ public class SharedLinkService {
 							sharedLink.setType(SharedLinkSourceType.FILE);
 							repository.save(sharedLink);
 						}
-						boolean present = false;
-						for (SharedLinkCommit sharedLinkCommit : gitRepositoryFile.getSharedLinks()) {
-							if(sharedLinkCommit.getSharedLink().getLink().equals(link)) {
-								present = true;
-								break;
-							}
-						}
-						if(!present) {
-							gitRepositoryFile.getSharedLinks().add(new SharedLinkCommit(sharedLink));
-						}
+						fileGitRepositorySharedLinkCommit.getSharedLinks().add(new SharedLinkCommit(sharedLink));
 					}
 				}
 			}
-			gitRepositoryFileRepository.save(gitRepositoryFile);
+
 		}catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
@@ -294,35 +328,35 @@ public class SharedLinkService {
 		//		}
 		//		System.out.println(sum);
 
-		List<Integer> distributionOfFiles = new ArrayList<>();
-		List<Integer> distributionOfSharedLinks = new ArrayList<>();
-		List<GitRepositoryFile> files = gitRepositoryFileRepository.findAll();
-		List<GitRepository> repos = gitRepositoryRepository.findAll();
-		for(GitRepository repo: repos) {
-			List<GitRepositoryFile> filesRepo = files.stream().filter(f -> f.getGitRepository().getId().equals(repo.getId())).toList();
-			int numValidFiles = 0;
-			for (GitRepositoryFile file : filesRepo) {
-				int numValidLinks = 0;
-				boolean validFile = false;
-				for (SharedLinkCommit sharedLinkCommit : file.getSharedLinks()) {
-					if(sharedLinkCommit.getSharedLink().getConversation() != null) {
-						validFile = true;
-						numValidLinks++;
-					}
-				}
-				if(validFile == true) {
-					distributionOfSharedLinks.add(numValidLinks);
-					numValidFiles++;
-				}
-			}
-			if(numValidFiles > 0) {
-				distributionOfFiles.add(numValidFiles);
-			}
-		}
-		log.info("=== Distribution stats of files per repo ===");
-		getStatistcsOfList(distributionOfFiles);
-		log.info("=== Distribution stats of shared links per repo===");
-		getStatistcsOfList(distributionOfSharedLinks);
+		//		List<Integer> distributionOfFiles = new ArrayList<>();
+		//		List<Integer> distributionOfSharedLinks = new ArrayList<>();
+		//		List<GitRepositoryFile> files = gitRepositoryFileRepository.findAll();
+		//		List<GitRepository> repos = gitRepositoryRepository.findAll();
+		//		for(GitRepository repo: repos) {
+		//			List<GitRepositoryFile> filesRepo = files.stream().filter(f -> f.getGitRepository().getId().equals(repo.getId())).toList();
+		//			int numValidFiles = 0;
+		//			for (GitRepositoryFile file : filesRepo) {
+		//				int numValidLinks = 0;
+		//				boolean validFile = false;
+		//				for (SharedLinkCommit sharedLinkCommit : file.getSharedLinks()) {
+		//					if(sharedLinkCommit.getSharedLink().getConversation() != null) {
+		//						validFile = true;
+		//						numValidLinks++;
+		//					}
+		//				}
+		//				if(validFile == true) {
+		//					distributionOfSharedLinks.add(numValidLinks);
+		//					numValidFiles++;
+		//				}
+		//			}
+		//			if(numValidFiles > 0) {
+		//				distributionOfFiles.add(numValidFiles);
+		//			}
+		//		}
+		//		log.info("=== Distribution stats of files per repo ===");
+		//		getStatistcsOfList(distributionOfFiles);
+		//		log.info("=== Distribution stats of shared links per repo===");
+		//		getStatistcsOfList(distributionOfSharedLinks);
 		return null;
 	}
 
@@ -352,7 +386,8 @@ public class SharedLinkService {
 		for (GitRepository gitRepository: repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
-					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
+					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
 				} catch (Exception e) {
 					e.printStackTrace();
 					log.error(e.getMessage());

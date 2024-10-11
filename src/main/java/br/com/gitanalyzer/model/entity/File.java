@@ -55,20 +55,18 @@ public class File{
 	@JsonIgnore
 	private String encoding;
 	@JsonIgnore
-	@Transient
-	private List<Commit> commits;
-	@JsonIgnore
-	@Transient
-	private GitRepository repository;
+	@OneToMany(mappedBy="file", cascade = CascadeType.REMOVE)
+	private List<FileVersion> versions;
 	private int size;
 	@JsonIgnore
 	@ElementCollection
 	private List<String> renamePaths = new ArrayList<>();
-	@JsonIgnore
-	@OneToMany(mappedBy="file", cascade = CascadeType.REMOVE)
-	private List<FileVersion> versions;
 	private String language;
-	
+
+	@JsonIgnore
+	@Transient
+	private List<Commit> commits;
+
 	public boolean isFile(String path) {
 		List<String> paths = new ArrayList<>();
 		paths.add(this.path);

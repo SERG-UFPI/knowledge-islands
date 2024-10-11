@@ -17,9 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
-import br.com.gitanalyzer.extractors.CommitExtractor;
-import br.com.gitanalyzer.extractors.FileExtractor;
-import br.com.gitanalyzer.extractors.GitRepositoryTruckFactorExtractor;
 import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.File;
@@ -37,6 +34,12 @@ public class FilterGitRepositoryService {
 	private GitRepositoryRepository projectRepository;
 	@Autowired
 	private GitRepositoryService projectService;
+	@Autowired
+	private FileService fileService;
+	@Autowired
+	private CommitService commitService;
+	@Autowired
+	private GitRepositoryVersionService gitRepositoryVersionService;
 
 	public void filterEcoSpringHistory() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> projects = projectRepository.findAll();
@@ -54,14 +57,13 @@ public class FilterGitRepositoryService {
 	}
 
 	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
-		GitRepositoryTruckFactorExtractor projectVersionExtractor = new GitRepositoryTruckFactorExtractor();
 		List<GitRepositoryVersion> versions = new ArrayList<GitRepositoryVersion>();
 		java.io.File dir = new java.io.File(form.getFolderPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
 				GitRepository project = projectService.returnProjectByPath(projectPath);
-				GitRepositoryVersion version = projectVersionExtractor.extractProjectVersionFiltering(projectPath);
+				GitRepositoryVersion version = gitRepositoryVersionService.getProjectVersionFiltering(projectPath);
 				version.setGitRepository(project);
 				versions.add(version);
 			}
@@ -82,7 +84,7 @@ public class FilterGitRepositoryService {
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
 		for(GitRepositoryVersion version: versions) {
-			if(version.getGitRepository().isFiltered() == false) {
+			if(!version.getGitRepository().isFiltered()) {
 				if(filterProjectByCommits(version)) {
 					version.getGitRepository().setFiltered(true);
 					version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
@@ -134,14 +136,12 @@ public class FilterGitRepositoryService {
 	}
 
 	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
-		FileExtractor fileExtractor = new FileExtractor();
-		CommitExtractor commitExtractor = new CommitExtractor();
-		List<File> files = fileExtractor.extractFilesFromClocFile(version.getGitRepository().getCurrentFolderPath(), version.getGitRepository().getName());
-		fileExtractor.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
-		List<Commit> commits = commitExtractor.extractCommitsFromLogFiles(version.getGitRepository().getCurrentFolderPath());
+		List<File> files = fileService.getFilesFromClocFile(version.getGitRepository(), null);
+		fileService.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
+		List<Commit> commits = commitService.getCommitsFromLogFiles(version.getGitRepository().getCurrentFolderPath());
 		Collections.sort(commits);
 		commits = getFirst20Commits(commits);
-		commits = commitExtractor.extractCommitsFiles(version.getGitRepository().getCurrentFolderPath(), commits, files);
+		commits = commitService.getCommitsFiles(version.getGitRepository(), commits, files, null);
 		int numberOfFiles = files.size();
 		List<File> addedFiles = new ArrayList<>();
 		for(Commit commit: commits) {

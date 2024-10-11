@@ -33,6 +33,7 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.ProjectGitHub;
 import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.model.enums.LanguageEnum;
+import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.AsyncUtils;
@@ -54,6 +55,8 @@ public class DownloaderService {
 	private GitRepositoryService projectService;
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
@@ -224,7 +227,7 @@ public class DownloaderService {
 
 	@Transactional
 	public List<GitRepository> cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
-		List<GitRepository> repositories = gitRepositoryRepository.findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
+		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
 		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
