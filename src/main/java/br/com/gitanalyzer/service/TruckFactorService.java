@@ -37,7 +37,7 @@ import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepositor
 import br.com.gitanalyzer.repository.GitRepositoryVersionProcessRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.repository.TruckFactorRepository;
-import br.com.gitanalyzer.utils.AsyncUtils;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @Service
 public class TruckFactorService {
@@ -176,7 +176,7 @@ public class TruckFactorService {
 	}
 
 	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForTf();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForTf();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(form.getPath());
 		for (java.io.File fileDir: dir.listFiles()) {

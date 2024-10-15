@@ -25,7 +25,7 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.FilteredEnum;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @Service
 public class FilterGitRepositoryService {
@@ -95,7 +95,7 @@ public class FilterGitRepositoryService {
 	}
 
 	public void filterNotSoftwareProjects(List<GitRepository> projects) {
-		List<String> notProjectSoftwareNames = Constants.projectsToRemoveInFiltering();
+		List<String> notProjectSoftwareNames = KnowledgeIslandsUtils.projectsToRemoveInFiltering();
 		for (GitRepository project : projects) {
 			if(notProjectSoftwareNames.contains(project.getFullName()) && project.isFiltered() == false) {
 				project.setFiltered(true);
@@ -109,7 +109,7 @@ public class FilterGitRepositoryService {
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
 		int calendarType = Calendar.YEAR;
-		c.add(calendarType, -Constants.intervalYearsProjectConsideredInactivate);
+		c.add(calendarType, -KnowledgeIslandsUtils.intervalYearsProjectConsideredInactivate);
 		for (GitRepository project : projects) {
 			if(project.getDownloadDate() != null && 
 					project.getDownloadDate().before(c.getTime()) && project.isFiltered() == false) {
@@ -124,7 +124,7 @@ public class FilterGitRepositoryService {
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date());
 		int calendarType = Calendar.YEAR;
-		c.add(calendarType, -Constants.intervalYearsProjectAgeFilter);
+		c.add(calendarType, -KnowledgeIslandsUtils.intervalYearsProjectAgeFilter);
 		for (GitRepository project : projects) {
 			if(project.getFirstCommitDate() != null && 
 					project.getFirstCommitDate().after(c.getTime()) && project.isFiltered() == false) {
@@ -136,12 +136,12 @@ public class FilterGitRepositoryService {
 	}
 
 	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
-		List<File> files = fileService.getFilesFromClocFile(version.getGitRepository(), null);
+		List<File> files = fileService.getFilesFromClocFile(version.getGitRepository());
 		fileService.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
 		List<Commit> commits = commitService.getCommitsFromLogFiles(version.getGitRepository().getCurrentFolderPath());
 		Collections.sort(commits);
 		commits = getFirst20Commits(commits);
-		commits = commitService.getCommitsFiles(version.getGitRepository(), commits, files, null);
+		commits = commitService.getCommitsFiles(version.getGitRepository(), commits, files);
 		int numberOfFiles = files.size();
 		List<File> addedFiles = new ArrayList<>();
 		for(Commit commit: commits) {

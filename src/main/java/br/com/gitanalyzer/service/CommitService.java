@@ -1,6 +1,7 @@
 package br.com.gitanalyzer.service;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,6 +10,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.AnyObjectId;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.EmptyTreeIterator;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +28,9 @@ import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.enums.OperationType;
-import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -28,13 +38,10 @@ import lombok.extern.log4j.Log4j2;
 public class CommitService {
 
 	@Autowired
-	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
-	@Autowired
 	private ContributorService contributorService;
 
-	public List<Commit> getCommitsFiles(GitRepository gitRepository, List<Commit> commits, List<File> files, 
-			List<FileGitRepositorySharedLinkCommit> fileSharedLink) throws IOException {
-		FileInputStream fstream = new FileInputStream(gitRepository.getCurrentFolderPath()+Constants.commitFileFileName);
+	public List<Commit> getCommitsFiles(GitRepository gitRepository, List<Commit> commits, List<File> files) throws IOException {
+		FileInputStream fstream = new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileFileName);
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(fstream));){
 			String strLine;
 			whileFile: while ((strLine = br.readLine()) != null) {
@@ -63,7 +70,7 @@ public class CommitService {
 	public List<Commit> getCommitsFromLogFiles(String projectPath) throws IOException {
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = new ArrayList<>();
-		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+		FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileName);
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 		try {
 			String strLine;
@@ -112,7 +119,7 @@ public class CommitService {
 	}
 
 	public List<Commit> getCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits) throws IOException {
-		FileInputStream fstream = new FileInputStream(projectPath+Constants.diffFileName);
+		FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.diffFileName);
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(fstream));) {
 			String strLine;
 			Commit commitAnalyzed = null;
@@ -209,5 +216,61 @@ public class CommitService {
 			}
 		}
 		return commitsAuthor;
+	}
+
+	public List<String> getLinesAddedCommitFile(Repository repository, Commit commit, File file) {
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		ObjectId commitId = ObjectId.fromString(commit.getSha());
+		try(RevWalk revWalk = new RevWalk(repository)) {
+			RevCommit rev = revWalk.parseCommit(commitId);
+			List<DiffEntry> diffs = diffsForTheCommit(repository, rev);
+			for (DiffEntry diff : diffs) {
+				if(file.isFile(diff.getNewPath()) || file.isFile(diff.getOldPath())) {
+					DiffFormatter diffFormatter = new DiffFormatter( stream );
+					diffFormatter.setRepository(repository);
+					diffFormatter.format(diff);
+					String in = stream.toString();
+					diffFormatter.close();
+					return getAddedLinesOnCommitDiff(in);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
+		return null;
+	}
+
+	public List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException { 
+		AnyObjectId currentCommit = repo.resolve(commit.getName()); 
+		AnyObjectId parentCommit = commit.getParentCount() > 0 ? repo.resolve(commit.getParent(0).getName()) : null; 
+		DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE); 
+		//df.setBinaryFileThreshold(2 * 1024); //2 MB MAX A FILE
+		df.setRepository(repo); 
+		df.setDiffComparator(RawTextComparator.DEFAULT); 
+		df.setDetectRenames(true); 
+		List<DiffEntry> diffs = null; 
+		if (parentCommit == null) { 
+			RevWalk rw = new RevWalk(repo); 
+			diffs = df.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), commit.getTree())); 
+			rw.close(); 
+		} else { 
+			diffs = df.scan(parentCommit, currentCommit); 
+		} 
+		df.close();
+		return diffs; 
+	}
+
+	public List<String> getAddedLinesOnCommitDiff(String fileDiff){
+		List<String> addedLines = new ArrayList<>();
+		if(fileDiff !=null ){
+			String[] lines = fileDiff.split("\n");
+			for(int i = 0; i < lines.length; i++){
+				if((lines[i].length() > 0) && (lines[i].charAt(0) == '+') && (lines[i].substring(1).trim().length() > 0)) {
+					addedLines.add(lines[i]);				
+				}
+			}
+		}
+		return addedLines;
 	}
 }

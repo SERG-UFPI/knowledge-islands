@@ -64,10 +64,11 @@ public class GitRepositoryVersion {
 	@OneToMany(mappedBy="gitRepositoryVersion", cascade = CascadeType.REMOVE)
 	private List<GitRepositoryVersionProcess> processes;
 
-	public GitRepositoryVersion(int numberAnalysedDevs, int numberAnalysedFiles, 
+	public GitRepositoryVersion(GitRepository gitRepository, int numberAnalysedDevs, int numberAnalysedFiles, 
 			int numberAnalysedCommits, Date dateVersion, String versionId, List<Contributor> contributors, 
-			List<Commit> commits, List<File> files, Double timeToExtract, GitRepositoryFolder rootFolder, boolean genAiAnalysis) {
+			List<Commit> commits, List<File> files, Double timeToExtract, GitRepositoryFolder rootFolder) {
 		super();
+		this.gitRepository = gitRepository;
 		this.numberAnalysedDevs = numberAnalysedDevs;
 		this.numberAnalysedFiles = numberAnalysedFiles;
 		this.numberAnalysedCommits = numberAnalysedCommits;
@@ -79,7 +80,6 @@ public class GitRepositoryVersion {
 		this.timeToExtract = timeToExtract;
 		this.rootFolder = rootFolder;
 		gitRepositoryVersionKnowledgeModel = new ArrayList<>();
-		this.genAiAnalysis = genAiAnalysis;
 	}
 
 	public String getRepositoryLanguage() {

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.List;
 
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 public class GitRepositoryFolderExtractor {
 
@@ -20,7 +20,7 @@ public class GitRepositoryFolderExtractor {
 		}
 		String absolutePath = file.getAbsolutePath();
 		if(file.isDirectory()) {
-			absolutePath = absolutePath+Constants.getFileSeparator();
+			absolutePath = absolutePath+KnowledgeIslandsUtils.getFileSeparator();
 		}
 		absolutePath = absolutePath.replace(root, "");
 		GitRepositoryFolder node = new GitRepositoryFolder(file.getName(), absolutePath.isEmpty()?null:absolutePath);

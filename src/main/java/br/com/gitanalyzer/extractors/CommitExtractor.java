@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.com.gitanalyzer.model.entity.Commit;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -23,7 +23,7 @@ public class CommitExtractor {
 
 	private List<Date> getDatesOfProject(String projectPath) throws IOException{
 		List<Date> dates = new ArrayList<Date>();
-		FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+		FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileName);
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 		String strLine;
 		while ((strLine = br.readLine()) != null) {
@@ -65,7 +65,7 @@ public class CommitExtractor {
 	}
 
 	public String getLastCommitHash(String projectPath) throws IOException{
-		BufferedReader br = new BufferedReader(new FileReader(projectPath+Constants.commitFileName));
+		BufferedReader br = new BufferedReader(new FileReader(projectPath+KnowledgeIslandsUtils.commitFileName));
 		String hash = br.readLine().split(";")[0];
 		br.close();
 		return hash;
@@ -74,7 +74,7 @@ public class CommitExtractor {
 	public List<Commit> getCommitsDatesAndHashes(String projectPath){
 		List<Commit> commits = new ArrayList<>();
 		try {
-			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileName);
+			FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
@@ -101,7 +101,7 @@ public class CommitExtractor {
 
 	public void generateCommitFileFile(String projectPath) {
 		try {
-			FileInputStream fstream = new FileInputStream(projectPath+Constants.logFile);
+			FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.logFile);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			String commitHash = null;

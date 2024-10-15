@@ -36,9 +36,7 @@ import br.com.gitanalyzer.model.enums.LanguageEnum;
 import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.UserRepository;
-import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.Constants;
-import br.com.gitanalyzer.utils.SystemUtil;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -59,10 +57,10 @@ public class DownloaderService {
 	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
-		form.setPath(SystemUtil.fixFolderPath(form.getPath()));
+		form.setPath(KnowledgeIslandsUtils.fixFolderPath(form.getPath()));
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
-				ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+				ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 				List<CompletableFuture<Void>> futures = new ArrayList<>();
 				for (LanguageEnum language : LanguageEnum.values()) {
 					if(language.equals(LanguageEnum.ALL) == false) {
@@ -115,7 +113,7 @@ public class DownloaderService {
 	}
 
 	private void cloneAndSaveReposOrg(List<ProjectGitHub> projectsInfo, String path) {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (ProjectGitHub projectInfo : projectsInfo) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -228,7 +226,7 @@ public class DownloaderService {
 	@Transactional
 	public List<GitRepository> cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -237,6 +235,7 @@ public class DownloaderService {
 							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
 				}catch (Exception e) {
 					e.printStackTrace();
+					log.error(e.getMessage());
 				}
 			}, executorService);
 			futures.add(future);
@@ -246,8 +245,8 @@ public class DownloaderService {
 		for (GitRepository gitRepository : repositories) {
 			if(gitRepository.getCurrentFolderPath() != null) {
 				String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
-				if(currentFolderPath.endsWith(Constants.repeatedRepoSuffix)) {
-					gitRepository.setName(gitRepository.getName()+Constants.repeatedRepoSuffix);
+				if(currentFolderPath.endsWith(KnowledgeIslandsUtils.repeatedRepoSuffix)) {
+					gitRepository.setName(gitRepository.getName()+KnowledgeIslandsUtils.repeatedRepoSuffix);
 				}
 			}
 		}
@@ -289,13 +288,13 @@ public class DownloaderService {
 						.call();
 			}
 		}catch(JGitInternalException e) {
-			log.error(form.getCloneUrl());
 			e.printStackTrace();
+			log.error(form.getCloneUrl());
 			repeatedNumber = repeatedNumber+1;
 			git = cloneProjectFromFile(projectName, repeatedNumber, form, cloneFolder);
 		}catch(GitAPIException e) {
-			log.error(form.getCloneUrl());
 			e.printStackTrace();
+			log.error(form.getCloneUrl());
 		}
 		return git;
 	}

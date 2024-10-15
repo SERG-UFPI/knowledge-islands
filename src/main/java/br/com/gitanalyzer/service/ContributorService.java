@@ -1,6 +1,8 @@
 package br.com.gitanalyzer.service;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -12,6 +14,26 @@ import br.com.gitanalyzer.model.entity.Contributor;
 
 @Service
 public class ContributorService {
+
+	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits){
+		if(contributors != null && !contributors.isEmpty()) {
+			Date currentDate = commits.get(0).getAuthorDate();
+			Calendar calendar = Calendar.getInstance();
+			calendar.setTime(currentDate);
+			calendar.add(Calendar.YEAR, -1);
+			Date date = calendar.getTime();
+			commits = commits.stream().filter(c -> c.getAuthorDate().after(date)).toList();
+			contributorFor: for (Contributor contributor : contributors) {
+				for (Commit commit : commits) {
+					if (commit.getAuthor().equals(contributor)) {
+						contributor.setActive(true);
+						continue contributorFor;
+					}
+				}
+			}
+		}
+		return contributors;
+	}
 
 	public List<Contributor> getContributorFromCommits(List<Commit> commits){
 		List<Contributor> contributors = new ArrayList<Contributor>();

@@ -31,8 +31,7 @@ import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
-import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -64,28 +63,28 @@ public class GitRepositoryService {
 			}
 			String folderPath = createFolderProjectLogs(GenerateFolderProjectLogDTO.builder().projectName(projectName).versionId(versionId).build());
 
-			Path sourceClocFile = Paths.get(path+Constants.clocFileName);
-			Path targetClocFile = Paths.get(folderPath+Constants.clocFileName);
+			Path sourceClocFile = Paths.get(path+KnowledgeIslandsUtils.clocFileName);
+			Path targetClocFile = Paths.get(folderPath+KnowledgeIslandsUtils.clocFileName);
 			Files.copy(sourceClocFile, targetClocFile);
 
-			Path sourceFileList = Paths.get(path+Constants.allFilesFileName);
-			Path targetFileList = Paths.get(folderPath+Constants.allFilesFileName);
+			Path sourceFileList = Paths.get(path+KnowledgeIslandsUtils.allFilesFileName);
+			Path targetFileList = Paths.get(folderPath+KnowledgeIslandsUtils.allFilesFileName);
 			Files.copy(sourceFileList, targetFileList);
 
-			Path sourceFileLinguist = Paths.get(path+Constants.linguistFileName);
-			Path targetFileLinguist = Paths.get(folderPath+Constants.linguistFileName);
+			Path sourceFileLinguist = Paths.get(path+KnowledgeIslandsUtils.linguistFileName);
+			Path targetFileLinguist = Paths.get(folderPath+KnowledgeIslandsUtils.linguistFileName);
 			Files.copy(sourceFileLinguist, targetFileLinguist);
 
-			Path sourceCommit = Paths.get(path+Constants.commitFileName);
-			Path targetCommit = Paths.get(folderPath+Constants.commitFileName);
+			Path sourceCommit = Paths.get(path+KnowledgeIslandsUtils.commitFileName);
+			Path targetCommit = Paths.get(folderPath+KnowledgeIslandsUtils.commitFileName);
 			Files.copy(sourceCommit, targetCommit);
 
-			Path sourceCommitFile = Paths.get(path+Constants.commitFileFileName);
-			Path targetCommitFile = Paths.get(folderPath+Constants.commitFileFileName);
+			Path sourceCommitFile = Paths.get(path+KnowledgeIslandsUtils.commitFileFileName);
+			Path targetCommitFile = Paths.get(folderPath+KnowledgeIslandsUtils.commitFileFileName);
 			Files.copy(sourceCommitFile, targetCommitFile);
 
-			Path sourceDiff = Paths.get(path+Constants.diffFileName);
-			Path targetDiff = Paths.get(folderPath+Constants.diffFileName);
+			Path sourceDiff = Paths.get(path+KnowledgeIslandsUtils.diffFileName);
+			Path targetDiff = Paths.get(folderPath+KnowledgeIslandsUtils.diffFileName);
 			Files.copy(sourceDiff, targetDiff);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -129,13 +128,13 @@ public class GitRepositoryService {
 	}
 
 	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
 				String projectPath = fileDir.getAbsolutePath()+"/";
-				File commitFile = new File(projectPath+Constants.commitFileName);
+				File commitFile = new File(projectPath+KnowledgeIslandsUtils.commitFileName);
 				//if(commitFile.exists() == false) {
 				CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 					try {
@@ -266,7 +265,7 @@ public class GitRepositoryService {
 	}
 
 	public void generateLogFilesRepositoriesPaths(List<String> paths) {
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (String repositoryPath: paths) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -336,7 +335,7 @@ public class GitRepositoryService {
 		Process process = pb.start();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String fullName = reader.readLine();
-		fullName = fullName.replace("https://github.com/", "");
+		fullName = fullName.replace(KnowledgeIslandsUtils.gitHubBaseUrl, "");
 		fullName = fullName.replace(".git", "");
 		return fullName;
 	}

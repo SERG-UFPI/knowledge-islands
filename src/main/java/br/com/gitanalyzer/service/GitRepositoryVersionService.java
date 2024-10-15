@@ -18,26 +18,22 @@ import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ContributorVersion;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.FileVersion;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
-import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
-import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.ContributorUtils;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
 public class GitRepositoryVersionService {
 
-	private ContributorUtils contributorUtils = new ContributorUtils();
 	private GitRepositoryFolderExtractor gitRepositoryFolderExtractor = new GitRepositoryFolderExtractor();
 
 	@Autowired
@@ -55,9 +51,9 @@ public class GitRepositoryVersionService {
 	@Autowired
 	private CommitService commitService;
 	@Autowired
-	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
-	@Autowired
 	private ContributorService contributorService;
+	@Autowired
+	private SharedLinkCommitService sharedLinkCommitService;
 
 	public void remove(Long id) {
 		gitRepositoryVersionRepository.deleteById(id);
@@ -68,7 +64,7 @@ public class GitRepositoryVersionService {
 		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findAll();
 		List<Long> ids = versions.stream().map(v -> v.getId()).toList();
 
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (Long id : ids) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -92,20 +88,17 @@ public class GitRepositoryVersionService {
 		gitRepositoryVersionRepository.deleteByGitRepositoryIdIn(ids);
 	}
 
-	public GitRepositoryVersion getProjectVersion(GitRepository repository, boolean genAiAnalysis) throws IOException, NoCommitForRepositoryException {
+	public GitRepositoryVersion getProjectVersion(GitRepository repository) throws IOException, NoCommitForRepositoryException {
 		long start = System.currentTimeMillis();
-		if(!repository.getCurrentFolderPath().substring(repository.getCurrentFolderPath().length() -1).equals("/")) {
-			repository.setCurrentFolderPath(repository.getCurrentFolderPath()+"/");
-		}
-		List<FileGitRepositorySharedLinkCommit> fileSharedLink = genAiAnalysis?fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(repository.getId()):null;
-		List<File> files = fileService.getFilesFromClocFile(repository, fileSharedLink);
+		repository.setCurrentFolderPath(KnowledgeIslandsUtils.fixFolderPath(repository.getCurrentFolderPath()));
+		List<File> files = fileService.getFilesFromClocFile(repository);
 		fileService.getRenamesFiles(repository.getCurrentFolderPath(), files);
 		List<Commit> commits = commitService.getCommitsFromLogFiles(repository.getCurrentFolderPath());
 		if(commits != null && !commits.isEmpty()) {
 			Collections.sort(commits, Collections.reverseOrder());
 			Date dateVersion = commits.get(0).getAuthorDate();
 			String versionId = commits.get(0).getSha();
-			commitService.getCommitsFiles(repository, commits, files, fileSharedLink);
+			commitService.getCommitsFiles(repository, commits, files);
 			commits.removeIf(c -> c.getCommitFiles().isEmpty());
 			commitService.getCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits);
 			List<Contributor> contributors = contributorService.getContributorFromCommits(commits);
@@ -115,10 +108,10 @@ public class GitRepositoryVersionService {
 			List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
 			GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
 			float sec = (end - start) / 1000F;
-			return new GitRepositoryVersion(contributors.size(), 
+			return new GitRepositoryVersion(repository, contributors.size(), 
 					files.size(), commits.size(), 
-					dateVersion, versionId, contributorUtils.setActiveContributors(contributors, commits),
-					commits, files, (double) sec, gitRepositoryFolder, genAiAnalysis);
+					dateVersion, versionId, contributorService.setActiveContributors(contributors, commits),
+					commits, files, (double) sec, gitRepositoryFolder);
 		}else {
 			throw new NoCommitForRepositoryException(repository.getFullName());
 		}
@@ -132,15 +125,18 @@ public class GitRepositoryVersionService {
 
 	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository, boolean genAiAnalysis) throws Exception {
 		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
-		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository, genAiAnalysis);
-		if(!gitRepositoryVersion.validGitRepositoryVersion()) {
-			throw new Exception("GitRepository version not valid");
-		}
-		if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
-			gitRepositoryVersion.setGitRepository(gitRepository);
-			gitRepositoryVersionRepository.save(gitRepositoryVersion);
+		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
+		if(gitRepositoryVersion.validGitRepositoryVersion()) {
+			if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
+				if(genAiAnalysis) {
+					sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
+				}
+				gitRepositoryVersionRepository.save(gitRepositoryVersion);
+			}else {
+				throw new Exception("GitRepository version already extracted");
+			}
 		}else {
-			throw new Exception("GitRepository version already extracted");
+			throw new Exception("GitRepository version not valid");
 		}
 		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		return gitRepositoryVersion;

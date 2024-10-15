@@ -13,27 +13,26 @@ import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @AllArgsConstructor
+@NoArgsConstructor
 public class SharedLinkCommit {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@OneToMany(cascade= {CascadeType.PERSIST, CascadeType.REMOVE})
-	private List<CopiedLine> copiedLines;
+	private List<CodeLine> copiedLines;
 	@OneToOne
 	private SharedLink sharedLink;
 	@OneToOne(cascade = {CascadeType.PERSIST})
 	private Commit commitThatAddedTheLink;
 
-	public SharedLinkCommit() {
-		this.copiedLines = new ArrayList<>();
-	}
-
 	public SharedLinkCommit(SharedLink sharedLink) {
 		super();
 		this.sharedLink = sharedLink;
+		this.copiedLines = new ArrayList<>();
 	}
 }

@@ -37,7 +37,7 @@ public class SharedLink {
 	private String openAiFullJson;
 	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private ChatgptConversation conversation;
+	private ChatGptConversation conversation;
 	@Enumerated(EnumType.STRING)
 	private SharedLinkSourceType type;
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -49,7 +49,7 @@ public class SharedLink {
 		this.textMatchFragment = textMatchFragment;
 	}
 
-	public SharedLink(String link, String textMatchFragment, ChatgptConversation conversation, String openAiFullJson) {
+	public SharedLink(String link, String textMatchFragment, ChatGptConversation conversation, String openAiFullJson) {
 		super();
 		this.link = link;
 		this.textMatchFragment = textMatchFragment;

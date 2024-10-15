@@ -11,14 +11,14 @@ import java.util.Map;
 
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 public class FileExtractor {
 
 	public int extractSizeAllFiles(String path) {
 		int lines = 0;
 		try {
-			FileInputStream fstream = new FileInputStream(path+Constants.allFilesFileName);
+			FileInputStream fstream = new FileInputStream(path+KnowledgeIslandsUtils.allFilesFileName);
 			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {

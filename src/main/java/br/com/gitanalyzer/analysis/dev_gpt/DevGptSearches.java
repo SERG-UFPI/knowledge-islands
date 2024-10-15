@@ -20,20 +20,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.gitanalyzer.exceptions.FileNotFoundOnCommitException;
-import br.com.gitanalyzer.exceptions.LinkNotFoundOnCommitsException;
 import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
-import br.com.gitanalyzer.model.entity.ChatgptConversation;
+import br.com.gitanalyzer.model.entity.ChatGptConversation;
 import br.com.gitanalyzer.model.entity.Commit;
-import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.PromptCode;
 import br.com.gitanalyzer.model.enums.ChatgptUserAgent;
-import br.com.gitanalyzer.model.enums.OperationType;
-import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.FileUtils;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 
 public class DevGptSearches {
@@ -201,86 +197,6 @@ public class DevGptSearches {
 	//		return contributors;
 	//	}
 
-	public static ChatgptConversation getConversationOfOpenAiJson(String json) throws PageJsonProcessingException {
-		ObjectMapper objectMapper = new ObjectMapper();
-		try {
-			JsonNode rootNode = objectMapper.readTree(json);
-			JsonNode dataNode = rootNode.path("state").path("loaderData").path("routes/share.$shareId.($action)").path("serverResponse").path("data");
-			if(!dataNode.isMissingNode()) {
-				ChatgptConversation conversation = new ChatgptConversation();
-				Date createTime = new java.util.Date(dataNode.get("create_time")!=null?dataNode.get("create_time").asLong()*1000:null);
-				conversation.setCreateTime(createTime);
-				Date updateTime = new java.util.Date(dataNode.get("update_time")!=null?dataNode.get("update_time").asLong()*1000:null);
-				conversation.setUpdateTime(updateTime);
-				conversation.setTitle(dataNode.get("title")!=null?dataNode.get("title").asText():"");
-				if(dataNode != null) {
-					JsonNode conversationsNode = dataNode.get("linear_conversation");
-					for (JsonNode node : conversationsNode) {
-						JsonNode messageNode = node.get("message");
-						if(messageNode != null) {
-							JsonNode authorNode = messageNode.get("author");
-							if(authorNode != null && ChatgptUserAgent.getValuesArray().contains(authorNode.get("role").asText())) {
-								ConversationTurn conversationTurn = new ConversationTurn();
-								String agent = authorNode.get("role").asText();
-								ChatgptUserAgent userAgent = ChatgptUserAgent.getByAgent(agent);
-								conversationTurn.setUserAgent(userAgent);
-								Long promptCreateTime = messageNode.get("create_time").asLong();
-								conversationTurn.setCreateTime(promptCreateTime);
-								JsonNode contentParts = messageNode.get("content").get("parts");
-								if(contentParts != null) {
-									for (JsonNode content : contentParts) {
-										String fullContent = content.asText();
-										List<PromptCode> codes = null;
-										if(agent.equals(ChatgptUserAgent.ASSISTANT.getAgent()) && fullContent.contains(Constants.openAiCodeJsonDelimiter)) {
-											int delimiterCount = fullContent.split(Constants.openAiCodeJsonDelimiter, -1).length-1;
-											if(delimiterCount % 2 == 0) {
-												codes = getCodesFromOpenAiJson(fullContent);
-												for (PromptCode code : codes) {
-													fullContent = fullContent.replace(code.getCodeFullText(), code.getCodeId());
-												}
-												conversationTurn.setCodes(codes);
-											}
-										}
-										conversationTurn.setFullText(fullContent);
-									}
-									conversation.addConversationTurn(conversationTurn);
-								}
-							}
-						}
-					}
-				}
-				return conversation;
-			}else {
-				throw new PageJsonProcessingException("Error on server response");
-			}
-		}catch(JsonProcessingException e) {
-			e.printStackTrace();
-			throw new PageJsonProcessingException(e.getMessage());
-		}
-	}
-
-	private static List<PromptCode> getCodesFromOpenAiJson(String fullContent) {
-		List<PromptCode> promptCode = new ArrayList<>();
-		Pattern r = Pattern.compile(Constants.openAiCodeJsonDelimiter+".*?"+Constants.openAiCodeJsonDelimiter, 
-				Pattern.DOTALL);
-		Matcher m = r.matcher(fullContent);
-		int codeId = 0;
-		while (m.find()) {
-			String codeText = m.group(0).trim();
-			String codeBlock = codeText.replace(Constants.openAiCodeJsonDelimiter, "");
-			String[] words = codeBlock.split("\\s+");
-			String language = words.length > 0 ? words[0].trim():"";
-			int firstNewlineIndex = codeBlock.indexOf("\n");
-			int lastNewlineIndex = codeBlock.lastIndexOf("\n");
-			if(firstNewlineIndex != -1 && lastNewlineIndex != -1) {
-				codeBlock = codeBlock.substring(firstNewlineIndex+1, lastNewlineIndex);
-				codeBlock = codeBlock.trim();
-				promptCode.add(new PromptCode(language, codeText, codeBlock, PromptCode.startOfCodeBlockId()+codeId));
-				codeId++;
-			}
-		}
-		return promptCode;
-	}
 
 	public static File getFileContent(String token, String repoFullName, String filePath) throws Exception {
 		filePath = UriUtils.encodePath(filePath, "UTF-8");
@@ -308,40 +224,40 @@ public class DevGptSearches {
 		}
 	}
 
-	public static List<CommitFile> getCommitFiles(String token, String repoFullName, String commitSha) throws Exception {
-		try {
-			List<CommitFile> commitFiles = new ArrayList<>();
-			ObjectMapper objectMapper = new ObjectMapper();
-			String[] command = {"curl", "-L", "-H", "Accept: application/vnd.github+json", "-H", "Authorization: Bearer "+token, 
-					"https://api.github.com/repos/"+repoFullName+"/commits/"+commitSha}; 
-			String content = GitHubCall.generalCall(command);
-			JsonNode rootNode = objectMapper.readTree(content.toString());
-			if (rootNode.get("files") != null && rootNode.get("files").size() > 0) {
-				for (JsonNode item : rootNode.get("files")) {
-					CommitFile commitFile = new CommitFile();
-					commitFile.getFile().setSha(item.get("sha").asText());
-					commitFile.getFile().setPath(item.get("filename").asText());
-					commitFile.setAdditions(item.get("additions").asInt());
-					commitFile.setDeletions(item.get("deletions").asInt());
-					commitFile.setChanges(item.get("changes").asInt());
-					commitFile.setPatch(item.get("patch")!=null?item.get("patch").asText():null);
-					commitFile.setAddedLines(commitFile.getPatch() != null ? getAddedLinesFromPatch(commitFile.getPatch()):null);
-					commitFile.setStatus(OperationType.valueOf(item.get("status").asText().toUpperCase()));
-					commitFiles.add(commitFile);
-				}
-			}
-			return commitFiles;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+	//	public static List<CommitFile> getCommitFiles(String token, String repoFullName, String commitSha) throws Exception {
+	//		try {
+	//			List<CommitFile> commitFiles = new ArrayList<>();
+	//			ObjectMapper objectMapper = new ObjectMapper();
+	//			String[] command = {"curl", "-L", "-H", "Accept: application/vnd.github+json", "-H", "Authorization: Bearer "+token, 
+	//					"https://api.github.com/repos/"+repoFullName+"/commits/"+commitSha}; 
+	//			String content = GitHubCall.generalCall(command);
+	//			JsonNode rootNode = objectMapper.readTree(content.toString());
+	//			if (rootNode.get("files") != null && rootNode.get("files").size() > 0) {
+	//				for (JsonNode item : rootNode.get("files")) {
+	//					CommitFile commitFile = new CommitFile();
+	//					commitFile.getFile().setSha(item.get("sha").asText());
+	//					commitFile.getFile().setPath(item.get("filename").asText());
+	//					commitFile.setAdditions(item.get("additions").asInt());
+	//					commitFile.setDeletions(item.get("deletions").asInt());
+	//					commitFile.setChanges(item.get("changes").asInt());
+	//					commitFile.setPatch(item.get("patch")!=null?item.get("patch").asText():null);
+	//					commitFile.setAddedLines(commitFile.getPatch() != null ? getAddedLinesFromPatch(commitFile.getPatch()):null);
+	//					commitFile.setStatus(OperationType.valueOf(item.get("status").asText().toUpperCase()));
+	//					commitFiles.add(commitFile);
+	//				}
+	//			}
+	//			return commitFiles;
+	//		} catch (Exception e) {
+	//			e.printStackTrace();
+	//		}
+	//		return null;
+	//	}
 
-	public static List<String> getCodesFromConversation(List<ConversationTurn> conversation){
+	public List<String> getCodesFromConversation(List<ConversationTurn> conversation){
 		List<String> codes = new ArrayList<>();
 		for (ConversationTurn turn : conversation) {
 			if(turn.getUserAgent().equals(ChatgptUserAgent.ASSISTANT) && turn.getCodes() != null
-					&& turn.getCodes().size() > 0) {
+					&& !turn.getCodes().isEmpty()) {
 				for(PromptCode code: turn.getCodes()) {
 					codes.addAll(Arrays.asList(code.getCode().split("\n")));
 				}
@@ -367,20 +283,20 @@ public class DevGptSearches {
 		return addedLines;
 	}
 
-	public static Commit getCommitThatAddedLink(File file, String link) throws LinkNotFoundOnCommitsException, FileNotFoundOnCommitException {
-		for (Commit commit : file.getCommits()) {
-			for (CommitFile commitFile : commit.getCommitFiles()) {
-				if(commitFile.getFile().getPath().equals(file.getPath())) {
-					if(commitFile.getAddedLines() != null && commitFile.getAddedLines().size() > 0) {
-						if(commitFile.getAddedLines().stream().anyMatch(a -> a.contains(link))) {
-							return commit;
-						}
-					}
-				}
-			}
-		}
-		throw new LinkNotFoundOnCommitsException(link, file.getPath());
-	}
+	//	public static Commit getCommitThatAddedLink(File file, String link) throws LinkNotFoundOnCommitsException, FileNotFoundOnCommitException {
+	//		for (Commit commit : file.getCommits()) {
+	//			for (CommitFile commitFile : commit.getCommitFiles()) {
+	//				if(commitFile.getFile().getPath().equals(file.getPath())) {
+	//					if(commitFile.getAddedLines() != null && commitFile.getAddedLines().size() > 0) {
+	//						if(commitFile.getAddedLines().stream().anyMatch(a -> a.contains(link))) {
+	//							return commit;
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//		throw new LinkNotFoundOnCommitsException(link, file.getPath());
+	//	}
 
 	//	public static List<File> getFilesFromSharedLinks(List<SharedLink> sharedLinks) {
 	//		List<File> files = new ArrayList<>();

@@ -19,7 +19,7 @@ import lombok.Data;
 @Data
 @Entity
 @AllArgsConstructor
-public class ChatgptConversation {
+public class ChatGptConversation {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,12 +32,12 @@ public class ChatgptConversation {
 	private Date updateTime;
 	private String title;
 
-	public ChatgptConversation() {
+	public ChatGptConversation() {
 		conversationTurns = new ArrayList<>();
 	}
-	
+
 	public void addConversationTurn(ConversationTurn turn) {
-        turn.setConversation(this);
-        conversationTurns.add(turn);
-    }
+		turn.setConversation(this);
+		conversationTurns.add(turn);
+	}
 }

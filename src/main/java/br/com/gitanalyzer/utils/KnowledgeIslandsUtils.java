@@ -4,8 +4,10 @@ package br.com.gitanalyzer.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class Constants {
+public class KnowledgeIslandsUtils {
 
 	public static final String pathInputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv");
 	public static final String pathScriptMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/predictionScript.R");
@@ -81,6 +83,9 @@ public class Constants {
 	public static final String repeatedRepoSuffix = "RepeatedRepo";
 
 	public static final int pageNotFoundCode = 404;
+	public static final String dateStringBeginSharedLink = "2023-01-01";
+	
+	public static final String gitHubBaseUrl = "https://github.com/";
 
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
@@ -108,6 +113,45 @@ public class Constants {
 
 	public static String getFileSeparator() {
 		return java.nio.file.FileSystems.getDefault().getSeparator();
+	}
+
+	public static ExecutorService getExecutorServiceForLogs() {
+		return Executors.newFixedThreadPool(numberOfThreadsToGenerateLogsFiles);
+	}
+
+	public static ExecutorService getExecutorServiceForTf() {
+		return Executors.newFixedThreadPool(numberOfThreadsToCalculateTf);
+	}
+
+	public static ExecutorService getExecutorServiceMax() {
+		return Executors.newFixedThreadPool(numberOfMaxThreads);
+	}
+
+	public static String fixFolderPath(String path) {
+		if(!path.substring(path.length() -1).equals(getFileSeparator())) {
+			path = path+getFileSeparator();
+		}
+		return path;
+	}
+
+	public static List<String> getProgrammingLanguagesAliasGithub(){
+		List<String> alias = new ArrayList<>();
+		//		alias.add("python");
+		//	alias.add("javascript");
+		//		alias.add("java");
+		//		alias.add("typescript");
+		//		alias.add("csharp");
+		//		alias.add("cpp");
+		//		alias.add("c");
+		alias.add("php");
+		//		alias.add("ruby");
+		//		alias.add("shell");
+		//		alias.add("go");
+		//		alias.add("nix");
+		//		alias.add("rust");
+		//		alias.add("scala");
+		//		alias.add("kotlin");
+		return alias;
 	}
 
 }

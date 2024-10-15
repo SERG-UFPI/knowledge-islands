@@ -16,6 +16,7 @@ import org.eclipse.jgit.blame.BlameResult;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.model.entity.File;
@@ -23,14 +24,19 @@ import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.OperationType;
-import br.com.gitanalyzer.utils.Constants;
+import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Service
 public class FileService {
 
-	public List<File> getFilesFromClocFile(GitRepository gitRepository, List<FileGitRepositorySharedLinkCommit> filesSharedLinks) throws IOException {
+	@Autowired
+	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
+
+	public List<File> getFilesFromClocFile(GitRepository gitRepository) throws IOException {
+		List<FileGitRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		Map<String, String[]> projectPatterns  = new HashMap<>();
 		String[] arrayLinux = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String[] arrayHomebrew = new String[] {"Library/Formula/"};
@@ -44,7 +50,7 @@ public class FileService {
 		}
 		List<File> files = new ArrayList<>();
 		List<File> filesWithoutSize = new ArrayList<>();
-		String clocListPath = gitRepository.getCurrentFolderPath()+Constants.clocFileName;
+		String clocListPath = gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.clocFileName;
 		List<File> filesRepository = new ArrayList<>();
 		if(gitRepository != null && gitRepository.getGitRepositoryVersion() != null) {
 			for (GitRepositoryVersion version : gitRepository.getGitRepositoryVersion()) {
@@ -57,7 +63,7 @@ public class FileService {
 			filesSharedLinks.forEach(fs -> filesRepository.add(fs.getFile()));
 		}
 		FileInputStream fstreamCloc = new FileInputStream(clocListPath);
-		try(BufferedReader brCloc =new BufferedReader(new InputStreamReader(fstreamCloc));) {
+		try(BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));) {
 			String strLineCloc;
 			whileFile: while ((strLineCloc = brCloc.readLine()) != null) {
 				String[] splitedLine = strLineCloc.split(";");
@@ -127,7 +133,7 @@ public class FileService {
 		HashMap<String, String> newOldName = new HashMap<String, String>();
 		BufferedReader br = null;
 		try {
-			FileInputStream fstream = new FileInputStream(projectPath+Constants.commitFileFileName);
+			FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileFileName);
 			br = new BufferedReader(new InputStreamReader(fstream));
 			String strLine;
 			while ((strLine = br.readLine()) != null) {

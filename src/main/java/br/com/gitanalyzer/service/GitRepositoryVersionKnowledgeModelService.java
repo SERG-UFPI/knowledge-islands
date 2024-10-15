@@ -42,9 +42,9 @@ import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryFolderRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
-import br.com.gitanalyzer.utils.Constants;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @Service
 public class GitRepositoryVersionKnowledgeModelService {
@@ -169,13 +169,13 @@ public class GitRepositoryVersionKnowledgeModelService {
 						boolean maintainer = false;
 						if (knowledgeMetric.equals(KnowledgeModel.DOE)) {
 							normalized = authorFile.getDoe().getDoeValue()/maxValue;
-							if (normalized >= Constants.normalizedThresholdMantainerDOE) {
+							if (normalized >= KnowledgeIslandsUtils.normalizedThresholdMantainerDOE) {
 								maintainer = true;
 							}
 						}else if(knowledgeMetric.equals(KnowledgeModel.DOA)){
 							normalized = authorFile.getDoa().getDoaValue()/maxValue;
-							if (normalized > Constants.normalizedThresholdMantainerDOA && 
-									authorFile.getDoa().getDoaValue() >= Constants.thresholdMantainerDOA) {
+							if (normalized > KnowledgeIslandsUtils.normalizedThresholdMantainerDOA && 
+									authorFile.getDoa().getDoaValue() >= KnowledgeIslandsUtils.thresholdMantainerDOA) {
 								maintainer = true;
 							}
 						}
@@ -192,7 +192,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}else {
-			java.io.File fileInput = new java.io.File(Constants.pathInputMlFile);
+			java.io.File fileInput = new java.io.File(KnowledgeIslandsUtils.pathInputMlFile);
 			FileWriter outputfile;
 			try {
 				outputfile = new FileWriter(fileInput);
@@ -214,12 +214,12 @@ public class GitRepositoryVersionKnowledgeModelService {
 			}
 			List<MlOutput> output = new ArrayList<MlOutput>();
 			try {
-				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", Constants.pathScriptMlFile);
+				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", KnowledgeIslandsUtils.pathScriptMlFile);
 				pb.redirectOutput(Redirect.INHERIT);
 				pb.redirectError(Redirect.INHERIT);
 				Process process = pb.start();
 				process.waitFor();
-				CSVReader reader = new CSVReader(new FileReader(Constants.pathOutputMlFile));
+				CSVReader reader = new CSVReader(new FileReader(KnowledgeIslandsUtils.pathOutputMlFile));
 				String[] lineInArray;
 				while ((lineInArray = reader.readNext()) != null) {
 					output.add(new MlOutput(lineInArray[5], lineInArray[6], lineInArray[7]));
@@ -305,7 +305,9 @@ public class GitRepositoryVersionKnowledgeModelService {
 	protected DOE getDoeContributorFile(ContributorVersion contributorVersion, 
 			FileVersion fileVersion, List<Commit> commits) {
 		Date currentDate = commits.get(0).getAuthorDate();
-		int adds = 0, fa = 0, numDays =0;;
+		int adds = 0; 
+		int fa = 0;
+		int numDays =0;;
 		Date dateLastCommit = null;
 		List<Contributor> contributors = new ArrayList<Contributor>();
 		contributors.add(contributorVersion.getContributor());

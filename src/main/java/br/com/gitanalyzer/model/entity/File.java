@@ -1,7 +1,9 @@
 package br.com.gitanalyzer.model.entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -72,6 +74,13 @@ public class File{
 		paths.add(this.path);
 		paths.addAll(renamePaths);
 		return paths.contains(path);
+	}
+
+	public Set<String> getFilePaths(){
+		Set<String> paths = new HashSet<>();
+		paths.add(this.path);
+		paths.addAll(renamePaths);
+		return paths;
 	}
 
 	public File(String path, int size) {

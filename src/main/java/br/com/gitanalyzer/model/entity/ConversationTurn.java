@@ -36,6 +36,6 @@ public class ConversationTurn {
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<PromptCode> codes;
 	@ManyToOne
-	private ChatgptConversation conversation;
+	private ChatGptConversation conversation;
 	private Long createTime;
 }

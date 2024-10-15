@@ -6,12 +6,18 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-public class CopiedLine {
+@NoArgsConstructor
+public class CodeLine {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	private String line;
+
+	public CodeLine(String line) {
+		this.line = line;
+	}
 }

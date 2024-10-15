@@ -36,7 +36,7 @@ public class GitRepositoryDependencyService {
 		try {
 			String owner = GitRepositoryUtils.getOwnerNameProject(projectFullName);
 			String name = GitRepositoryUtils.getNameProject(projectFullName);
-			String command = br.com.gitanalyzer.utils.Constants.commandGetDependencyRepo.replace("$TOKEN", token).replace("$OWNER", owner).replace("$PROJECT", name);
+			String command = br.com.gitanalyzer.utils.KnowledgeIslandsUtils.commandGetDependencyRepo.replace("$TOKEN", token).replace("$OWNER", owner).replace("$PROJECT", name);
 			ProcessBuilder pb = new ProcessBuilder(new String[] {"bash", "-l", "-c", command});
 			pb.redirectErrorStream(true);
 			Process process = pb.start();

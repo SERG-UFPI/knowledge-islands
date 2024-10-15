@@ -55,7 +55,9 @@ public class GitRepository {
 	private boolean privateRepository;
 	private int size;
 	@javax.persistence.Transient
-	private int numberAnalysedDevs, numberAllCommits, numberAllFiles;
+	private int numberAnalysedDevs;
+	int numberAllCommits;
+	int numberAllFiles;
 
 	public GitRepository(String name, String currentFolderPath, String fullName, String downloadVersionHash) {
 		this.name = name;

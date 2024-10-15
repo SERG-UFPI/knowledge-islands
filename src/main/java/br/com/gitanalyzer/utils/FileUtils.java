@@ -12,26 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class FileUtils {
 
-	public static List<String> getProgrammingLanguagesAliasGithub(){
-		List<String> alias = new ArrayList<>();
-//		alias.add("python");
-//		alias.add("javascript");
-//		alias.add("java");
-//		alias.add("typescript");
-//		alias.add("csharp");
-//		alias.add("cpp");
-//		alias.add("c");
-		alias.add("php");
-//		alias.add("ruby");
-//		alias.add("shell");
-//		alias.add("go");
-//		alias.add("nix");
-//		alias.add("rust");
-//		alias.add("scala");
-//		alias.add("kotlin");
-		return alias;
-	}
-
 	public static String getFileExtension(String path) {
 		if(path.contains("/")) {
 			String extension = path.substring(path.lastIndexOf("/")+1);

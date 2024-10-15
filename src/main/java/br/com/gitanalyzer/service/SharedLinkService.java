@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.gitanalyzer.analysis.dev_gpt.DevGptSearches;
 import br.com.gitanalyzer.analysis.dev_gpt.GitHubCall;
 import br.com.gitanalyzer.exceptions.CommandExecutionException;
 import br.com.gitanalyzer.exceptions.FetchPageException;
@@ -30,7 +29,7 @@ import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
 import br.com.gitanalyzer.exceptions.SharedLinkNoCode;
 import br.com.gitanalyzer.exceptions.SharedLinkNoConversation;
 import br.com.gitanalyzer.exceptions.SharedLinkNotFoundException;
-import br.com.gitanalyzer.model.entity.ChatgptConversation;
+import br.com.gitanalyzer.model.entity.ChatGptConversation;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
@@ -47,9 +46,7 @@ import br.com.gitanalyzer.repository.FileRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.repository.SharedLinkSearchRepository;
-import br.com.gitanalyzer.utils.AsyncUtils;
-import br.com.gitanalyzer.utils.Constants;
-import br.com.gitanalyzer.utils.FileUtils;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -76,7 +73,8 @@ public class SharedLinkService {
 	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 	@Value("${configuration.github.token}")
 	private String token;
-	private Pattern pattern = Pattern.compile(Constants.regexOpenAiRegex);
+	@Autowired
+	private ChatGPTConversationService chatGPTConversationService;
 
 	public String extractOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
 		try {
@@ -96,13 +94,13 @@ public class SharedLinkService {
 
 			process.waitFor();
 			String html = content.toString();
-			int startIndex = html.indexOf(Constants.openAiJsonStart);
-			int endIndex = html.indexOf(Constants.openAiJsonEnd);
+			int startIndex = html.indexOf(KnowledgeIslandsUtils.openAiJsonStart);
+			int endIndex = html.indexOf(KnowledgeIslandsUtils.openAiJsonEnd);
 			if(startIndex != -1 && endIndex != -1) {
-				String json = html.substring(startIndex + Constants.openAiJsonStart.length(), endIndex);
+				String json = html.substring(startIndex + KnowledgeIslandsUtils.openAiJsonStart.length(), endIndex);
 				JsonNode rootNode = objectMapper.readTree(json);
 				JsonNode errorNode = rootNode.path("state").path("errors").path("root");
-				if(!errorNode.isMissingNode() && errorNode.path("status").asInt() == Constants.pageNotFoundCode) {
+				if(!errorNode.isMissingNode() && errorNode.path("status").asInt() == KnowledgeIslandsUtils.pageNotFoundCode) {
 					throw new SharedLinkNotFoundException(url);
 				}
 				return json;
@@ -122,18 +120,21 @@ public class SharedLinkService {
 	public List<GitRepository> saveGitRepositoriesApi() throws InterruptedException, IOException{
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversation();
 		ObjectMapper objectMapper = new ObjectMapper();
-		ExecutorService executorService = AsyncUtils.getExecutorServiceMax();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository gitRepository : repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
 					if(gitRepository.getCloneUrl() == null) {
 						String[] command = {"curl", "-H", "Authorization: Bearer "+token, 
-								Constants.githubApiBaseUrl+"/repos/"+gitRepository.getFullName()};
+								KnowledgeIslandsUtils.githubApiBaseUrl+"/repos/"+gitRepository.getFullName()};
 						String content = GitHubCall.generalCall(command);
 						JsonNode rootNode = objectMapper.readTree(content);
 						gitRepository.setPrivateRepository(rootNode.get("private")!=null?rootNode.get("private").asBoolean():false);
 						gitRepository.setCloneUrl(rootNode.get("clone_url")!=null?rootNode.get("clone_url").asText():null);
+						if(gitRepository.getCloneUrl() == null) {
+							gitRepository.setCloneUrl(KnowledgeIslandsUtils.gitHubBaseUrl+gitRepository.getFullName());
+						}
 						gitRepository.setLanguage(rootNode.get("language")!=null?rootNode.get("language").asText():null);
 						gitRepository.setDefaultBranch(rootNode.get("default_branch")!=null?rootNode.get("default_branch").asText():null);
 						gitRepository.setSize(rootNode.get("size")!=null?rootNode.get("size").asInt():0);
@@ -158,7 +159,7 @@ public class SharedLinkService {
 			SharedLink sharedLink = sharedLinks.get(j);
 			try {
 				String json = extractOpenAiJson(sharedLink.getLink());
-				ChatgptConversation conversation = DevGptSearches.getConversationOfOpenAiJson(json);
+				ChatGptConversation conversation = chatGPTConversationService.getConversationOfOpenAiJson(json);
 				if (conversation.getConversationTurns().isEmpty()) {
 					throw new SharedLinkNoConversation(sharedLink.getLink());
 				}
@@ -205,6 +206,7 @@ public class SharedLinkService {
 	}
 
 	private void saveFileSharedLinkItem(JsonNode item, String language) {
+		Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegex);
 		String repositoryLabel = "repository";
 		try {
 			JsonNode repositoryNode = item.get(repositoryLabel);
@@ -245,7 +247,7 @@ public class SharedLinkService {
 					}
 				}
 			}
-
+			fileGitRepositorySharedLinkCommitRepository.save(fileGitRepositorySharedLinkCommit);
 		}catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
@@ -257,7 +259,7 @@ public class SharedLinkService {
 		String itemsLabel = "items";
 		int perPage = 100;
 		ObjectMapper objectMapper = new ObjectMapper();
-		List<String> aliases = FileUtils.getProgrammingLanguagesAliasGithub();
+		List<String> aliases = KnowledgeIslandsUtils.getProgrammingLanguagesAliasGithub();
 		List<SharedLink> sharedLinks = new ArrayList<>();
 		for (String language: aliases) {
 			int page = 1;
@@ -265,7 +267,7 @@ public class SharedLinkService {
 			SharedLinkSearch search = new SharedLinkSearch();
 			while(indexPage <= page) {
 				String[] command = {"curl", "-H", "Accept: application/vnd.github.text-match+json", "-H", "Authorization: Bearer "+token, 
-						Constants.githubApiBaseUrl+"/search/code?q=https://chat.openai.com/share/+language:"+language+"&page="+indexPage+"&per_page="+perPage};
+						KnowledgeIslandsUtils.githubApiBaseUrl+"/search/code?q=https://chat.openai.com/share/+language:"+language+"&page="+indexPage+"&per_page="+perPage};
 				String commandJoined = String.join(" ", command);
 				try {
 					String content = GitHubCall.searchCall(command);
@@ -283,7 +285,8 @@ public class SharedLinkService {
 							}
 						}
 						if(rootNode.get(itemsLabel) != null && rootNode.get(itemsLabel).size() > 0) {
-							for (JsonNode item : rootNode.get(itemsLabel)) {
+							JsonNode items = rootNode.get(itemsLabel);
+							for (JsonNode item : items) {
 								saveFileSharedLinkItem(item, language);
 							}
 						}
@@ -372,7 +375,6 @@ public class SharedLinkService {
 		log.info("Third Quartile (Q3): " + q3);
 	}
 
-	@Transactional
 	public void createSharedLinkFull() throws InterruptedException, IOException, URISyntaxException {
 		saveFileSharedLinks();
 		setConversationSharedLinks();
@@ -381,7 +383,7 @@ public class SharedLinkService {
 		List<String> repositoriesPath = new ArrayList<>();
 		repositories.forEach(r -> repositoriesPath.add(r.getCurrentFolderPath()));
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
-		ExecutorService executorService = AsyncUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository gitRepository: repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
