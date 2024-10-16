@@ -41,12 +41,6 @@ public class Contributor {
 		this.name = name;
 		this.email = email;
 	}
-	
-	public Contributor createGenerativeAIContributor() {
-		this.name = "GenerativeAI";
-		this.email = "generativeai@genemail.com";
-		return this;
-	}
 
 	@Override
 	public int hashCode() {

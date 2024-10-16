@@ -127,14 +127,14 @@ public class GitRepositoryVersionService {
 		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
 		if(gitRepositoryVersion.validGitRepositoryVersion()) {
-			if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
-				if(genAiAnalysis) {
-					sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
-				}
-				gitRepositoryVersionRepository.save(gitRepositoryVersion);
-			}else {
-				throw new Exception("GitRepository version already extracted");
+			//if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
+			if(genAiAnalysis) {
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
 			}
+			gitRepositoryVersionRepository.save(gitRepositoryVersion);
+			//			}else {
+			//				throw new Exception("GitRepository version already extracted");
+			//			}
 		}else {
 			throw new Exception("GitRepository version not valid");
 		}

@@ -143,10 +143,10 @@ public class KnowledgeIslandsUtils {
 		//		alias.add("csharp");
 		//		alias.add("cpp");
 		//		alias.add("c");
-		alias.add("php");
+		//alias.add("php");
 		//		alias.add("ruby");
 		//		alias.add("shell");
-		//		alias.add("go");
+				alias.add("go");
 		//		alias.add("nix");
 		//		alias.add("rust");
 		//		alias.add("scala");

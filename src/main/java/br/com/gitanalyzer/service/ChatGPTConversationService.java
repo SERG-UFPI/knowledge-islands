@@ -44,7 +44,12 @@ public class ChatGPTConversationService {
 			if(turn.getUserAgent().equals(ChatgptUserAgent.ASSISTANT) && turn.getCodes() != null
 					&& !turn.getCodes().isEmpty()) {
 				for(PromptCode code: turn.getCodes()) {
-					codes.addAll(Arrays.asList(code.getCode().split("\n")));
+					List<String> lines = Arrays.asList(code.getCode().split("\n"));
+					for (String line : lines) {
+						if(!line.isEmpty() && !line.isBlank()) {
+							codes.add(line);
+						}
+					}
 				}
 			}
 		}
@@ -114,6 +119,8 @@ public class ChatGPTConversationService {
 		if(promptCode.getLanguage() == null || promptCode.getLanguage().isEmpty()) {
 			if(promptCode.getCode().contains("javascript")) {
 				promptCode.setLanguage("javascript");
+			}else if(promptCode.getCode().matches(".*\\bgo\\b.*")) {
+				promptCode.setLanguage("go");
 			}
 		}
 	}

@@ -25,6 +25,7 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
@@ -34,9 +35,10 @@ public class FileService {
 
 	@Autowired
 	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
+	@Autowired
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 
 	public List<File> getFilesFromClocFile(GitRepository gitRepository) throws IOException {
-		List<FileGitRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		Map<String, String[]> projectPatterns  = new HashMap<>();
 		String[] arrayLinux = new String[] {"drivers/", "crypto/", "sound/", "security/"};
 		String[] arrayHomebrew = new String[] {"Library/Formula/"};
@@ -52,15 +54,21 @@ public class FileService {
 		List<File> filesWithoutSize = new ArrayList<>();
 		String clocListPath = gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.clocFileName;
 		List<File> filesRepository = new ArrayList<>();
-		if(gitRepository != null && gitRepository.getGitRepositoryVersion() != null) {
-			for (GitRepositoryVersion version : gitRepository.getGitRepositoryVersion()) {
+		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+		if(versions != null) {
+			for (GitRepositoryVersion version : versions) {
 				if(version.getFiles() != null) {
-					version.getFiles().forEach(filesRepository::add);
+					filesRepository.addAll(version.getFiles());
 				}
 			}
 		}
+		List<FileGitRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
-			filesSharedLinks.forEach(fs -> filesRepository.add(fs.getFile()));
+			for(FileGitRepositorySharedLinkCommit fileSharedLink: filesSharedLinks) {
+				if(filesRepository.stream().noneMatch(f -> f.getId().equals(fileSharedLink.getId()))) {
+					filesRepository.add(fileSharedLink.getFile());
+				}
+			}
 		}
 		FileInputStream fstreamCloc = new FileInputStream(clocListPath);
 		try(BufferedReader brCloc = new BufferedReader(new InputStreamReader(fstreamCloc));) {
@@ -77,12 +85,14 @@ public class FileService {
 				}
 				File file = null;
 				for (File fileAux : filesRepository) {
-					if(fileAux.getPath().equals(filePath)) {
+					if(fileAux.isFile(filePath)) {
 						file = fileAux;
 						break;
 					}
 				}
-				if ((file == null && splitedLine.length > 1) || (file != null && file.getSize() == 0)) {
+				if(file != null && file.getSize() != 0) {
+					files.add(file);
+				}else if (splitedLine.length == 3) {
 					String fileSizeString = splitedLine[2];
 					if (fileSizeString != null && !fileSizeString.equals("")) {
 						if(!fileSizeString.equals("0")) {
@@ -114,10 +124,12 @@ public class FileService {
 						blameCommand.setTextComparator(RawTextComparator.WS_IGNORE_ALL);
 						blameCommand.setFilePath(file.getPath());
 						BlameResult blameResult = blameCommand.call();
-						RawText rawText = blameResult.getResultContents();
-						file.setSize(rawText.size());
-						if(file.getSize() > 0) {
-							files.add(file);
+						if(blameResult != null) {
+							RawText rawText = blameResult.getResultContents();
+							file.setSize(rawText.size());
+							if(file.getSize() > 0) {
+								files.add(file);
+							}
 						}
 					}
 				}

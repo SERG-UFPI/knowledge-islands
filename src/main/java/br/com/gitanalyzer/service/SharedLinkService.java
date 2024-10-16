@@ -383,22 +383,15 @@ public class SharedLinkService {
 		List<String> repositoriesPath = new ArrayList<>();
 		repositories.forEach(r -> repositoriesPath.add(r.getCurrentFolderPath()));
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository gitRepository: repositories) {
-			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-				try {
-					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
-					gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
-				} catch (Exception e) {
-					e.printStackTrace();
-					log.error(e.getMessage());
-				}
-			}, executorService);
-			futures.add(future);
+			try {
+				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
+				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage());
+			}
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		executorService.shutdown();
 	}
 
 }

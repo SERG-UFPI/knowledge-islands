@@ -231,7 +231,7 @@ public class CommitService {
 					diffFormatter.format(diff);
 					String in = stream.toString();
 					diffFormatter.close();
-					return getAddedLinesOnCommitDiff(in);
+					return getAddedLines(in);
 				}
 			}
 		} catch (IOException e) {
@@ -261,13 +261,14 @@ public class CommitService {
 		return diffs; 
 	}
 
-	public List<String> getAddedLinesOnCommitDiff(String fileDiff){
+	public List<String> getAddedLines(String fileDiff) {
 		List<String> addedLines = new ArrayList<>();
-		if(fileDiff !=null ){
-			String[] lines = fileDiff.split("\n");
-			for(int i = 0; i < lines.length; i++){
-				if((lines[i].length() > 0) && (lines[i].charAt(0) == '+') && (lines[i].substring(1).trim().length() > 0)) {
-					addedLines.add(lines[i]);				
+		String[] lines = fileDiff.split("\\r?\\n");
+		for (String line : lines) {
+			if (line.startsWith("+") && !line.startsWith("+++")) {
+				line = line.substring(1).replace("\t", "");
+				if(!line.isEmpty() && !line.isBlank()) {
+					addedLines.add(line);
 				}
 			}
 		}

@@ -168,21 +168,6 @@ public class DevGptSearches {
 		return output.toString();
 	}
 
-	public static List<String> getLinesCopied(List<String> code, List<String> addedLines) {
-		List<String> linesCopied = new ArrayList<>();
-		addedLineFor: for (String addedLine: addedLines) {
-			if(!addedLine.isBlank()) {
-				for(String lineCode : code) {
-					if(!lineCode.isBlank() && lineCode.trim().equals(addedLine.trim())) {
-						linesCopied.add(addedLine);
-						continue addedLineFor;
-					}
-				}
-			}
-		}
-		return linesCopied;
-	}
-
 	//	public static List<Contributor> getContributorsFromCommits(List<CommitCitation> commits){
 	//		List<Contributor> contributors = new ArrayList<Contributor>();
 	//		forCommit: for (CommitCitation commit : commits) {
@@ -270,17 +255,6 @@ public class DevGptSearches {
 		String sanitizedEncodedString = encode.replaceAll("\\s", "");
 		byte[] decodedBytes = Base64.getDecoder().decode(sanitizedEncodedString);
 		return new String(decodedBytes);
-	}
-
-	public static List<String> getAddedLinesFromPatch(String patch){
-		List<String> addedLines = new ArrayList<>();
-		String[] lines = patch.split("\n");
-		for (String line : lines) {
-			if(line.startsWith("+")) {
-				addedLines.add(line.substring(1));
-			}
-		}
-		return addedLines;
 	}
 
 	//	public static Commit getCommitThatAddedLink(File file, String link) throws LinkNotFoundOnCommitsException, FileNotFoundOnCommitException {
