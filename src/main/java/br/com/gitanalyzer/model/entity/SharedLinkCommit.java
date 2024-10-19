@@ -28,7 +28,7 @@ public class SharedLinkCommit {
 	@OneToOne
 	private SharedLink sharedLink;
 	@OneToOne(cascade = {CascadeType.PERSIST})
-	private Commit commitThatAddedTheLink;
+	private CommitFile commitFileThatAddedTheLink;
 
 	public SharedLinkCommit(SharedLink sharedLink) {
 		super();

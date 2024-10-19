@@ -29,12 +29,12 @@ public class FileGitRepositorySharedLinkCommit {
 	@OneToOne
 	private GitRepository gitRepository;
 	@ManyToMany(cascade = {CascadeType.PERSIST})
-	private List<SharedLinkCommit> sharedLinks;
+	private List<SharedLinkCommit> sharedLinksCommits;
 
 	public FileGitRepositorySharedLinkCommit(File file, GitRepository gitRepository) {
 		this.file = file;
 		this.gitRepository = gitRepository;
-		sharedLinks = new ArrayList<>();
+		this.sharedLinksCommits = new ArrayList<>();
 	}
 
 }

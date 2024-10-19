@@ -38,7 +38,6 @@ public class GitHubCall {
 		String line;
 		StringBuilder content = new StringBuilder();
 		while ((line = reader.readLine()) != null) {
-			//System.out.println(line);
 			content.append(line);
 		}
 		process.waitFor();

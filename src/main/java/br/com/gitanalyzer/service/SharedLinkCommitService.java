@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.gitanalyzer.model.entity.CodeLine;
 import br.com.gitanalyzer.model.entity.Commit;
@@ -35,26 +36,30 @@ public class SharedLinkCommitService {
 	@Autowired
 	private SharedLinkCommitRepository sharedLinkCommitRepository;
 
+	@Transactional
 	public void setCommitCopiedLineOfRepository(GitRepositoryVersion gitRepositoryVersion) {
-		List<FileGitRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository
+		List<FileGitRepositorySharedLinkCommit> filesSharedLinksCommits = fileGitRepositorySharedLinkCommitRepository
 				.findByGitRepositoryId(gitRepositoryVersion.getGitRepository().getId());
-		for (FileGitRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinks) {
+		for (FileGitRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinksCommits) {
 			try(Git git = Git.open(new File(fileGitRepositorySharedLinkCommit.getGitRepository().getCurrentFolderPath()));) {
 				Repository repository = git.getRepository();
 				for (Commit commit : gitRepositoryVersion.getCommits()) {
 					for (CommitFile commitFile : commit.getCommitFiles()) {
 						if(commitFile.getFile().isFile(fileGitRepositorySharedLinkCommit.getFile().getPath())) {
 							List<String> addedLines = commitService.getLinesAddedCommitFile(repository, commit, fileGitRepositorySharedLinkCommit.getFile());
+							commitFile.setAdditionsCodes(addedLines.size());
 							if(addedLines != null && !addedLines.isEmpty()) {
-								addedLines.forEach(c -> commitFile.getAddedLines().add(new CodeLine(c)));
-								for(SharedLinkCommit sharedLinkCommit: fileGitRepositorySharedLinkCommit.getSharedLinks()) {
+								addedLines.forEach(c -> commitFile.getAddedCodeLines().add(new CodeLine(c)));
+								for(SharedLinkCommit sharedLinkCommit: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
 									if(addedLines.stream().anyMatch(l -> l.contains(sharedLinkCommit.getSharedLink().getLink())) && 
-											sharedLinkCommit.getCommitThatAddedTheLink() == null) {
-										sharedLinkCommit.setCommitThatAddedTheLink(commit);
+											sharedLinkCommit.getCommitFileThatAddedTheLink() == null) {
+										sharedLinkCommit.setCommitFileThatAddedTheLink(commitFile);
 										List<String> chatGPTCodeLines = chatGPTConversationService.getCodesFromConversation(sharedLinkCommit.getSharedLink().getConversation().getConversationTurns());
 										List<String> codeLinesCopied = chatGPTConversationService.getLinesCopied(chatGPTCodeLines, addedLines);
 										if(codeLinesCopied != null && !codeLinesCopied.isEmpty()) {
 											codeLinesCopied.forEach(c -> sharedLinkCommit.getCopiedLines().add(new CodeLine(c)));
+											commitFile.setAdditions(commitFile.getAdditions()-codeLinesCopied.size());
+											commitFile.setAdditionsCodes(commitFile.getAdditionsCodes()-codeLinesCopied.size());
 										}
 										sharedLinkCommitRepository.save(sharedLinkCommit);
 									}
@@ -62,6 +67,11 @@ public class SharedLinkCommitService {
 								commitFileRepository.save(commitFile);
 							}
 						}
+					}
+				}
+				for(SharedLinkCommit sharedLinkCommit: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
+					if(sharedLinkCommit.getCommitFileThatAddedTheLink() == null) {
+						System.out.println();
 					}
 				}
 			} catch (IOException e) {

@@ -53,7 +53,7 @@ public class CommitService {
 						String filePath = splited[3];
 						for (File file : files) {
 							if (file.isFile(filePath)) {
-								commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation)));
+								commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation), commit));
 								continue whileFile;
 							}
 						}
@@ -119,8 +119,7 @@ public class CommitService {
 	}
 
 	public List<Commit> getCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits) throws IOException {
-		FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.diffFileName);
-		try(BufferedReader br = new BufferedReader(new InputStreamReader(fstream));) {
+		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(projectPath+KnowledgeIslandsUtils.diffFileName)));) {
 			String strLine;
 			Commit commitAnalyzed = null;
 			whileFile:while ((strLine = br.readLine()) != null) {
@@ -128,11 +127,10 @@ public class CommitService {
 					continue whileFile;
 				}
 				String[] splited1 = strLine.split(" ");
-				String string1 = splited1[0];
-				if (string1.equals("commit")) {
+				if (splited1.length > 1 && splited1[0].equals("commit")) {
 					String idCommitString = splited1[1];
 					for (Commit commit : commits) {
-						if (idCommitString.equals(commit.getSha())) {
+						if (idCommitString.trim().equals(commit.getSha())) {
 							commitAnalyzed = commit;
 							continue whileFile;
 						}
@@ -143,6 +141,7 @@ public class CommitService {
 				if (commitAnalyzed != null) {
 					try {
 						String[] splited2 = strLine.split("\t");
+						if(splited2.length < 3) continue;
 						String path = splited2[2];
 						if (path.contains("=>")) {
 							String commonString1 = "";
@@ -162,15 +161,13 @@ public class CommitService {
 							String path1 = splited3[0];
 							path1 = path1.trim();
 							String file1 = commonString1+path1+commonString2;
-							if(file1.contains("//")) {
-								file1 = file1.replace("//", "/");
-							}
+							file1 = file1.replace("//", "/");
+							
 							String path2 = splited3[1];
 							path2 = path2.trim();
 							String file2 = commonString1+path2+commonString2;
-							if(file2.contains("//")) {
-								file2 = file2.replace("//", "/");
-							}
+							file2 = file2.replace("//", "/");
+							
 							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
 								if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
 									try {

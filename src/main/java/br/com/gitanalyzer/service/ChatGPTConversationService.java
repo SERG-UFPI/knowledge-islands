@@ -47,6 +47,7 @@ public class ChatGPTConversationService {
 					List<String> lines = Arrays.asList(code.getCode().split("\n"));
 					for (String line : lines) {
 						if(!line.isEmpty() && !line.isBlank()) {
+							line = line.trim();
 							codes.add(line);
 						}
 					}

@@ -143,22 +143,21 @@ public class FileService {
 
 	public void getRenamesFiles(String projectPath, List<File> files) throws IOException {
 		HashMap<String, String> newOldName = new HashMap<String, String>();
-		BufferedReader br = null;
-		try {
-			FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileFileName);
-			br = new BufferedReader(new InputStreamReader(fstream));
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileFileName)));){
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
-				String operation = splited[1];
-				if (operation.equals(OperationType.RENAMED.name())) {
-					String oldPath = splited[2];
-					String fileName = splited[3];
-					newOldName.put(oldPath, fileName);
+				if (splited.length >= 4) {
+					String operation = splited[1];
+					if (operation.equals(OperationType.RENAMED.name())) {
+						String oldPath = splited[2];
+						String fileName = splited[3];
+						newOldName.put(oldPath, fileName);
+					}
 				}
 			}
 			for (File file : files) {
-				if(file.getId() == null) {
+				if(file.getRenamePaths() == null || file.getRenamePaths().isEmpty()) {
 					for (Map.Entry<String, String> entry : newOldName.entrySet()) {
 						String fileName = entry.getValue();
 						if (file.isFile(fileName)) {
@@ -169,8 +168,6 @@ public class FileService {
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
-		}finally {
-			br.close();
 		}
 	}
 }

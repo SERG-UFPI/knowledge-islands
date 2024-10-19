@@ -40,7 +40,7 @@ public class Commit implements Comparable<Commit>{
 	private Contributor committer;
 	@Column(length=1000)
 	private String message;
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(mappedBy="commit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<CommitFile> commitFiles = new ArrayList<>();
 
 	public Commit(Contributor author, Date date, String externalId, String message) {

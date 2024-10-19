@@ -29,7 +29,10 @@ public class CommitFile {
 	private Long id;
 	@ManyToOne
 	private File file;
+	@ManyToOne
+	private Commit commit;
 	private int additions;
+	private int additionsCodes;
 	@Enumerated(EnumType.STRING)
 	private OperationType status;
 	private int deletions;
@@ -38,13 +41,14 @@ public class CommitFile {
 	@Column(columnDefinition="TEXT")
 	private String patch;
 	@OneToMany(cascade = {CascadeType.PERSIST})
-	private List<CodeLine> addedLines;
+	private List<CodeLine> addedCodeLines;
 
-	public CommitFile(File file, OperationType status) {
+	public CommitFile(File file, OperationType status, Commit commit) {
 		super();
 		this.file = file;
+		this.commit = commit;
 		this.status = status;
-		this.addedLines = new ArrayList<>();
+		this.addedCodeLines = new ArrayList<>();
 	}
 
 }

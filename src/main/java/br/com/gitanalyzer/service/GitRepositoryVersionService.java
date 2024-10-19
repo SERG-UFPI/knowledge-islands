@@ -52,8 +52,6 @@ public class GitRepositoryVersionService {
 	private CommitService commitService;
 	@Autowired
 	private ContributorService contributorService;
-	@Autowired
-	private SharedLinkCommitService sharedLinkCommitService;
 
 	public void remove(Long id) {
 		gitRepositoryVersionRepository.deleteById(id);
@@ -120,17 +118,14 @@ public class GitRepositoryVersionService {
 	@Transactional
 	public GitRepositoryVersion saveGitRepositoryAndGitRepositoryVersion(String repositoryPath) throws Exception {
 		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
-		return saveGitRepositoryVersion(gitRepository, false);
+		return saveGitRepositoryVersion(gitRepository);
 	}
 
-	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository, boolean genAiAnalysis) throws Exception {
+	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
 		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
 		if(gitRepositoryVersion.validGitRepositoryVersion()) {
 			//if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
-			if(genAiAnalysis) {
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
-			}
 			gitRepositoryVersionRepository.save(gitRepositoryVersion);
 			//			}else {
 			//				throw new Exception("GitRepository version already extracted");

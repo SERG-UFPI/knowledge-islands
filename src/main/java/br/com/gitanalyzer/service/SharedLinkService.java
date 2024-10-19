@@ -35,6 +35,7 @@ import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.entity.SharedLinkErrorLog;
@@ -75,6 +76,8 @@ public class SharedLinkService {
 	private String token;
 	@Autowired
 	private ChatGPTConversationService chatGPTConversationService;
+	@Autowired
+	private SharedLinkCommitService sharedLinkCommitService;
 
 	public String extractOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
 		try {
@@ -243,7 +246,7 @@ public class SharedLinkService {
 							sharedLink.setType(SharedLinkSourceType.FILE);
 							repository.save(sharedLink);
 						}
-						fileGitRepositorySharedLinkCommit.getSharedLinks().add(new SharedLinkCommit(sharedLink));
+						fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink));
 					}
 				}
 			}
@@ -385,8 +388,10 @@ public class SharedLinkService {
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
 		for (GitRepository gitRepository: repositories) {
 			try {
-				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
-				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
+				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
+				System.out.println();
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());

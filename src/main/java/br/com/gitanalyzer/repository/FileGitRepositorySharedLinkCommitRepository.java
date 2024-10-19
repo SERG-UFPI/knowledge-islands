@@ -12,12 +12,12 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 @Repository
 public interface FileGitRepositorySharedLinkCommitRepository extends JpaRepository<FileGitRepositorySharedLinkCommit, Long>{
 	@Query("SELECT DISTINCT fg.gitRepository FROM FileGitRepositorySharedLinkCommit fg " +
-			"JOIN fg.sharedLinks sl " +
+			"JOIN fg.sharedLinksCommits sl " +
 			"WHERE sl.sharedLink.conversation IS NOT NULL")
 	List<GitRepository> findDistinctGitRepositoriesWithNonNullConversation();
 
 	@Query("SELECT DISTINCT fg.gitRepository FROM FileGitRepositorySharedLinkCommit fg " +
-			"JOIN fg.sharedLinks sl " +
+			"JOIN fg.sharedLinksCommits sl " +
 			"WHERE sl.sharedLink.conversation IS NOT NULL and fg.gitRepository.cloneUrl is NOT NULL and fg.gitRepository.currentFolderPath is NULL")
 	List<GitRepository> findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
 
