@@ -138,7 +138,7 @@ public class FilterGitRepositoryService {
 	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
 		List<File> files = fileService.getFilesFromClocFile(version.getGitRepository());
 		fileService.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
-		List<Commit> commits = commitService.getCommitsFromLogFiles(version.getGitRepository().getCurrentFolderPath());
+		List<Commit> commits = commitService.getCommitsFromLogFiles(version.getGitRepository());
 		Collections.sort(commits);
 		commits = getFirst20Commits(commits);
 		commits = commitService.getCommitsFiles(version.getGitRepository(), commits, files);

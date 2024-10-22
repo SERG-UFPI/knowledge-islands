@@ -17,6 +17,5 @@ public class GitRepositoryVersionKnowledgeModelForm1 {
 	private Long idGitRepositoryVersion;
 	private KnowledgeModel knowledgeMetric;
 	private List<String> foldersPaths;
-	private boolean withSharedLinks;
 
 }

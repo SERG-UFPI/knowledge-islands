@@ -8,7 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileGitRepositorySharedLinkCommit {
+public class FileRepositorySharedLinkCommit {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,10 +28,10 @@ public class FileGitRepositorySharedLinkCommit {
 	private File file;
 	@OneToOne
 	private GitRepository gitRepository;
-	@ManyToMany(cascade = {CascadeType.PERSIST})
+	@OneToMany(mappedBy = "fileRepositorySharedLinkCommit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<SharedLinkCommit> sharedLinksCommits;
 
-	public FileGitRepositorySharedLinkCommit(File file, GitRepository gitRepository) {
+	public FileRepositorySharedLinkCommit(File file, GitRepository gitRepository) {
 		this.file = file;
 		this.gitRepository = gitRepository;
 		this.sharedLinksCommits = new ArrayList<>();

@@ -67,53 +67,43 @@ public class CommitService {
 		return commits;
 	}
 
-	public List<Commit> getCommitsFromLogFiles(String projectPath) throws IOException {
+	public List<Commit> getCommitsFromLogFiles(GitRepository repository) throws IOException {
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = new ArrayList<>();
-		FileInputStream fstream = new FileInputStream(projectPath+KnowledgeIslandsUtils.commitFileName);
-		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-		try {
+		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(repository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
-				try {
-					String[] commitSplited = strLine.split(";");
-					if(commitSplited.length >= 4) {
-						String idCommit = commitSplited[0];
-						String authorName = commitSplited[1];
-						String authorEmail = commitSplited[2];
-						if(authorName != null && authorEmail != null) {
-							String time = commitSplited[3];
-							String message = null;
-							if(commitSplited.length == 5) {
-								message = commitSplited[4];
-							}
-							Contributor contributorCommit = null;
-							for (Contributor contributor : contributors) {
-								if(contributor.getName().equals(authorName)
-										&& contributor.getEmail().equals(authorEmail)) {
-									contributorCommit = contributor;
-									break;
-								}
-							}
-							if(contributorCommit == null) {
-								contributorCommit = new Contributor(authorName, authorEmail);
-								contributors.add(contributorCommit);
-							}
-							Integer timeInt = Integer.parseInt(time);
-							Instant instant = Instant.ofEpochSecond(timeInt);
-							Date commitDate = Date.from(instant);
-							commits.add(new Commit(contributorCommit, commitDate, idCommit, message));
+				String[] commitSplited = strLine.split(";");
+				if(commitSplited.length >= 4) {
+					String idCommit = commitSplited[0];
+					String authorName = commitSplited[1];
+					String authorEmail = commitSplited[2];
+					if(authorName != null && authorEmail != null) {
+						String time = commitSplited[3];
+						String message = null;
+						if(commitSplited.length == 5) {
+							message = commitSplited[4];
 						}
+						Contributor contributorCommit = null;
+						for (Contributor contributor : contributors) {
+							if(contributor.getName().equals(authorName)
+									&& contributor.getEmail().equals(authorEmail)) {
+								contributorCommit = contributor;
+								break;
+							}
+						}
+						if(contributorCommit == null) {
+							contributorCommit = new Contributor(authorName, authorEmail);
+							contributors.add(contributorCommit);
+						}
+						Date commitDate = Date.from(Instant.ofEpochSecond(Integer.parseInt(time)));
+						commits.add(new Commit(contributorCommit, commitDate, idCommit, message));
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ArrayList<>();
-		} finally {
-			br.close();
 		}
 		return commits;
 	}
@@ -162,12 +152,12 @@ public class CommitService {
 							path1 = path1.trim();
 							String file1 = commonString1+path1+commonString2;
 							file1 = file1.replace("//", "/");
-							
+
 							String path2 = splited3[1];
 							path2 = path2.trim();
 							String file2 = commonString1+path2+commonString2;
 							file2 = file2.replace("//", "/");
-							
+
 							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
 								if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
 									try {
@@ -187,6 +177,7 @@ public class CommitService {
 										commitFile.setAdditions(linesAdded);
 									} catch (Exception e) {
 										e.printStackTrace();
+										log.error(e.getMessage());
 									}
 									continue whileFile;
 								}
@@ -215,7 +206,7 @@ public class CommitService {
 		return commitsAuthor;
 	}
 
-	public List<String> getLinesAddedCommitFile(Repository repository, Commit commit, File file) {
+	public List<String> getCodeLinesAddedCommitFile(Repository repository, Commit commit, File file) {
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		ObjectId commitId = ObjectId.fromString(commit.getSha());
 		try(RevWalk revWalk = new RevWalk(repository)) {

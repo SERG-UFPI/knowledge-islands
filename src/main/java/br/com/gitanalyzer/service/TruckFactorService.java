@@ -99,7 +99,7 @@ public class TruckFactorService {
 		List<ContributorVersion> topContributors = new ArrayList<>();
 		double fileSize = gitRepositoryVersionKnowledgeModel.getFiles().size();
 		int tf = 0;
-		while(gitRepositoryVersionKnowledgeModel.getContributors().isEmpty() == false) {
+		while(!gitRepositoryVersionKnowledgeModel.getContributors().isEmpty()) {
 			double numberFilesCovarage = getCoverageFiles(gitRepositoryVersionKnowledgeModel.getContributors(), gitRepositoryVersionKnowledgeModel.getFiles()).size();
 			double coverage = numberFilesCovarage/fileSize;
 			if(coverage < 0.5) 
@@ -123,16 +123,7 @@ public class TruckFactorService {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryAndGitRepositoryVersion(repo.getRepositoryPath());
 		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
 		models.add(gitRepositoryVersionKnowledgeModelService.
-				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), false)));
-		//		if(gitRepositoryVersion.getGitRepository().getSharedLinks() != null 
-		//				&& !gitRepositoryVersion.getGitRepository().getSharedLinks().isEmpty()) {
-		//			List<SharedLink> sharedLinks = sharedLinkService.setSharedLinksData(gitRepositoryVersion.getGitRepository().getId());
-		//			boolean analysisSharedLink = false;//sharedLinks.stream().anyMatch(sh -> sh.getCommitThatAddedTheLink() != null);
-		//			if(analysisSharedLink) {
-		//				models.add(gitRepositoryVersionKnowledgeModelService.
-		//						saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), true)));
-		//			}
-		//		}
+				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths())));
 		List<TruckFactor> truckFactors = new ArrayList<>();
 		for(GitRepositoryVersionKnowledgeModel model: models) {
 			truckFactors.add(saveTruckFactor(model.getId()));
@@ -234,7 +225,7 @@ public class TruckFactorService {
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeTruckFactor(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(
-						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths(), false));
+						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths()));
 		saveTruckFactor(gitRepositoryVersionKnowledgeModel.getId());
 		return gitRepositoryVersionKnowledgeModel;
 	}

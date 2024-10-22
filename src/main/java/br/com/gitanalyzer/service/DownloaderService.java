@@ -33,7 +33,7 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.ProjectGitHub;
 import br.com.gitanalyzer.model.entity.User;
 import br.com.gitanalyzer.model.enums.LanguageEnum;
-import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
+import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.UserRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
@@ -54,7 +54,7 @@ public class DownloaderService {
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
-	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
+	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 
 	public void downloadPerLanguage(DownloaderPerLanguageForm form) throws URISyntaxException, InterruptedException {
 		form.setPath(KnowledgeIslandsUtils.fixFolderPath(form.getPath()));
@@ -233,6 +233,10 @@ public class DownloaderService {
 				try {
 					repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
 							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
+					String currentFolderPath = repository.getCurrentFolderPath().substring(0, repository.getCurrentFolderPath().length() - 1);
+					if(currentFolderPath.endsWith(KnowledgeIslandsUtils.repeatedRepoSuffix)) {
+						repository.setName(repository.getName()+KnowledgeIslandsUtils.repeatedRepoSuffix);
+					}
 				}catch (Exception e) {
 					e.printStackTrace();
 					log.error(e.getMessage());
@@ -242,14 +246,6 @@ public class DownloaderService {
 		}
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 		executorService.shutdown();
-		for (GitRepository gitRepository : repositories) {
-			if(gitRepository.getCurrentFolderPath() != null) {
-				String currentFolderPath = gitRepository.getCurrentFolderPath().substring(0, gitRepository.getCurrentFolderPath().length() - 1);
-				if(currentFolderPath.endsWith(KnowledgeIslandsUtils.repeatedRepoSuffix)) {
-					gitRepository.setName(gitRepository.getName()+KnowledgeIslandsUtils.repeatedRepoSuffix);
-				}
-			}
-		}
 		gitRepositoryRepository.saveAll(repositories);
 		return repositories;
 	}

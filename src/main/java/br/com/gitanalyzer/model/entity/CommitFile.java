@@ -27,12 +27,9 @@ public class CommitFile {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@ManyToOne
-	private File file;
-	@ManyToOne
-	private Commit commit;
 	private int additions;
 	private int additionsCodes;
+	private int removingsCodes;
 	@Enumerated(EnumType.STRING)
 	private OperationType status;
 	private int deletions;
@@ -42,6 +39,10 @@ public class CommitFile {
 	private String patch;
 	@OneToMany(cascade = {CascadeType.PERSIST})
 	private List<CodeLine> addedCodeLines;
+	@ManyToOne
+	private File file;
+	@ManyToOne
+	private Commit commit;
 
 	public CommitFile(File file, OperationType status, Commit commit) {
 		super();

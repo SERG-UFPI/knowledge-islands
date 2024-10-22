@@ -35,7 +35,6 @@ import br.com.gitanalyzer.model.entity.FileVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
-import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.model.vo.MlOutput;
@@ -74,10 +73,10 @@ public class GitRepositoryVersionKnowledgeModelService {
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionRepository.findById(form.getIdGitRepositoryVersion()).get();
 		Collections.sort(gitRepositoryVersion.getCommits(), Collections.reverseOrder());
-		List<AuthorFileExpertise> authorFiles = new ArrayList<AuthorFileExpertise>();
+		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = new GitRepositoryVersionKnowledgeModel(gitRepositoryVersion, form.getKnowledgeMetric(), form.getFoldersPaths());
 		List<FileVersion> filesVersion = new ArrayList<>();
-		if(form.getFoldersPaths() == null || form.getFoldersPaths().size() == 0){
+		if(form.getFoldersPaths() == null || form.getFoldersPaths().isEmpty()){
 			gitRepositoryVersion.getFiles().stream().forEach(f -> filesVersion.add(new FileVersion(f)));
 		}else {
 			List<File> files = new ArrayList<>();
@@ -91,7 +90,6 @@ public class GitRepositoryVersionKnowledgeModelService {
 			}
 			files.forEach(f -> filesVersion.add(new FileVersion(f)));
 		}
-		List<SharedLink> sharedLinks = null;//form.isWithSharedLinks() ? gitRepositoryVersion.getGitRepository().getSharedLinks():null;
 		List<ContributorVersion> contributorsVersion = new ArrayList<>();
 		gitRepositoryVersion.getContributors().stream().forEach(c -> contributorsVersion.add(new ContributorVersion(c)));
 		for(ContributorVersion contributorVersion: contributorsVersion) {
@@ -100,9 +98,6 @@ public class GitRepositoryVersionKnowledgeModelService {
 				for (FileVersion fileVersion : filesVersion) {
 					if(fileVersion.getFile().isFile(fileContributor.getPath())) {
 						AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(form.getKnowledgeMetric(), gitRepositoryVersion.getCommits(), contributorVersion, fileVersion);
-						if(sharedLinks != null) {
-							authorFile = getNewAuthorFileFromSharedLink(sharedLinks, contributorVersion, fileVersion, authorFile);
-						}
 						addFileKnowledgeOfAuthor(form.getKnowledgeMetric(), fileVersion, authorFile);
 						authorFiles.add(authorFile);
 						continue forFileContributor;
@@ -127,25 +122,6 @@ public class GitRepositoryVersionKnowledgeModelService {
 				version.setTotalKnowledge(rounded.doubleValue());
 			}
 		}
-	}
-
-	private AuthorFileExpertise getNewAuthorFileFromSharedLink(List<SharedLink> sharedLinks, ContributorVersion contributorVersion, FileVersion fileVersion, 
-			AuthorFileExpertise authorFile) {
-		for (SharedLink sharedLink : sharedLinks) {
-			//			if(sharedLink.getCommitThatAddedTheLink() != null && sharedLink.getCommitThatAddedTheLink().getAuthor().getId().equals(contributorVersion.getContributor().getId())) {
-			//				for (FileLinkAuthor fileLinkAuthor : sharedLink.getFilesLinkAuthor()) {
-			//					if(fileVersion.getFile().isFile(fileLinkAuthor.getFile().getPath())) {
-			//						int newAdds = authorFile.getDoe().getAdds()-fileLinkAuthor.getLinesCopied().size();
-			//						double newDoeValue = new DoeUtils().getDOE(newAdds, 
-			//								authorFile.getDoe().getFa(), authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize());
-			//						DOE newDoe = new DOE(newAdds, authorFile.getDoe().getFa(), 
-			//								authorFile.getDoe().getNumDays(), authorFile.getDoe().getSize(), newDoeValue);
-			//						return new AuthorFile(authorFile.getAuthorVersion(), authorFile.getFileVersion(), newDoe);
-			//					}
-			//				}
-			//			}
-		}
-		return null;
 	}
 
 	protected void setContributorTruckFactorData(List<ContributorVersion> contributorsVersion, 

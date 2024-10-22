@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 public class FileExtractor {
@@ -79,7 +78,4 @@ public class FileExtractor {
 		return null;
 	}
 
-	public void getBlameOfFile(GitRepository repository, File file) {
-
-	}
 }

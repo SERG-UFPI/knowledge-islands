@@ -33,17 +33,16 @@ import br.com.gitanalyzer.model.entity.ChatGptConversation;
 import br.com.gitanalyzer.model.entity.ConversationTurn;
 import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
-import br.com.gitanalyzer.model.entity.FileGitRepositorySharedLinkCommit;
+import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
-import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.entity.SharedLinkErrorLog;
 import br.com.gitanalyzer.model.entity.SharedLinkSearch;
 import br.com.gitanalyzer.model.enums.SharedLinkFetchError;
 import br.com.gitanalyzer.model.enums.SharedLinkSourceType;
-import br.com.gitanalyzer.repository.FileGitRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.FileRepository;
+import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.repository.SharedLinkSearchRepository;
@@ -71,7 +70,7 @@ public class SharedLinkService {
 	@Autowired
 	private GitRepositoryVersionService gitRepositoryVersionService;
 	@Autowired
-	private FileGitRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
+	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 	@Value("${configuration.github.token}")
 	private String token;
 	@Autowired
@@ -133,7 +132,8 @@ public class SharedLinkService {
 								KnowledgeIslandsUtils.githubApiBaseUrl+"/repos/"+gitRepository.getFullName()};
 						String content = GitHubCall.generalCall(command);
 						JsonNode rootNode = objectMapper.readTree(content);
-						gitRepository.setPrivateRepository(rootNode.get("private")!=null?rootNode.get("private").asBoolean():false);
+						JsonNode privateNode = rootNode.get("private");
+						gitRepository.setPrivateRepository(privateNode!=null?privateNode.asBoolean():false);
 						gitRepository.setCloneUrl(rootNode.get("clone_url")!=null?rootNode.get("clone_url").asText():null);
 						if(gitRepository.getCloneUrl() == null) {
 							gitRepository.setCloneUrl(KnowledgeIslandsUtils.gitHubBaseUrl+gitRepository.getFullName());
@@ -229,7 +229,7 @@ public class SharedLinkService {
 			file.setHtmlUrl(item.get("html_url").asText());
 			file.setLanguage(language);
 			fileRepository.save(file);
-			FileGitRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileGitRepositorySharedLinkCommit(file, gitRepository);
+			FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
 			JsonNode matchesNode = item.get("text_matches");
 			if(!matchesNode.isEmpty()) {
 				for (JsonNode matchNode : matchesNode) {
@@ -246,7 +246,7 @@ public class SharedLinkService {
 							sharedLink.setType(SharedLinkSourceType.FILE);
 							repository.save(sharedLink);
 						}
-						fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink));
+						fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink, fileGitRepositorySharedLinkCommit));
 					}
 				}
 			}
@@ -388,9 +388,8 @@ public class SharedLinkService {
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
 		for (GitRepository gitRepository: repositories) {
 			try {
-				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
-				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
+				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository));
 				System.out.println();
 			} catch (Exception e) {
 				e.printStackTrace();

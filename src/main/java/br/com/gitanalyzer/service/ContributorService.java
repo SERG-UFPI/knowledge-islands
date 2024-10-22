@@ -36,7 +36,7 @@ public class ContributorService {
 	}
 
 	public List<Contributor> getContributorFromCommits(List<Commit> commits){
-		List<Contributor> contributors = new ArrayList<Contributor>();
+		List<Contributor> contributors = new ArrayList<>();
 		forCommit: for (Commit commit : commits) {
 			Contributor contributor = commit.getAuthor();
 			for (Contributor contributor2 : contributors) {

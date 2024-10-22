@@ -72,7 +72,7 @@ public class KnowledgeIslandsUtils {
 	public static final String noreply = ".noreply";
 	public static final String chatGptShare = "https://chat.openai.com/share/";
 
-	public static final String openAiJsonStart = "<script nonce=\"\">window.__remixContext = ";
+	public static final String openAiJsonStart = "window.__remixContext = ";
 	public static final String openAiJsonEnd = "</script><script nonce=";
 	public static final String openAiCodeJsonDelimiter = "```";
 
@@ -137,19 +137,19 @@ public class KnowledgeIslandsUtils {
 	public static List<String> getProgrammingLanguagesAliasGithub(){
 		List<String> alias = new ArrayList<>();
 		//		alias.add("python");
-		//	alias.add("javascript");
+		//		alias.add("javascript");
 		//		alias.add("java");
 		//		alias.add("typescript");
 		//		alias.add("csharp");
 		//		alias.add("cpp");
 		//		alias.add("c");
-		//alias.add("php");
+		//		alias.add("php");
 		//		alias.add("ruby");
 		//		alias.add("shell");
-				alias.add("go");
+		//		alias.add("go");
 		//		alias.add("nix");
 		//		alias.add("rust");
-		//		alias.add("scala");
+				alias.add("scala");
 		//		alias.add("kotlin");
 		return alias;
 	}

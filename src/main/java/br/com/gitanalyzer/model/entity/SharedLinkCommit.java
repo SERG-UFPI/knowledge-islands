@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
@@ -28,11 +29,14 @@ public class SharedLinkCommit {
 	@OneToOne
 	private SharedLink sharedLink;
 	@OneToOne(cascade = {CascadeType.PERSIST})
-	private CommitFile commitFileThatAddedTheLink;
+	private CommitFile commitFileAddedLink;
+	@ManyToOne
+	private FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit;
 
-	public SharedLinkCommit(SharedLink sharedLink) {
+	public SharedLinkCommit(SharedLink sharedLink, FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit) {
 		super();
 		this.sharedLink = sharedLink;
+		this.fileRepositorySharedLinkCommit = fileRepositorySharedLinkCommit;
 		this.copiedLines = new ArrayList<>();
 	}
 }

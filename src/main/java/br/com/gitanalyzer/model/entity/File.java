@@ -5,14 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -56,9 +54,6 @@ public class File{
 	private String contentDecoded;
 	@JsonIgnore
 	private String encoding;
-	@JsonIgnore
-	@OneToMany(mappedBy="file", cascade = CascadeType.REMOVE)
-	private List<FileVersion> versions;
 	private int size;
 	@JsonIgnore
 	@ElementCollection

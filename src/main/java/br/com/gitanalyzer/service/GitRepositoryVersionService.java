@@ -91,7 +91,7 @@ public class GitRepositoryVersionService {
 		repository.setCurrentFolderPath(KnowledgeIslandsUtils.fixFolderPath(repository.getCurrentFolderPath()));
 		List<File> files = fileService.getFilesFromClocFile(repository);
 		fileService.getRenamesFiles(repository.getCurrentFolderPath(), files);
-		List<Commit> commits = commitService.getCommitsFromLogFiles(repository.getCurrentFolderPath());
+		List<Commit> commits = commitService.getCommitsFromLogFiles(repository);
 		if(commits != null && !commits.isEmpty()) {
 			Collections.sort(commits, Collections.reverseOrder());
 			Date dateVersion = commits.get(0).getAuthorDate();
@@ -194,7 +194,7 @@ public class GitRepositoryVersionService {
 	}
 
 	public GitRepositoryVersion getProjectVersionFiltering(String projectPath) throws IOException {
-		List<Commit> commits = commitService.getCommitsFromLogFiles(projectPath);
+		List<Commit> commits = null;//commitService.getCommitsFromLogFiles(projectPath);
 		int numberAllCommits = commits.size();
 		List<Contributor> contributors = contributorService.getContributorFromCommits(commits);
 		contributors = contributorService.setAlias(contributors, null);
