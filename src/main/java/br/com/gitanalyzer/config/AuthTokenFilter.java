@@ -16,7 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import br.com.gitanalyzer.service.UserDetailsServiceImpl;
 import br.com.gitanalyzer.utils.JwtUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class AuthTokenFilter extends OncePerRequestFilter{
 
 	@Autowired
@@ -44,9 +46,8 @@ public class AuthTokenFilter extends OncePerRequestFilter{
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 			}
 		} catch (Exception e) {
-			System.out.println("Cannot set user authentication: {}");
+			log.info("Cannot set user authentication: {}");
 		}
-
 		filterChain.doFilter(request, response);
 	}
 

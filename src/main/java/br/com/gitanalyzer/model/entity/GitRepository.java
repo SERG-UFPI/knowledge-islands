@@ -58,6 +58,7 @@ public class GitRepository {
 	private int numberAnalysedDevs;
 	int numberAllCommits;
 	int numberAllFiles;
+	private boolean generatedLogs;
 
 	public GitRepository(String name, String currentFolderPath, String fullName, String downloadVersionHash) {
 		this.name = name;

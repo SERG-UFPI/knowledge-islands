@@ -24,7 +24,7 @@ public class DOE {
 	private int numDays;
 	private int size;
 	private double doeValue;
-	
+
 	public DOE(int adds, int fa, int numDays, int size, double doeValue) {
 		super();
 		this.adds = adds;
@@ -34,10 +34,4 @@ public class DOE {
 		this.doeValue = doeValue;
 	}
 
-	public DOE(int adds, int fa, int numDays) {
-		super();
-		this.adds = adds;
-		this.fa = fa;
-		this.numDays = numDays;
-	}
 }

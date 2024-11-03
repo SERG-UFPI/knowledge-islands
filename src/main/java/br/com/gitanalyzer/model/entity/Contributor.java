@@ -1,6 +1,5 @@
 package br.com.gitanalyzer.model.entity;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,13 +27,10 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
-	private boolean active;
+	//private boolean active;
 	@JsonIgnore
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
-	@JsonIgnore
-	@OneToMany(mappedBy="contributor", cascade = CascadeType.REMOVE)
-	private List<ContributorVersion> versions;
 
 	public Contributor(String name, String email) {
 		super();

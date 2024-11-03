@@ -23,6 +23,7 @@ import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
+import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
@@ -52,6 +53,12 @@ public class GitRepositoryVersionService {
 	private CommitService commitService;
 	@Autowired
 	private ContributorService contributorService;
+	@Autowired
+	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
+	@Autowired
+	private SharedLinkCommitService sharedLinkCommitService;
+	@Autowired
+	private GitRepositoryVersionKnowledgeModelService gitRepositoryVersionKnowledgeModelService;
 
 	public void remove(Long id) {
 		gitRepositoryVersionRepository.deleteById(id);
@@ -62,7 +69,7 @@ public class GitRepositoryVersionService {
 		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findAll();
 		List<Long> ids = versions.stream().map(v -> v.getId()).toList();
 
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (Long id : ids) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -118,18 +125,15 @@ public class GitRepositoryVersionService {
 	@Transactional
 	public GitRepositoryVersion saveGitRepositoryAndGitRepositoryVersion(String repositoryPath) throws Exception {
 		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
-		return saveGitRepositoryVersion(gitRepository);
+		return saveGitRepositoryVersion(gitRepository, false);
 	}
 
-	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
+	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository, boolean genAiAnalysis) throws Exception {
 		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
 		if(gitRepositoryVersion.validGitRepositoryVersion()) {
-			//if(!gitRepositoryVersionRepository.existsByVersionIdAndGitRepositoryId(gitRepositoryVersion.getVersionId(), gitRepository.getId())) {
+			gitRepositoryVersion.setGenAiAnalysis(genAiAnalysis);
 			gitRepositoryVersionRepository.save(gitRepositoryVersion);
-			//			}else {
-			//				throw new Exception("GitRepository version already extracted");
-			//			}
 		}else {
 			throw new Exception("GitRepository version not valid");
 		}
@@ -181,14 +185,14 @@ public class GitRepositoryVersionService {
 	private void setNumberActiveAuthorsFiles(GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel) {
 		for (FileVersion fileVersion : gitRepositoryVersionKnowledgeModel.getFiles()) {
 			forContributor: for (ContributorVersion contributor : gitRepositoryVersionKnowledgeModel.getTruckFactor().getContributors()) {
-				if(contributor.getContributor().isActive()) {
-					for (File file: contributor.getFilesAuthor()) {
-						if(file.isFile(fileVersion.getFile().getPath())) {
-							fileVersion.setNumberActiveAuthor(fileVersion.getNumberActiveAuthor()+1);
-							continue forContributor;
-						}
+				//if(contributor.getContributor().isActive()) {
+				for (File file: contributor.getFilesAuthor()) {
+					if(file.isFile(fileVersion.getFile().getPath())) {
+						fileVersion.setNumberActiveAuthor(fileVersion.getNumberActiveAuthor()+1);
+						continue forContributor;
 					}
 				}
+				//}
 			}
 		}
 	}
@@ -201,4 +205,29 @@ public class GitRepositoryVersionService {
 		int numberAnalysedDevs = contributors.size();
 		return GitRepositoryVersion.builder().numberAnalysedCommits(numberAllCommits).numberAnalysedDevs(numberAnalysedDevs).build();
 	}
+
+	public void saveGitRepositoriesVersionGenai() {
+		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCurrentFolderPathIsNotNull();
+		for (GitRepository gitRepository: repositories) {
+			try {
+				saveGitRepositoryVersion(gitRepository, false);
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository, true));
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage());
+			}
+		}
+	}
+
+	public void saveGitRepositoryVersionGenai(String repositoryPath) {
+		GitRepository gitRepository = gitRepositoryRepository.findByCurrentFolderPath(repositoryPath);
+		try {
+			saveGitRepositoryVersion(gitRepository, false);
+			sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository, true));
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
+	}
+
 }

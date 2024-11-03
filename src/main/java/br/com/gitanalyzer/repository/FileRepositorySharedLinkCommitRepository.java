@@ -21,5 +21,10 @@ public interface FileRepositorySharedLinkCommitRepository extends JpaRepository<
 			"WHERE sl.sharedLink.conversation IS NOT NULL and fg.gitRepository.cloneUrl is NOT NULL and fg.gitRepository.currentFolderPath is NULL")
 	List<GitRepository> findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
 
+	@Query("SELECT DISTINCT fg.gitRepository FROM FileRepositorySharedLinkCommit fg " +
+			"JOIN fg.sharedLinksCommits sl " +
+			"WHERE sl.sharedLink.conversation IS NOT NULL and fg.gitRepository.currentFolderPath is not NULL")
+	List<GitRepository> findDistinctGitRepositoriesWithNonNullConversationAndCurrentFolderPathIsNotNull();
+
 	List<FileRepositorySharedLinkCommit> findByGitRepositoryId(Long id);
 }

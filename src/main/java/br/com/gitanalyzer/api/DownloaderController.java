@@ -3,9 +3,6 @@ package br.com.gitanalyzer.api;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +30,7 @@ public class DownloaderController {
 		service.downloadPerLanguage(form);
 		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
 	}
-	
+
 	@PostMapping("/donwload-per-org")
 	public ResponseEntity<?> downloadPerorg(@RequestBody DownloaderPerOrgForm form) throws URISyntaxException, InterruptedException{
 		service.downloadPerOrg(form);
@@ -41,13 +38,19 @@ public class DownloaderController {
 	}
 
 	@PostMapping("clone-repository")
-	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException, IOException{
+	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) {
 		return ResponseEntity.ok(service.cloneProject(form));
 	}
-	
+
 	@PostMapping("clone-shared-links-repositories")
-	public ResponseEntity<?> cloneSharedLinkRepositories() throws InvalidRemoteException, TransportException, GitAPIException, URISyntaxException, IOException, InterruptedException{
-		return ResponseEntity.ok(service.cloneRepositoriesWithSharedLinks());
+	public ResponseEntity<?> cloneSharedLinkRepositories() throws URISyntaxException, IOException, InterruptedException{
+		return ResponseEntity.ok(service.cloneRepositoriesSharedLinks());
+	}
+
+	@PostMapping("clone-shared-links-repositories-generate-logs")
+	public ResponseEntity<?> cloneRepositoriesSharedLinksGenerateLogs() throws URISyntaxException, IOException, InterruptedException{
+		service.cloneRepositoriesSharedLinksGenerateLogs();
+		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
 	}
 
 }

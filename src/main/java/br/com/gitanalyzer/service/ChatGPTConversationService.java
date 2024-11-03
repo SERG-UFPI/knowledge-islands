@@ -28,7 +28,8 @@ public class ChatGPTConversationService {
 		addedLineFor: for (String addedLine: addedLines) {
 			if(!addedLine.isBlank()) {
 				for(String lineCode : code) {
-					if(!lineCode.isBlank() && lineCode.trim().equals(addedLine.trim())) {
+					if(!lineCode.isBlank() && 
+							lineCode.toLowerCase().trim().equals(addedLine.toLowerCase().trim())) {
 						linesCopied.add(addedLine);
 						continue addedLineFor;
 					}
@@ -59,14 +60,16 @@ public class ChatGPTConversationService {
 
 	public ChatGptConversation getConversationOfOpenAiJson(String json) throws PageJsonProcessingException {
 		ObjectMapper objectMapper = new ObjectMapper();
+		String createTimeLabel = "create_time";
+		String updateTimeLabel = "update_time";
 		try {
 			JsonNode rootNode = objectMapper.readTree(json);
 			JsonNode dataNode = rootNode.path("state").path("loaderData").path("routes/share.$shareId.($action)").path("serverResponse").path("data");
 			if(!dataNode.isMissingNode()) {
 				ChatGptConversation conversation = new ChatGptConversation();
-				Date createTime = new java.util.Date(dataNode.get("create_time")!=null?dataNode.get("create_time").asLong()*1000:null);
+				Date createTime = new java.util.Date(dataNode.get(createTimeLabel)!=null?dataNode.get(createTimeLabel).asLong()*1000:null);
 				conversation.setCreateTime(createTime);
-				Date updateTime = new java.util.Date(dataNode.get("update_time")!=null?dataNode.get("update_time").asLong()*1000:null);
+				Date updateTime = new java.util.Date(dataNode.get(updateTimeLabel)!=null?dataNode.get(updateTimeLabel).asLong()*1000:null);
 				conversation.setUpdateTime(updateTime);
 				conversation.setTitle(dataNode.get("title")!=null?dataNode.get("title").asText():"");
 				if(dataNode != null) {
@@ -80,7 +83,7 @@ public class ChatGPTConversationService {
 								String agent = authorNode.get("role").asText();
 								ChatgptUserAgent userAgent = ChatgptUserAgent.getByAgent(agent);
 								conversationTurn.setUserAgent(userAgent);
-								Long promptCreateTime = messageNode.get("create_time").asLong();
+								Long promptCreateTime = messageNode.get(createTimeLabel).asLong();
 								conversationTurn.setCreateTime(promptCreateTime);
 								JsonNode contentParts = messageNode.get("content").get("parts");
 								if(contentParts != null) {

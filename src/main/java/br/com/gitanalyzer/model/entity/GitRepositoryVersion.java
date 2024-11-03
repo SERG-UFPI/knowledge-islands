@@ -45,9 +45,9 @@ public class GitRepositoryVersion {
 	private Date dateVersion; 
 	@ManyToOne(optional = false)
 	private GitRepository gitRepository;
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<Contributor> contributors;
-	@ManyToMany(cascade = CascadeType.ALL)
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<File> files;
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.REMOVE, mappedBy = "repositoryVersion")

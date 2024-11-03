@@ -18,10 +18,12 @@ import javax.persistence.OneToMany;
 import br.com.gitanalyzer.model.enums.OperationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @AllArgsConstructor
+@NoArgsConstructor
 public class CommitFile {
 
 	@Id

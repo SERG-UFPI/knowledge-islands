@@ -7,7 +7,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
-import javax.persistence.Transient;
 
 import lombok.Data;
 
@@ -19,44 +18,37 @@ public class AuthorFileExpertise {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@ManyToOne
-	private ContributorVersion authorVersion;
+	private ContributorVersion contributorVersion;
 	@OneToOne
 	private FileVersion fileVersion;
 	@OneToOne(cascade = CascadeType.PERSIST)
 	private DOE doe;
 	@OneToOne(cascade = CascadeType.PERSIST)
 	private DOA doa;
-	@Transient
-	private GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel;
-	private boolean withGenAi;
 
-	public AuthorFileExpertise(ContributorVersion author, FileVersion file) {
+	public AuthorFileExpertise(ContributorVersion contributorVersion, FileVersion file) {
 		super();
-		this.authorVersion = author;
+		this.contributorVersion = contributorVersion;
 		this.fileVersion = file;
-		this.withGenAi = false;
 	}
 
 	public AuthorFileExpertise() {
 		this.fileVersion = new FileVersion();
-		this.authorVersion = new ContributorVersion();
-		this.withGenAi = false;
+		this.contributorVersion = new ContributorVersion();
 	}
 
-	public AuthorFileExpertise(ContributorVersion author, FileVersion file, DOE doe) {
+	public AuthorFileExpertise(ContributorVersion contributorVersion, FileVersion file, DOE doe) {
 		super();
-		this.authorVersion = author;
+		this.contributorVersion = contributorVersion;
 		this.fileVersion = file;
 		this.doe = doe;
-		this.withGenAi = false;
 	}
 
-	public AuthorFileExpertise(ContributorVersion author, FileVersion file, DOA doa) {
+	public AuthorFileExpertise(ContributorVersion contributorVersion, FileVersion file, DOA doa) {
 		super();
-		this.authorVersion = author;
+		this.contributorVersion = contributorVersion;
 		this.fileVersion = file;
 		this.doa = doa;
-		this.withGenAi = false;
 	}
 
 }

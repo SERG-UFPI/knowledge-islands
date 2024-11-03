@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.gitanalyzer.analysis.dev_gpt.GitHubCall;
+import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm1;
 import br.com.gitanalyzer.exceptions.CommandExecutionException;
 import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
@@ -35,10 +36,12 @@ import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.entity.SharedLinkErrorLog;
 import br.com.gitanalyzer.model.entity.SharedLinkSearch;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.enums.SharedLinkFetchError;
 import br.com.gitanalyzer.model.enums.SharedLinkSourceType;
 import br.com.gitanalyzer.repository.FileRepository;
@@ -71,12 +74,14 @@ public class SharedLinkService {
 	private GitRepositoryVersionService gitRepositoryVersionService;
 	@Autowired
 	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
-	@Value("${configuration.github.token}")
-	private String token;
 	@Autowired
 	private ChatGPTConversationService chatGPTConversationService;
 	@Autowired
 	private SharedLinkCommitService sharedLinkCommitService;
+	@Autowired
+	private GitRepositoryVersionKnowledgeModelService gitRepositoryVersionKnowledgeModelService;
+	@Value("${configuration.github.token}")
+	private String token;
 
 	public String extractOpenAiJson(String url) throws CommandExecutionException, PageJsonProcessingException, SharedLinkNotFoundException, FetchPageException {
 		try {
@@ -209,48 +214,61 @@ public class SharedLinkService {
 	}
 
 	private void saveFileSharedLinkItem(JsonNode item, String language) {
-		Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegex);
-		String repositoryLabel = "repository";
 		try {
+			Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegex);
+			String repositoryLabel = "repository";
 			JsonNode repositoryNode = item.get(repositoryLabel);
 			String repoFullName = repositoryNode.get("full_name").asText();
-			GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
-			if(gitRepository == null) {
-				gitRepository = new GitRepository(repositoryNode.get("name").asText(), 
-						repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
-				gitRepositoryRepository.save(gitRepository);
-			}
-			File file = new File();
-			file.setName(item.get("name").asText());
-			file.setPath(item.get("path").asText());
-			file.setSha(item.get("sha").asText());
-			file.setUrl(item.get("url").asText());
-			file.setGitUrl(item.get("git_url").asText());
-			file.setHtmlUrl(item.get("html_url").asText());
-			file.setLanguage(language);
-			fileRepository.save(file);
-			FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
-			JsonNode matchesNode = item.get("text_matches");
-			if(!matchesNode.isEmpty()) {
-				for (JsonNode matchNode : matchesNode) {
-					String fragment = matchNode.get("fragment").asText();
-					Matcher matcher = pattern.matcher(fragment);
-					while(matcher.find()) {
-						String link = matcher.group();
-						link = link.trim();
-						SharedLink sharedLink = sharedLinkRepository.findByLink(link);
-						if(sharedLink == null) {
-							sharedLink = new SharedLink();
-							sharedLink.setLink(link);
-							sharedLink.setTextMatchFragment(fragment);
-							sharedLink.setType(SharedLinkSourceType.FILE);
-							repository.save(sharedLink);
-						}
-						fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink, fileGitRepositorySharedLinkCommit));
+			List<String> problematicProjects = KnowledgeIslandsUtils.problematicGenAiProject();
+			if(!problematicProjects.contains(repoFullName)) {
+				GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
+				if(gitRepository == null) {
+					gitRepository = new GitRepository(repositoryNode.get("name").asText(), 
+							repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
+					gitRepositoryRepository.save(gitRepository);
+				}
+				if(gitRepository != null) {
+					File file = new File();
+					file.setName(item.get("name").asText());
+					file.setPath(item.get("path").asText());
+					if(KnowledgeIslandsUtils.containsNonAscii(file.getPath())) {
+						file.setPath(KnowledgeIslandsUtils.encodeNonAsciiOnly(file.getPath()));
 					}
+					file.setSha(item.get("sha").asText());
+					file.setUrl(item.get("url").asText());
+					file.setGitUrl(item.get("git_url").asText());
+					file.setHtmlUrl(item.get("html_url").asText());
+					file.setLanguage(language);
+					fileRepository.save(file);
+					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
+					JsonNode matchesNode = item.get("text_matches");
+					if(!matchesNode.isEmpty()) {
+						for (JsonNode matchNode : matchesNode) {
+							String fragment = matchNode.get("fragment").asText();
+							Matcher matcher = pattern.matcher(fragment);
+							matchWhile:while(matcher.find()) {
+								String link = matcher.group();
+								link = link.trim();
+								SharedLink sharedLink = sharedLinkRepository.findByLink(link);
+								if(sharedLink == null) {
+									sharedLink = new SharedLink();
+									sharedLink.setLink(link);
+									sharedLink.setTextMatchFragment(fragment);
+									sharedLink.setType(SharedLinkSourceType.FILE);
+									repository.save(sharedLink);
+								}
+								for(SharedLinkCommit slc: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
+									if(slc.getSharedLink().getLink().equals(sharedLink.getLink())) {
+										continue matchWhile;
+									}
+								}
+								fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink, fileGitRepositorySharedLinkCommit));
+							}
+						}
+					}
+					fileGitRepositorySharedLinkCommitRepository.save(fileGitRepositorySharedLinkCommit);
 				}
 			}
-			fileGitRepositorySharedLinkCommitRepository.save(fileGitRepositorySharedLinkCommit);
 		}catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
@@ -378,19 +396,25 @@ public class SharedLinkService {
 		log.info("Third Quartile (Q3): " + q3);
 	}
 
+	public void createSharedLinkConversationRepoInfo() throws InterruptedException, IOException {
+		saveFileSharedLinks();
+		setConversationSharedLinks();
+		saveGitRepositoriesApi();
+	}
+
 	public void createSharedLinkFull() throws InterruptedException, IOException, URISyntaxException {
 		saveFileSharedLinks();
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
-		List<GitRepository> repositories = downloaderService.cloneRepositoriesWithSharedLinks();
-		List<String> repositoriesPath = new ArrayList<>();
-		repositories.forEach(r -> repositoriesPath.add(r.getCurrentFolderPath()));
-		gitRepositoryService.generateLogFilesRepositoriesPaths(repositoriesPath);
+		List<GitRepository> repositories = downloaderService.cloneRepositoriesSharedLinks();
+		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
 		for (GitRepository gitRepository: repositories) {
 			try {
-				gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository));
-				System.out.println();
+				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
+				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
+				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null));
+				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null));
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());

@@ -13,6 +13,7 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -50,7 +51,7 @@ public class DownloaderService {
 	@Autowired
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
-	private GitRepositoryService projectService;
+	private GitRepositoryService gitRepositoryService;
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
@@ -81,8 +82,8 @@ public class DownloaderService {
 				log.info("=========== Download "+form.getLanguage().getName()+" project ==================");
 				downloaderPerLanguage("language:"+form.getLanguage().getName()+" stars:>500", form);
 			}
-			projectService.generateCommitFileFolder(form.getPath());
-			projectService.setProjectDatesFolder(form.getPath());
+			gitRepositoryService.generateCommitFileFolder(form.getPath());
+			gitRepositoryService.setProjectDatesFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -92,8 +93,8 @@ public class DownloaderService {
 		try {
 			log.info("=========== download from "+form.getOrg()+" org ==================");
 			downloaderPerOrg("org:"+form.getOrg(), form);
-			projectService.generateCommitFileFolder(form.getPath());
-			projectService.setProjectDatesFolder(form.getPath());
+			gitRepositoryService.generateCommitFileFolder(form.getPath());
+			gitRepositoryService.setProjectDatesFolder(form.getPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -124,7 +125,7 @@ public class DownloaderService {
 						String projectPath = path+projectInfo.getName()+"/";
 						GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 								projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
-								projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
+								projectInfo.getStargazers_count(), gitRepositoryService.getCurrentRevisionHash(projectPath));
 						gitRepositoryRepository.save(project);
 					}
 				} catch (Exception e) {
@@ -146,7 +147,7 @@ public class DownloaderService {
 					String projectPath = path+projectInfo.getName()+"/";
 					GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 							projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
-							projectInfo.getStargazers_count(), projectService.getCurrentRevisionHash(projectPath));
+							projectInfo.getStargazers_count(), gitRepositoryService.getCurrentRevisionHash(projectPath));
 					gitRepositoryRepository.save(project);
 				}
 			} catch (Exception e) {
@@ -224,9 +225,9 @@ public class DownloaderService {
 	}
 
 	@Transactional
-	public List<GitRepository> cloneRepositoriesWithSharedLinks() throws URISyntaxException, IOException, InterruptedException {
+	public List<GitRepository> cloneRepositoriesSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceDownload();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
@@ -250,6 +251,11 @@ public class DownloaderService {
 		return repositories;
 	}
 
+	public void cloneRepositoriesSharedLinksGenerateLogs() throws URISyntaxException, IOException, InterruptedException {
+		List<GitRepository> repositories = cloneRepositoriesSharedLinks();
+		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
+	}
+
 	public String cloneProject(CloneRepoForm form) {
 		String cloneFolderModified = cloneFolder;
 		if(form.getIdUser() != null) {
@@ -258,7 +264,7 @@ public class DownloaderService {
 				cloneFolderModified = cloneFolderModified+op.get().getUsername().toLowerCase()+"/";
 			}
 		}
-		String projectName = projectService.extractProjectName(form.getCloneUrl());
+		String projectName = gitRepositoryService.extractProjectName(form.getCloneUrl());
 		projectName = projectName.replace(".git", "");
 		Git git = cloneProjectFromFile(projectName, 0, form, cloneFolderModified);
 		String path = git.getRepository().getDirectory().getAbsolutePath().replace(".git", "");
@@ -268,21 +274,19 @@ public class DownloaderService {
 
 	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form, String cloneFolder) {
 		File file = null;
+		String folderProjectName = cloneFolder+projectName;
 		if(repeatedNumber != 0) {
-			file = new File(cloneFolder+projectName+"RepeatedRepo"+repeatedNumber);
+			file = new File(folderProjectName+"RepeatedRepo"+repeatedNumber);
 		}else {
-			file = new File(cloneFolder+projectName);
+			file = new File(folderProjectName);
 		}
 		Git git = null;
 		try {
-			if(form.getBranch() != null && form.getBranch().isEmpty() == false) {
-				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-						.setBranch(form.getBranch()) 
-						.call();
-			}else {
-				git = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file)
-						.call();
+			CloneCommand command = Git.cloneRepository().setURI(form.getCloneUrl()).setDirectory(file);
+			if(form.getBranch() != null && !form.getBranch().isEmpty()) {
+				command = command.setBranch(form.getBranch()); 
 			}
+			git = command.call();
 		}catch(JGitInternalException e) {
 			e.printStackTrace();
 			log.error(form.getCloneUrl());

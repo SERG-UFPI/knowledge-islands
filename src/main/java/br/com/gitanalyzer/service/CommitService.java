@@ -29,7 +29,9 @@ import br.com.gitanalyzer.model.entity.CommitFile;
 import br.com.gitanalyzer.model.entity.Contributor;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.OperationType;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
 
@@ -39,6 +41,8 @@ public class CommitService {
 
 	@Autowired
 	private ContributorService contributorService;
+	@Autowired
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 
 	public List<Commit> getCommitsFiles(GitRepository gitRepository, List<Commit> commits, List<File> files) throws IOException {
 		FileInputStream fstream = new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileFileName);
@@ -51,6 +55,7 @@ public class CommitService {
 					if (id.equals(commit.getSha())) {
 						String operation = splited[1];
 						String filePath = splited[3];
+						filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(filePath);
 						for (File file : files) {
 							if (file.isFile(filePath)) {
 								commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation), commit));
@@ -67,10 +72,18 @@ public class CommitService {
 		return commits;
 	}
 
-	public List<Commit> getCommitsFromLogFiles(GitRepository repository) throws IOException {
+	private void addContributorsRepositoryVersions(List<Contributor> contributors, Long gitRepositoryId) {
+		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepositoryId);
+		if(versions != null) {
+			versions.forEach(v -> contributors.addAll(v.getContributors()));
+		}
+	}
+
+	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = new ArrayList<>();
-		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(repository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
+		addContributorsRepositoryVersions(contributors, gitRepository.getId());
+		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
 				String[] commitSplited = strLine.split(";");
@@ -90,6 +103,14 @@ public class CommitService {
 									&& contributor.getEmail().equals(authorEmail)) {
 								contributorCommit = contributor;
 								break;
+							}else if(contributor.getAlias() != null) {
+								for (Contributor alias : contributor.getAlias()) {
+									if(alias.getName().equals(authorName)
+											&& alias.getEmail().equals(authorEmail)) {
+										contributorCommit = contributor;
+										break;
+									}
+								}
 							}
 						}
 						if(contributorCommit == null) {
@@ -165,6 +186,7 @@ public class CommitService {
 										commitFile.setAdditions(linesAdded);
 									} catch (Exception e) {
 										e.printStackTrace();
+										log.error(e.getMessage());
 									}
 									continue whileFile;
 								}
@@ -213,7 +235,15 @@ public class CommitService {
 			RevCommit rev = revWalk.parseCommit(commitId);
 			List<DiffEntry> diffs = diffsForTheCommit(repository, rev);
 			for (DiffEntry diff : diffs) {
-				if(file.isFile(diff.getNewPath()) || file.isFile(diff.getOldPath())) {
+				String newPath = diff.getNewPath();
+				if(KnowledgeIslandsUtils.containsNonAscii(newPath)) {
+					newPath = KnowledgeIslandsUtils.encodeNonAsciiOnly(newPath);
+				}
+				String oldPath = diff.getOldPath();
+				if(KnowledgeIslandsUtils.containsNonAscii(newPath)) {
+					oldPath = KnowledgeIslandsUtils.encodeNonAsciiOnly(oldPath);
+				}
+				if(file.isFile(newPath) || file.isFile(oldPath)) {
 					DiffFormatter diffFormatter = new DiffFormatter( stream );
 					diffFormatter.setRepository(repository);
 					diffFormatter.format(diff);
@@ -226,7 +256,7 @@ public class CommitService {
 			e.printStackTrace();
 			log.error(e.getMessage());
 		}
-		return null;
+		return new ArrayList<>();
 	}
 
 	public List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException { 

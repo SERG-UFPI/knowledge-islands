@@ -32,9 +32,6 @@ public class SharedLink {
 	@Lob
 	@Column(columnDefinition="TEXT")
 	private String textMatchFragment;
-	@Lob
-	@Column(columnDefinition="TEXT")
-	private String openAiFullJson;
 	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private ChatGptConversation conversation;
@@ -49,12 +46,11 @@ public class SharedLink {
 		this.textMatchFragment = textMatchFragment;
 	}
 
-	public SharedLink(String link, String textMatchFragment, ChatGptConversation conversation, String openAiFullJson) {
+	public SharedLink(String link, String textMatchFragment, ChatGptConversation conversation) {
 		super();
 		this.link = link;
 		this.textMatchFragment = textMatchFragment;
 		this.conversation = conversation;
-		this.openAiFullJson = openAiFullJson;
 	}
 
 }

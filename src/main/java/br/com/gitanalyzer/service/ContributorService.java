@@ -26,7 +26,7 @@ public class ContributorService {
 			contributorFor: for (Contributor contributor : contributors) {
 				for (Commit commit : commits) {
 					if (commit.getAuthor().equals(contributor)) {
-						contributor.setActive(true);
+						//contributor.setActive(true);
 						continue contributorFor;
 					}
 				}
@@ -39,10 +39,8 @@ public class ContributorService {
 		List<Contributor> contributors = new ArrayList<>();
 		forCommit: for (Commit commit : commits) {
 			Contributor contributor = commit.getAuthor();
-			for (Contributor contributor2 : contributors) {
-				if (contributor2.equals(contributor)) {
-					continue forCommit;
-				}
+			if(contributors.stream().anyMatch(c -> c.equals(contributor))) {
+				continue forCommit;
 			}
 			contributors.add(contributor);
 		}
@@ -51,9 +49,17 @@ public class ContributorService {
 
 	public List<Contributor> setAlias(List<Contributor> contributors, String projectName){
 		List<Contributor> contributorsAliases = new ArrayList<>();
+		for (Contributor contributor : contributors) {
+			if(contributor.getId() != null) {
+				contributorsAliases.add(contributor);
+			}
+		}
 		forContributors:for (int i = 0; i < contributors.size(); i++) {
+			//check if contributor i is present in the aliases of the already added contributorsAliases
 			for (Contributor contributorAlias : contributorsAliases) {
-				if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
+				if(contributors.get(i).equals(contributorAlias)) {
+					continue forContributors;
+				}else if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
 					for (Contributor contributorAliasAux : contributorAlias.getAlias()) {
 						if (contributors.get(i).equals(contributorAliasAux)) {
 							continue forContributors;
@@ -61,29 +67,33 @@ public class ContributorService {
 					}
 				}
 			}
-			for(int j = i+1; j < contributors.size(); j++) {
-				boolean alias = checkAliasContributors(contributors.get(j), contributors.get(i));
-				if(alias == true) {
+			//set all alias of contributor i
+			forContributor2:for(int j = i+1; j < contributors.size(); j++) {
+				if(checkAliasContributors(contributors.get(j), contributors.get(i))) {
 					if(contributors.get(i).getAlias() == null) {
 						contributors.get(i).setAlias(new HashSet<>());
+					}
+					for(Contributor alias: contributors.get(i).getAlias()) {
+						if(alias.equals(contributors.get(j))) {
+							continue forContributor2;
+						}
 					}
 					contributors.get(i).getAlias().add(contributors.get(j));
 				}
 			}
-			if(contributors.get(i).getAlias() != null && !contributors.get(i).getAlias().isEmpty()) {
-				for (Contributor alias : contributors.get(i).getAlias()) {
-					for (Contributor contributorAlias : contributorsAliases) {
-						if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
-							for (Contributor contributorAliasAux : contributorAlias.getAlias()) {
-								if (alias.equals(contributorAliasAux)) {
-									List<Contributor> aux = new ArrayList<>();
-									aux.addAll(contributors.get(i).getAlias());
-									aux.add(contributors.get(i));
-									contributors.get(i).getAlias().clear();
-									contributorAlias.getAlias().addAll(aux);
-									continue forContributors;
-								}
+			for (Contributor contributorAlias : contributorsAliases) {
+				if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
+					for (Contributor contributorAliasAux : contributorAlias.getAlias()) {
+						if(checkAliasContributors(contributorAliasAux, contributors.get(i)) || 
+								(contributors.get(i).getAlias() != null && contributors.get(i).getAlias().stream().anyMatch(c -> checkAliasContributors(contributorAliasAux, c)))) {
+							List<Contributor> aux = new ArrayList<>();
+							aux.add(contributors.get(i));
+							if(contributors.get(i).getAlias() != null) {
+								aux.addAll(contributors.get(i).getAlias());
+								contributors.get(i).getAlias().clear();
 							}
+							contributorAlias.getAlias().addAll(aux);
+							continue forContributors;
 						}
 					}
 				}
@@ -97,12 +107,10 @@ public class ContributorService {
 		if(contributor1.getEmail().equals(contributor2.getEmail())) {
 			return true;
 		}else {
-			if(contributor1.getName() != null) {
-				int distance = StringUtils.getLevenshteinDistance(contributor2.getName().toUpperCase()
-						, contributor1.getName().toUpperCase());
-				if (distance <= 1) {
-					return true;
-				}
+			int distance = StringUtils.getLevenshteinDistance(contributor2.getName().toUpperCase()
+					, contributor1.getName().toUpperCase());
+			if (distance <= 1) {
+				return true;
 			}
 		}
 		return false;

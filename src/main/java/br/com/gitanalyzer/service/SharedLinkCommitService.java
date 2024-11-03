@@ -46,7 +46,13 @@ public class SharedLinkCommitService {
 		for (FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinksCommits) {
 			try(Git git = Git.open(new File(fileGitRepositorySharedLinkCommit.getGitRepository().getCurrentFolderPath()));) {
 				Repository repository = git.getRepository();
+//				if(fileGitRepositorySharedLinkCommit.getFile().getPath().equals("Programers/Day5/42626_\\354\\212\\244\\354\\275\\224\\353\\271\\214.java")) {
+//					System.out.println();
+//				}
 				for (Commit commit : commits) {
+//					if(commit.getSha().equals("86119b6991e4a5789002fbde85109be279aa9395")) {
+//						System.out.println();
+//					}
 					for (CommitFile commitFile : commit.getCommitFiles()) {
 						if(commitFile.getFile().isFile(fileGitRepositorySharedLinkCommit.getFile().getPath())) {
 							List<String> addedCodeLines = commitService.getCodeLinesAddedCommitFile(repository, commit, fileGitRepositorySharedLinkCommit.getFile());
@@ -55,7 +61,7 @@ public class SharedLinkCommitService {
 								addedCodeLines.forEach(c -> commitFile.getAddedCodeLines().add(new CodeLine(c)));
 								List<SharedLinkCommit> sharedLinksCommits = fileGitRepositorySharedLinkCommit.getSharedLinksCommits().stream().filter(slc -> slc.getSharedLink().getConversation() != null).toList();
 								for(SharedLinkCommit sharedLinkCommit: sharedLinksCommits) {
-									if( addedCodeLines.stream().anyMatch(l -> l.contains(sharedLinkCommit.getSharedLink().getLink())) && 
+									if(addedCodeLines.stream().anyMatch(l -> l.contains(sharedLinkCommit.getSharedLink().getLink())) && 
 											sharedLinkCommit.getCommitFileAddedLink() == null) {
 										List<String> chatGPTCodeLines = chatGPTConversationService.getCodesFromConversation(sharedLinkCommit.getSharedLink().getConversation().getConversationTurns());
 										List<String> codeLinesCopied = chatGPTConversationService.getLinesCopied(chatGPTCodeLines, addedCodeLines);
@@ -69,13 +75,17 @@ public class SharedLinkCommitService {
 										sharedLinkCommitRepository.save(sharedLinkCommit);
 									}
 								}
+								if(commitFile.getAdditions() < 0) {
+									System.out.println();
+								}
 								commitFileRepository.save(commitFile);
 							}
 						}
 					}
 				}
 				for(SharedLinkCommit sharedLinkCommit: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
-					if(sharedLinkCommit.getCommitFileAddedLink() == null && sharedLinkCommit.getSharedLink().getConversation() != null) {
+					if(sharedLinkCommit.getSharedLink().getConversation() != null && 
+							sharedLinkCommit.getCommitFileAddedLink() == null) {
 						System.out.println();
 					}
 				}

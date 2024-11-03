@@ -9,9 +9,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,19 +33,24 @@ import br.com.gitanalyzer.model.entity.DOA;
 import br.com.gitanalyzer.model.entity.DOE;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileVersion;
+import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
+import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryFolderRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
+import br.com.gitanalyzer.repository.SharedLinkCommitRepository;
 import br.com.gitanalyzer.utils.DoaUtils;
 import br.com.gitanalyzer.utils.DoeUtils;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Service
 public class GitRepositoryVersionKnowledgeModelService {
 
@@ -54,6 +60,8 @@ public class GitRepositoryVersionKnowledgeModelService {
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 	@Autowired
 	private GitRepositoryFolderRepository gitRepositoryFolderRepository;
+	@Autowired
+	private SharedLinkCommitRepository sharedLinkCommitRepository;
 	private DoeUtils doeUtils = new DoeUtils();
 	private DoaUtils doaUtils = new DoaUtils();
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
@@ -62,7 +70,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		GitRepositoryVersionKnowledgeModelForm1 form1  = new GitRepositoryVersionKnowledgeModelForm1();
 		form1.setIdGitRepositoryVersion(form.getIdGitRepositoryVersion());
 		form1.setKnowledgeMetric(form.getKnowledgeMetric());
-		if(form.getFoldersIds() != null && form.getFoldersIds().size() > 0) {
+		if(form.getFoldersIds() != null && !form.getFoldersIds().isEmpty()) {
 			List<GitRepositoryFolder> folders = gitRepositoryFolderRepository.findAllById(form.getFoldersIds());
 			form1.setFoldersPaths(folders.stream().map(f -> f.getPath()).filter(f -> f!=null).toList());
 		}
@@ -72,7 +80,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	@Transactional
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionRepository.findById(form.getIdGitRepositoryVersion()).get();
-		Collections.sort(gitRepositoryVersion.getCommits(), Collections.reverseOrder());
+		Collections.sort(gitRepositoryVersion.getCommits());
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = new GitRepositoryVersionKnowledgeModel(gitRepositoryVersion, form.getKnowledgeMetric(), form.getFoldersPaths());
 		List<FileVersion> filesVersion = new ArrayList<>();
@@ -90,17 +98,16 @@ public class GitRepositoryVersionKnowledgeModelService {
 			}
 			files.forEach(f -> filesVersion.add(new FileVersion(f)));
 		}
-		List<ContributorVersion> contributorsVersion = new ArrayList<>();
-		gitRepositoryVersion.getContributors().stream().forEach(c -> contributorsVersion.add(new ContributorVersion(c)));
+		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(c -> new ContributorVersion(c)).toList();
 		for(ContributorVersion contributorVersion: contributorsVersion) {
 			List<File> filesContributor = filesTouchedByContributor(contributorVersion, gitRepositoryVersion.getCommits());
-			forFileContributor: for (File fileContributor : filesContributor) {
+			for (File fileContributor : filesContributor) {
 				for (FileVersion fileVersion : filesVersion) {
 					if(fileVersion.getFile().isFile(fileContributor.getPath())) {
 						AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(form.getKnowledgeMetric(), gitRepositoryVersion.getCommits(), contributorVersion, fileVersion);
-						addFileKnowledgeOfAuthor(form.getKnowledgeMetric(), fileVersion, authorFile);
+						addToFileTotalKnowledge(form.getKnowledgeMetric(), fileVersion, authorFile);
 						authorFiles.add(authorFile);
-						continue forFileContributor;
+						break;
 					}
 				}
 			}
@@ -118,8 +125,18 @@ public class GitRepositoryVersionKnowledgeModelService {
 		for(FileVersion version: filesVersion) {
 			if(version.getTotalKnowledge() > 0) {
 				BigDecimal bd = BigDecimal.valueOf(version.getTotalKnowledge());
-				BigDecimal rounded = bd.setScale(2, RoundingMode.HALF_UP);
+				BigDecimal rounded = bd.setScale(4, RoundingMode.HALF_UP);
 				version.setTotalKnowledge(rounded.doubleValue());
+			}
+		}
+	}
+
+	private void addFileToFilesAuthor(List<ContributorVersion> contributorsVersion, AuthorFileExpertise authorFile, File file) {
+		for (ContributorVersion contributorKnowledgeModel: contributorsVersion) {
+			if (authorFile.getContributorVersion().getContributor().equals(contributorKnowledgeModel.getContributor())) {
+				contributorKnowledgeModel.getFilesAuthor().add(file);
+				contributorKnowledgeModel.setNumberFilesAuthor(contributorKnowledgeModel.getNumberFilesAuthor()+1);
+				break;
 			}
 		}
 	}
@@ -129,39 +146,28 @@ public class GitRepositoryVersionKnowledgeModelService {
 		if (knowledgeMetric.equals(KnowledgeModel.DOE) || knowledgeMetric.equals(KnowledgeModel.DOA)) {
 			for (File file: files) {
 				List<AuthorFileExpertise> authorsFilesAux = authorsFiles.stream().
-						filter(authorFile -> authorFile.getFileVersion().getFile().getPath().equals(file.getPath())).collect(Collectors.toList());
-				if(authorsFilesAux != null && authorsFilesAux.size() > 0) {
+						filter(authorFile -> authorFile.getFileVersion().getFile().getPath().equals(file.getPath())).toList();
+				if(authorsFilesAux != null && !authorsFilesAux.isEmpty()) {
 					double maxValue = 0.0;
 					for (AuthorFileExpertise authorFile : authorsFilesAux) {
 						if(knowledgeMetric.equals(KnowledgeModel.DOE) && authorFile.getDoe().getDoeValue() > maxValue) {
 							maxValue = authorFile.getDoe().getDoeValue();
-						}
-						if(knowledgeMetric.equals(KnowledgeModel.DOA) && authorFile.getDoa().getDoaValue() > maxValue) {
+						}else if(knowledgeMetric.equals(KnowledgeModel.DOA) && authorFile.getDoa().getDoaValue() > maxValue) {
 							maxValue = authorFile.getDoa().getDoaValue();
 						}
 					}
 					for (AuthorFileExpertise authorFile : authorsFilesAux) {
 						double normalized = 0.0;
-						boolean maintainer = false;
 						if (knowledgeMetric.equals(KnowledgeModel.DOE)) {
 							normalized = authorFile.getDoe().getDoeValue()/maxValue;
 							if (normalized >= KnowledgeIslandsUtils.normalizedThresholdMantainerDOE) {
-								maintainer = true;
+								addFileToFilesAuthor(contributorsVersion, authorFile, file);
 							}
 						}else if(knowledgeMetric.equals(KnowledgeModel.DOA)){
 							normalized = authorFile.getDoa().getDoaValue()/maxValue;
 							if (normalized > KnowledgeIslandsUtils.normalizedThresholdMantainerDOA && 
 									authorFile.getDoa().getDoaValue() >= KnowledgeIslandsUtils.thresholdMantainerDOA) {
-								maintainer = true;
-							}
-						}
-						if(maintainer == true) {
-							for (ContributorVersion contributorKnowledgeModel: contributorsVersion) {
-								if (authorFile.getAuthorVersion().getContributor().equals(contributorKnowledgeModel.getContributor())) {
-									contributorKnowledgeModel.getFilesAuthor().add(file);
-									contributorKnowledgeModel.setNumberFilesAuthor(contributorKnowledgeModel.getNumberFilesAuthor()+1);
-									break;
-								}
+								addFileToFilesAuthor(contributorsVersion, authorFile, file);
 							}
 						}
 					}
@@ -180,7 +186,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 							String.valueOf(authorFile.getDoe().getNumDays()),
 							String.valueOf(authorFile.getDoe().getSize()),
 							String.valueOf(authorFile.getDoe().getFa()),
-							authorFile.getAuthorVersion().getContributor().getEmail(),
+							authorFile.getContributorVersion().getContributor().getEmail(),
 							authorFile.getFileVersion().getFile().getPath()
 					});
 				}
@@ -188,7 +194,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			List<MlOutput> output = new ArrayList<MlOutput>();
+			List<MlOutput> output = new ArrayList<>();
 			try {
 				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", KnowledgeIslandsUtils.pathScriptMlFile);
 				pb.redirectOutput(Redirect.INHERIT);
@@ -225,7 +231,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 	}
 
-	private void addFileKnowledgeOfAuthor(KnowledgeModel knowledgeMetric, FileVersion fileVersion, AuthorFileExpertise authorFile) {
+	private void addToFileTotalKnowledge(KnowledgeModel knowledgeMetric, FileVersion fileVersion, AuthorFileExpertise authorFile) {
 		if (knowledgeMetric.equals(KnowledgeModel.DOE) 
 				|| knowledgeMetric.equals(KnowledgeModel.MACHINE_LEARNING)) {
 			fileVersion.setTotalKnowledge(fileVersion.getTotalKnowledge()+authorFile.getDoe().getDoeValue());
@@ -235,20 +241,14 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private List<File> filesTouchedByContributor(ContributorVersion contributorVersion, List<Commit> commits){
-		List<File> files = new ArrayList<File>();
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributorVersion.getContributor());
-		if(contributorVersion.getContributor().getAlias() != null) {
-			contributors.addAll(contributorVersion.getContributor().getAlias());
-		}
+		List<File> files = new ArrayList<>();
+		List<Contributor> contributors = getContributorAndAliases(contributorVersion.getContributor());
 		forCommit:for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
-					forCommitFile: for (CommitFile commitFile: commit.getCommitFiles()) {
-						for (File file : files) {
-							if (file.isFile(commitFile.getFile().getPath())) {
-								continue forCommitFile;
-							}
+					for (CommitFile commitFile: commit.getCommitFiles()) {
+						if(files.stream().anyMatch(f -> f.isFile(commitFile.getFile().getPath()))) {
+							continue;
 						}
 						files.add(commitFile.getFile());
 					}
@@ -264,43 +264,55 @@ public class GitRepositoryVersionKnowledgeModelService {
 		if (knowledgeMetric.equals(KnowledgeModel.DOE) 
 				|| knowledgeMetric.equals(KnowledgeModel.MACHINE_LEARNING)) {
 			DOE doe = getDoeContributorFile(contributorVersion, fileVersion, commits);
-			double doeValue = doeUtils.getDOE(doe.getAdds(), doe.getFa(),
-					doe.getNumDays(), fileVersion.getFile().getSize());
-			doe.setDoeValue(doeValue);
-			doe.setSize(fileVersion.getFile().getSize());
 			return new AuthorFileExpertise(contributorVersion, fileVersion, doe);
 		}else {
 			DOA doa = getDoaContributorFile(contributorVersion, fileVersion, commits);
-			double doaValue = doaUtils.getDOA(doa.getFa(), doa.getDl(),
-					doa.getAc());
-			doa.setDoaValue(doaValue);
 			return new AuthorFileExpertise(contributorVersion, fileVersion, doa);
 		}
 	}
 
+	private List<Contributor> getContributorAndAliases(Contributor contributor){
+		List<Contributor> contributors = new ArrayList<>();
+		contributors.add(contributor);
+		if(contributor.getAlias() != null) {
+			contributors.addAll(contributor.getAlias());
+		}
+		return contributors;
+	}
+
+	private int isContributorFa(List<Contributor> contributors, File file, List<Commit> commits) {
+		for (Commit commit : commits) {
+			for (CommitFile commitFile: commit.getCommitFiles()) {
+				if(file.isFile(commitFile.getFile().getPath()) && 
+						commitFile.getStatus().equals(OperationType.ADDED)) {
+					for (Contributor contributorAux : contributors) {
+						if(contributorAux.equals(commit.getAuthor())) {
+							return 1;
+						}
+					}
+					return 0;
+				}
+			}
+		}
+		return 0;
+	}
+
 	protected DOE getDoeContributorFile(ContributorVersion contributorVersion, 
 			FileVersion fileVersion, List<Commit> commits) {
-		Date currentDate = commits.get(0).getAuthorDate();
+		List<Contributor> contributors = getContributorAndAliases(contributorVersion.getContributor());
+		Date currentDate = new Date();
 		int adds = 0; 
-		int fa = 0;
-		int numDays =0;;
-		Date dateLastCommit = null;
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributorVersion.getContributor());
-		if(contributorVersion.getContributor().getAlias() != null) {
-			contributors.addAll(contributorVersion.getContributor().getAlias());
-		}
+		int numDays =0;
+		int fa = isContributorFa(contributors, fileVersion.getFile(), commits);
+		Date dateLastCommit = commits.get(0).getAuthorDate();
 		forCommit: for (Commit commit : commits) {
 			for (Contributor contributorAux : contributors) {
 				if (contributorAux.equals(commit.getAuthor())) {
 					for (CommitFile commitFile: commit.getCommitFiles()) {
 						if (fileVersion.getFile().isFile(commitFile.getFile().getPath())) {
 							adds = commitFile.getAdditions() + adds;
-							if (dateLastCommit == null) {
+							if (commit.getAuthorDate().after(dateLastCommit)) {
 								dateLastCommit = commit.getAuthorDate();
-							}
-							if(commitFile.getStatus().equals(OperationType.ADDED)) {
-								fa = 1;
 							}
 							continue forCommit;
 						}
@@ -312,17 +324,17 @@ public class GitRepositoryVersionKnowledgeModelService {
 			long diff = currentDate.getTime() - dateLastCommit.getTime();
 			numDays = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
 		}
-		return new DOE(adds, fa, numDays);
+		double doeValue = doeUtils.getDOE(adds, fa,
+				numDays, fileVersion.getFile().getSize());
+		return new DOE(adds, fa, numDays, fileVersion.getFile().getSize(), doeValue);
 	}
 
-	protected DOA getDoaContributorFile(ContributorVersion contributorVersion, 
+	private DOA getDoaContributorFile(ContributorVersion contributorVersion, 
 			FileVersion fileVersion, List<Commit> commits) {
-		int dl = 0, ac = 0, fa = 0;
-		List<Contributor> contributors = new ArrayList<Contributor>();
-		contributors.add(contributorVersion.getContributor());
-		if(contributorVersion.getContributor().getAlias() != null) {
-			contributors.addAll(contributorVersion.getContributor().getAlias());
-		}
+		List<Contributor> contributors = getContributorAndAliases(contributorVersion.getContributor());
+		int dl = 0;
+		int ac = 0; 
+		int fa = isContributorFa(contributors, fileVersion.getFile(), commits);
 		for (Commit commit : commits) {
 			boolean present = false;
 			for (Contributor contributorAux : contributors) {
@@ -331,13 +343,10 @@ public class GitRepositoryVersionKnowledgeModelService {
 					break;
 				}
 			}
-			if (present == true) {
+			if (present) {
 				for (CommitFile commitFile: commit.getCommitFiles()) {
 					if (commitFile.getFile().getPath().equals(fileVersion.getFile().getPath())) {
 						dl = dl + 1;
-						if(commitFile.getStatus().equals(OperationType.ADDED)) {
-							fa = 1;
-						}
 						break;
 					}
 				}
@@ -350,11 +359,29 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
-		return new DOA(fa, dl, ac);
+		double doaValue = doaUtils.getDOA(fa, dl,ac);
+		return new DOA(fa, dl, ac, doaValue);
 	}
 
 	public List<GitRepositoryVersionKnowledgeModel> getByGitRepositoryVersionId(Long id) {
 		return gitRepositoryVersionKnowledgeModelRepository.findByRepositoryVersionId(id);
+	}
+
+	public void saveRepositoryVersionKnowledgeSharedLinks() {
+		List<SharedLinkCommit> sharedLinkCommits = sharedLinkCommitRepository.findByCommitFileAddedLinkIsNotNull();
+		Set<GitRepository> repositories = new HashSet<>();
+		sharedLinkCommits.forEach(slc -> repositories.add(slc.getFileRepositorySharedLinkCommit().getGitRepository()));
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			for (GitRepositoryVersion version : versions) {
+				try {
+					saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+							.idGitRepositoryVersion(version.getId()).knowledgeMetric(KnowledgeModel.DOE).foldersPaths(null).build());
+				}catch (Exception e) {
+					log.info(e.getMessage());
+				}
+			}
+		}
 	}
 
 }

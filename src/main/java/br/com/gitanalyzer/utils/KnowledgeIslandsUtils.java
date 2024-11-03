@@ -1,12 +1,20 @@
 
 package br.com.gitanalyzer.utils;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 public class KnowledgeIslandsUtils {
 
 	public static final String pathInputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv");
@@ -63,9 +71,9 @@ public class KnowledgeIslandsUtils {
 	public static final int intervalYearsProjectConsideredInactivate = 1;
 	public static final int intervalYearsProjectAgeFilter = 2;
 
-	public static final int numberOfMaxThreads = 12;
-	public static final int numberOfThreadsToGenerateLogsFiles = 9;
-	public static final int numberOfThreadsToCalculateTf = 5;
+	public static final int numMaxThreads = 10;
+	public static final int numThreadsToTf = 7;
+	public static final int numThreadsToDownload = 5;
 
 	public static final String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
 
@@ -84,7 +92,7 @@ public class KnowledgeIslandsUtils {
 
 	public static final int pageNotFoundCode = 404;
 	public static final String dateStringBeginSharedLink = "2023-01-01";
-	
+
 	public static final String gitHubBaseUrl = "https://github.com/";
 
 	public static List<String> projectsToRemoveInFiltering(){
@@ -115,16 +123,16 @@ public class KnowledgeIslandsUtils {
 		return java.nio.file.FileSystems.getDefault().getSeparator();
 	}
 
-	public static ExecutorService getExecutorServiceForLogs() {
-		return Executors.newFixedThreadPool(numberOfThreadsToGenerateLogsFiles);
-	}
-
 	public static ExecutorService getExecutorServiceForTf() {
-		return Executors.newFixedThreadPool(numberOfThreadsToCalculateTf);
+		return Executors.newFixedThreadPool(numThreadsToTf);
 	}
 
 	public static ExecutorService getExecutorServiceMax() {
-		return Executors.newFixedThreadPool(numberOfMaxThreads);
+		return Executors.newFixedThreadPool(numMaxThreads);
+	}
+
+	public static ExecutorService getExecutorServiceDownload() {
+		return Executors.newFixedThreadPool(numThreadsToDownload);
 	}
 
 	public static String fixFolderPath(String path) {
@@ -141,7 +149,7 @@ public class KnowledgeIslandsUtils {
 		//		alias.add("java");
 		//		alias.add("typescript");
 		//		alias.add("csharp");
-		//		alias.add("cpp");
+				alias.add("cpp");
 		//		alias.add("c");
 		//		alias.add("php");
 		//		alias.add("ruby");
@@ -149,9 +157,60 @@ public class KnowledgeIslandsUtils {
 		//		alias.add("go");
 		//		alias.add("nix");
 		//		alias.add("rust");
-				alias.add("scala");
+		//		alias.add("scala");
 		//		alias.add("kotlin");
 		return alias;
+	}
+
+	public static void saveToCSV(String filePath, List<String> headers, List<List<String>> data) {
+		Path path = Path.of(filePath);
+		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+			writer.write(String.join(",", headers));
+			writer.newLine();
+			for (List<String> row : data) {
+				writer.write(String.join(",", row));
+				writer.newLine();
+			}
+			log.info("CSV file created successfully at: " + filePath);
+		} catch (IOException e) {
+			log.error("Error writing CSV file: " + e.getMessage());
+		}
+	}
+
+	public static List<String> problematicGenAiProject(){
+		return Arrays.asList("luhao661/CPP_CODE");
+	}
+
+	public static String encodeNonAsciiOnly(String text) {
+		StringBuilder encoded = new StringBuilder();
+		for (char c : text.toCharArray()) {
+			if (c > 127) { // Non-ASCII characters, likely Chinese
+				for (byte b : String.valueOf(c).getBytes(StandardCharsets.UTF_8)) {
+					encoded.append(String.format("\\%03o", b & 0xFF)); // Encode each byte in octal
+				}
+			} else {
+				encoded.append(c); // Append ASCII characters as-is
+			}
+		}
+		return encoded.toString();
+	}
+
+	public static boolean containsNonAscii(String filePath) {
+		for (char c : filePath.toCharArray()) {
+			if (c > 127) { // Non-ASCII character detected
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static String removeEnclosingQuotes(String text) {
+		// Check if the string starts and ends with double quotes
+		if (text.startsWith("\"") && text.endsWith("\"")) {
+			// Remove the enclosing double quotes
+			return text.substring(1, text.length() - 1);
+		}
+		return text; // Return as-is if not enclosed by double quotes
 	}
 
 }

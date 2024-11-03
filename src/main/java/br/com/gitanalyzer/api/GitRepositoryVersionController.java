@@ -49,9 +49,22 @@ public class GitRepositoryVersionController {
 	public ResponseEntity<?> saveGitRepositoryTruckFactor(@RequestBody String repositoryPath) throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoryAndGitRepositoryVersion(repositoryPath));
 	}
+	
+	@PostMapping("/save-git-repository-version-genai")
+	public ResponseEntity<?> saveGitRepositoryVersionGenai(@RequestBody String repositoryPath) throws Exception{
+		service.saveGitRepositoryVersionGenai(repositoryPath);
+		return ResponseEntity.ok("Finished");
+	}
+	
+	@PostMapping("/save-git-repositories-version-genai")
+	public ResponseEntity<?> saveGitRepositoriesVersionGenai() throws Exception{
+		service.saveGitRepositoriesVersionGenai();
+		return ResponseEntity.ok("Finished");
+	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getGitRepositoryVersionById(@PathVariable("id") Long id) throws Exception{
 		return ResponseEntity.ok(service.getGitRepositoryVersionById(id));
 	}
+	
 }

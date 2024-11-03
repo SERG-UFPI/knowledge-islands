@@ -128,7 +128,7 @@ public class GitRepositoryService {
 	}
 
 	public void generateCommitFileFolder(String folderPath) throws URISyntaxException, IOException, InterruptedException {
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(folderPath);
 		for (java.io.File fileDir: dir.listFiles()) {
@@ -265,12 +265,17 @@ public class GitRepositoryService {
 	}
 
 	public void generateLogFilesRepositoriesPaths(List<String> paths) {
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForLogs();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (String repositoryPath: paths) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
 					generateLogFiles(repositoryPath);
+					GitRepository gitRepository = repository.findByCurrentFolderPath(repositoryPath);
+					if(gitRepository != null) {
+						gitRepository.setGeneratedLogs(true);
+						repository.save(gitRepository);
+					}
 				} catch (URISyntaxException | IOException | InterruptedException e) {
 					e.printStackTrace();
 					log.error(e.getMessage());

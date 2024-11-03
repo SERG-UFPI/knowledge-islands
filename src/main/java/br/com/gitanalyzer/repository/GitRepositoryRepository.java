@@ -16,6 +16,7 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	List<GitRepository> findByFilteredTrue();
 	GitRepository findByFullName(String fullName);
 	List<GitRepository> findByNameEndingWith(String suffix);
+	GitRepository findByCurrentFolderPath(String currentFolderPath);
 
 	@Query("SELECT DISTINCT gr FROM GitRepository gr " +
 			"JOIN FileRepositorySharedLinkCommit grf ON grf.gitRepository = gr " +

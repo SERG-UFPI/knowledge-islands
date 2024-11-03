@@ -30,10 +30,5 @@ public class DOA {
 		this.ac = ac;
 		this.doaValue = doaValue;
 	}
-	public DOA(int fa, int dl, int ac) {
-		super();
-		this.fa = fa;
-		this.dl = dl;
-		this.ac = ac;
-	}
+
 }
