@@ -16,7 +16,9 @@ import javax.json.JsonValue;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -224,39 +226,44 @@ public class DownloaderService {
 		return projects;
 	}
 
-	@Transactional
 	public List<GitRepository> cloneRepositoriesSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceDownload();
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		//		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceDownload();
+		//		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
-			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-				try {
-					repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
-							.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
-					String currentFolderPath = repository.getCurrentFolderPath().substring(0, repository.getCurrentFolderPath().length() - 1);
-					if(currentFolderPath.endsWith(KnowledgeIslandsUtils.repeatedRepoSuffix)) {
-						repository.setName(repository.getName()+KnowledgeIslandsUtils.repeatedRepoSuffix);
-					}
-				}catch (Exception e) {
-					e.printStackTrace();
-					log.error(e.getMessage());
-				}
-			}, executorService);
-			futures.add(future);
+			//			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+			try {
+				cloneAndSaveRepository(repository);
+			}catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage());
+			}
+			//			}, executorService);
+			//			futures.add(future);
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		executorService.shutdown();
-		gitRepositoryRepository.saveAll(repositories);
+		//		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		//		executorService.shutdown();
 		return repositories;
+	}
+	
+	@Transactional
+	private void cloneAndSaveRepository(GitRepository repository) throws GitAPIException {
+		repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()
+				.cloneUrl(repository.getCloneUrl()).branch(repository.getDefaultBranch()).build()));
+		String currentFolderPath = repository.getCurrentFolderPath().substring(0, repository.getCurrentFolderPath().length() - 1);
+		if(currentFolderPath.endsWith(KnowledgeIslandsUtils.repeatedRepoSuffix)) {
+			repository.setName(repository.getName()+KnowledgeIslandsUtils.repeatedRepoSuffix);
+		}
+		gitRepositoryRepository.save(repository);
 	}
 
 	public void cloneRepositoriesSharedLinksGenerateLogs() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = cloneRepositoriesSharedLinks();
-		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
+		List<String> paths = repositories.stream().map(r -> r.getCurrentFolderPath()).toList();
+		gitRepositoryService.generateLogFilesRepositoriesPaths(paths);
 	}
 
-	public String cloneProject(CloneRepoForm form) {
+	public String cloneProject(CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
 		String cloneFolderModified = cloneFolder;
 		if(form.getIdUser() != null) {
 			Optional<User> op = userRepository.findById(form.getIdUser());
@@ -272,7 +279,7 @@ public class DownloaderService {
 		return path;
 	}
 
-	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form, String cloneFolder) {
+	private Git cloneProjectFromFile(String projectName, int repeatedNumber, CloneRepoForm form, String cloneFolder) throws InvalidRemoteException, TransportException, GitAPIException {
 		File file = null;
 		String folderProjectName = cloneFolder+projectName;
 		if(repeatedNumber != 0) {
@@ -292,9 +299,6 @@ public class DownloaderService {
 			log.error(form.getCloneUrl());
 			repeatedNumber = repeatedNumber+1;
 			git = cloneProjectFromFile(projectName, repeatedNumber, form, cloneFolder);
-		}catch(GitAPIException e) {
-			e.printStackTrace();
-			log.error(form.getCloneUrl());
 		}
 		return git;
 	}

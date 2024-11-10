@@ -7,13 +7,21 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.Contributor;
+import br.com.gitanalyzer.repository.ContributorRepository;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @Service
 public class ContributorService {
+
+	@Autowired
+	private EmailService emailService;
+	@Autowired
+	private ContributorRepository contributorRepository;
 
 	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits){
 		if(contributors != null && !contributors.isEmpty()) {
@@ -47,60 +55,84 @@ public class ContributorService {
 		return contributors;
 	}
 
-	public List<Contributor> setAlias(List<Contributor> contributors, String projectName){
-		List<Contributor> contributorsAliases = new ArrayList<>();
+	public List<Contributor> setAlias(List<Contributor> contributors){
+		List<Contributor> finalContributors = new ArrayList<>();
 		for (Contributor contributor : contributors) {
 			if(contributor.getId() != null) {
-				contributorsAliases.add(contributor);
+				finalContributors.add(contributor);
 			}
 		}
-		forContributors:for (int i = 0; i < contributors.size(); i++) {
-			//check if contributor i is present in the aliases of the already added contributorsAliases
-			for (Contributor contributorAlias : contributorsAliases) {
-				if(contributors.get(i).equals(contributorAlias)) {
-					continue forContributors;
-				}else if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
-					for (Contributor contributorAliasAux : contributorAlias.getAlias()) {
-						if (contributors.get(i).equals(contributorAliasAux)) {
-							continue forContributors;
-						}
+		forContributor:for (int i = 0; i < contributors.size(); i++) {
+			for (Contributor contributorFinal : finalContributors) {
+				List<Contributor> aliasesFinal = contributorFinal.contributorAlias();
+				for (Contributor contributorAliasFinal : aliasesFinal) {
+					if(contributorAliasFinal.equals(contributors.get(i))) {
+						continue forContributor;
 					}
 				}
 			}
-			//set all alias of contributor i
-			forContributor2:for(int j = i+1; j < contributors.size(); j++) {
-				if(checkAliasContributors(contributors.get(j), contributors.get(i))) {
+			for(int j = i+1; j < contributors.size(); j++) {
+				if(!contributors.get(i).equals(contributors.get(j)) && 
+						checkAliasContributors(contributors.get(i), contributors.get(j))) {
 					if(contributors.get(i).getAlias() == null) {
 						contributors.get(i).setAlias(new HashSet<>());
-					}
-					for(Contributor alias: contributors.get(i).getAlias()) {
-						if(alias.equals(contributors.get(j))) {
-							continue forContributor2;
-						}
 					}
 					contributors.get(i).getAlias().add(contributors.get(j));
 				}
 			}
-			for (Contributor contributorAlias : contributorsAliases) {
-				if(contributorAlias.getAlias() != null && !contributorAlias.getAlias().isEmpty()) {
-					for (Contributor contributorAliasAux : contributorAlias.getAlias()) {
-						if(checkAliasContributors(contributorAliasAux, contributors.get(i)) || 
-								(contributors.get(i).getAlias() != null && contributors.get(i).getAlias().stream().anyMatch(c -> checkAliasContributors(contributorAliasAux, c)))) {
-							List<Contributor> aux = new ArrayList<>();
-							aux.add(contributors.get(i));
-							if(contributors.get(i).getAlias() != null) {
-								aux.addAll(contributors.get(i).getAlias());
-								contributors.get(i).getAlias().clear();
-							}
-							contributorAlias.getAlias().addAll(aux);
-							continue forContributors;
-						}
+			List<Contributor> contributorAliases = contributors.get(i).contributorAlias();
+			for (Contributor contributorFinal : finalContributors) {
+				List<Contributor> aliasesFinal = contributorFinal.contributorAlias();
+				boolean isAlias = false;
+				for (Contributor contributorAliasFinal : aliasesFinal) {
+					if(contributorAliases.stream().anyMatch(c -> checkAliasContributors(contributorAliasFinal, c))) {
+						isAlias = true;
+						break;
 					}
 				}
+				if(isAlias) {
+					if(contributorFinal.getAlias() == null) {
+						contributorFinal.setAlias(new HashSet<>());
+					}
+					for (Contributor contributorAlias : contributorAliases) {
+						if(contributorFinal.getAlias().stream().noneMatch(c -> c.equals(contributorAlias))) {
+							contributorAlias.clearAlias();
+							contributorFinal.getAlias().add(contributorAlias);
+						}
+					}
+					continue forContributor;
+				}
 			}
-			contributorsAliases.add(contributors.get(i));
+			finalContributors.add(contributors.get(i));
 		}
-		return contributorsAliases;
+		List<Contributor> contributorRemoved = new ArrayList<>();
+		for (int i = 0; i < finalContributors.size(); i++) {
+			List<Contributor> alias1 = finalContributors.get(i).contributorAlias();
+			for (int j = i+1; j < finalContributors.size(); j++) {
+				boolean isEqual = false;
+				List<Contributor> alias2 = finalContributors.get(j).contributorAlias();
+				for (Contributor contributor : alias1) {
+					if(alias2.stream().anyMatch(a -> a.equals(contributor))) {
+						isEqual = true;
+						break;
+					}
+				}
+				if(isEqual) {
+					for (Contributor contributor : alias2) {
+						if(alias1.stream().noneMatch(a -> a.equals(contributor))) {
+							if (finalContributors.get(i).getAlias() == null) {
+								finalContributors.get(i).setAlias(new HashSet<>());
+							}
+							contributor.clearAlias();
+							finalContributors.get(i).getAlias().add(contributor);
+						}
+					}
+					contributorRemoved.add(finalContributors.get(j));
+				}
+			}
+		}
+		finalContributors.removeAll(contributorRemoved);
+		return finalContributors;
 	}
 
 	public boolean checkAliasContributors(Contributor contributor1, Contributor contributor2) {
@@ -114,5 +146,13 @@ public class ContributorService {
 			}
 		}
 		return false;
+	}
+
+	public void sendEmailsContributorsSharedLinks() {
+		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithRemovedCodes();
+		contributors = contributors.stream().filter(c -> KnowledgeIslandsUtils.checkIfEmailNoreply(c.getEmail())).toList();
+		for (Contributor contributor : contributors) {
+			//TODO SEND EMAILS TO CONTRIBUTORS
+		}
 	}
 }

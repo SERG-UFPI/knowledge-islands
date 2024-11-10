@@ -1,20 +1,30 @@
 package br.com.gitanalyzer.analysis;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
+
 public class TesteChineseCharac {
-	public static String removeEnclosingQuotes(String text) {
-        // Check if the string starts and ends with double quotes
-        if (text.startsWith("\"") && text.endsWith("\"")) {
-            // Remove the enclosing double quotes
-            return text.substring(1, text.length() - 1);
+	public static void main(String[] args) {
+//        String text = "vivekhebs@gmail.comhuggingface-cli login --token \"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\""
+//                    + "wandb login 42f92cd30e98dd827d409693246504bc33a15ca4git config --global user.name \"VH-abc\""
+//                    + "git config --global user.name \"VH-abc\"git config --global user.email vivekhebs@gmail.com";
+//
+//        // Regular expression to match email addresses
+//        String emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,7}";
+//        Pattern pattern = Pattern.compile(emailRegex);
+//        Matcher matcher = pattern.matcher(text);
+//
+//        while (matcher.find()) {
+//            System.out.println("Found email: " + matcher.group());
+//        }
+        
+        
+        Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegexChatGPT);
+        Matcher matcher = pattern.matcher("https://chatgpt.com/share/6730ac9a-1a80-8005-bbab-520e69f239f0");
+        matchWhile:while(matcher.find()) {
+        	System.out.println(matcher.group());
         }
-        return text; // Return as-is if not enclosed by double quotes
-    }
-
-    public static void main(String[] args) {
-        String pathWithQuotes = "\"Programers/Day5/42626_\\354\\212\\244\\354\\275\\224\\353\\271\\214.java\"";
-        String pathWithoutQuotes = removeEnclosingQuotes(pathWithQuotes);
-
-        System.out.println("Original: " + pathWithQuotes);
-        System.out.println("Without quotes: " + pathWithoutQuotes);
     }
 }

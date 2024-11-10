@@ -129,6 +129,12 @@ public class GitRepositoryController {
 		return ResponseEntity.status(HttpStatus.OK).body("");
 	}
 
+	@PostMapping("/generate-logs-projects-shared-link")
+	public ResponseEntity<?> generateLogsProjectsSharedLink(){
+		gitRepositoryService.generateLogsProjectsSharedLink();
+		return ResponseEntity.ok("Finished");
+	}
+
 	@PostMapping("/generate-logs-repository")
 	public ResponseEntity<?> generateLogFiles(@RequestBody String projectPath){
 		try {

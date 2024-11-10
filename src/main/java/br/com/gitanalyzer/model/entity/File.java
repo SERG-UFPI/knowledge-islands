@@ -57,6 +57,7 @@ public class File{
 	private int size;
 	@JsonIgnore
 	@ElementCollection
+	@Column(length=500)
 	private List<String> renamePaths = new ArrayList<>();
 	private String language;
 

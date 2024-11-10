@@ -12,4 +12,5 @@ import br.com.gitanalyzer.model.entity.File;
 public interface FileRepository extends JpaRepository<File, Long>{
 	@Query("SELECT DISTINCT f.language from File f where f.language IS NOT NULL")
 	List<String> findDistinctLanguages();
+	File findByUrl(String url);
 }

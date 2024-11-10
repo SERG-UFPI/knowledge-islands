@@ -36,6 +36,7 @@ import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.model.entity.GitRepositoryGenAi;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
@@ -215,7 +216,8 @@ public class SharedLinkService {
 
 	private void saveFileSharedLinkItem(JsonNode item, String language) {
 		try {
-			Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegex);
+			Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegexChat);
+			Pattern pattern2 = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegexChatGPT);
 			String repositoryLabel = "repository";
 			JsonNode repositoryNode = item.get(repositoryLabel);
 			String repoFullName = repositoryNode.get("full_name").asText();
@@ -228,41 +230,34 @@ public class SharedLinkService {
 					gitRepositoryRepository.save(gitRepository);
 				}
 				if(gitRepository != null) {
-					File file = new File();
-					file.setName(item.get("name").asText());
-					file.setPath(item.get("path").asText());
-					if(KnowledgeIslandsUtils.containsNonAscii(file.getPath())) {
-						file.setPath(KnowledgeIslandsUtils.encodeNonAsciiOnly(file.getPath()));
+					String fileUrl = item.get("url").asText();
+					File file = fileRepository.findByUrl(fileUrl);
+					if(file == null) {
+						file = new File();
+						file.setName(item.get("name").asText());
+						file.setPath(item.get("path").asText());
+						if(KnowledgeIslandsUtils.containsNonAscii(file.getPath())) {
+							file.setPath(KnowledgeIslandsUtils.encodeNonAsciiOnly(file.getPath()));
+						}
+						file.setSha(item.get("sha").asText());
+						file.setUrl(fileUrl);
+						file.setGitUrl(item.get("git_url").asText());
+						file.setHtmlUrl(item.get("html_url").asText());
+						file.setLanguage(language);
+						fileRepository.save(file);
 					}
-					file.setSha(item.get("sha").asText());
-					file.setUrl(item.get("url").asText());
-					file.setGitUrl(item.get("git_url").asText());
-					file.setHtmlUrl(item.get("html_url").asText());
-					file.setLanguage(language);
-					fileRepository.save(file);
 					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
 					JsonNode matchesNode = item.get("text_matches");
 					if(!matchesNode.isEmpty()) {
 						for (JsonNode matchNode : matchesNode) {
 							String fragment = matchNode.get("fragment").asText();
 							Matcher matcher = pattern.matcher(fragment);
-							matchWhile:while(matcher.find()) {
-								String link = matcher.group();
-								link = link.trim();
-								SharedLink sharedLink = sharedLinkRepository.findByLink(link);
-								if(sharedLink == null) {
-									sharedLink = new SharedLink();
-									sharedLink.setLink(link);
-									sharedLink.setTextMatchFragment(fragment);
-									sharedLink.setType(SharedLinkSourceType.FILE);
-									repository.save(sharedLink);
-								}
-								for(SharedLinkCommit slc: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
-									if(slc.getSharedLink().getLink().equals(sharedLink.getLink())) {
-										continue matchWhile;
-									}
-								}
-								fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink, fileGitRepositorySharedLinkCommit));
+							while(matcher.find()) {
+								addSharedLinkCommit(matcher, fragment, fileGitRepositorySharedLinkCommit);
+							}
+							Matcher matcher2 = pattern2.matcher(fragment);
+							while(matcher2.find()) {
+								addSharedLinkCommit(matcher2, fragment, fileGitRepositorySharedLinkCommit);
 							}
 						}
 					}
@@ -275,8 +270,31 @@ public class SharedLinkService {
 		}
 	}
 
+	private void addSharedLinkCommit(Matcher matcher, String fragment, FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit) {
+		String link = matcher.group();
+		link = link.trim();
+		SharedLink sharedLink = sharedLinkRepository.findByLink(link);
+		if(sharedLink == null) {
+			sharedLink = new SharedLink();
+			sharedLink.setLink(link);
+			sharedLink.setTextMatchFragment(fragment);
+			sharedLink.setType(SharedLinkSourceType.FILE);
+			repository.save(sharedLink);
+		}
+		boolean addSharedLinkCommit = true;
+		for(SharedLinkCommit slc: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
+			if(slc.getSharedLink().getLink().equals(sharedLink.getLink())) {
+				addSharedLinkCommit = false;
+				break;
+			}
+		}
+		if(addSharedLinkCommit) {
+			fileGitRepositorySharedLinkCommit.getSharedLinksCommits().add(new SharedLinkCommit(sharedLink, fileGitRepositorySharedLinkCommit));
+		}
+	}
+
 	@Transactional
-	public List<SharedLink> saveFileSharedLinks() {
+	public List<SharedLink> saveFileSharedLinks(String shearchTerm) {
 		String itemsLabel = "items";
 		int perPage = 100;
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -288,7 +306,7 @@ public class SharedLinkService {
 			SharedLinkSearch search = new SharedLinkSearch();
 			while(indexPage <= page) {
 				String[] command = {"curl", "-H", "Accept: application/vnd.github.text-match+json", "-H", "Authorization: Bearer "+token, 
-						KnowledgeIslandsUtils.githubApiBaseUrl+"/search/code?q=https://chat.openai.com/share/+language:"+language+"&page="+indexPage+"&per_page="+perPage};
+						KnowledgeIslandsUtils.githubApiBaseUrl+"/search/code?q="+shearchTerm+"+language:"+language+"&page="+indexPage+"&per_page="+perPage};
 				String commandJoined = String.join(" ", command);
 				try {
 					String content = GitHubCall.searchCall(command);
@@ -397,21 +415,25 @@ public class SharedLinkService {
 	}
 
 	public void createSharedLinkConversationRepoInfo() throws InterruptedException, IOException {
-		saveFileSharedLinks();
+		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
+			saveFileSharedLinks(term);
+		}
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
 	}
 
 	public void createSharedLinkFull() throws InterruptedException, IOException, URISyntaxException {
-		saveFileSharedLinks();
+		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
+			saveFileSharedLinks(term);
+		}
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
 		List<GitRepository> repositories = downloaderService.cloneRepositoriesSharedLinks();
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
 		for (GitRepository gitRepository: repositories) {
 			try {
-				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, false);
-				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, true);
+				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, null);
+				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, new GitRepositoryGenAi());
 				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
 				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null));
 				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null));

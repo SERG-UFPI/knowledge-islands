@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.service.SharedLinkService;
+import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @RestController
 @RequestMapping("/api/shared-link")
@@ -34,7 +35,10 @@ public class SharedLinkController {
 
 	@PostMapping("/create-file-shared-links")
 	public ResponseEntity<?> createFileSharedLinks() {
-		return ResponseEntity.ok(service.saveFileSharedLinks());
+		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
+			service.saveFileSharedLinks(term);
+		}
+		return ResponseEntity.ok("Finished");
 	}
 
 	@PostMapping("/set-conversation-shared-links")

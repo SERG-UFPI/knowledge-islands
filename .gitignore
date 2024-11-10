@@ -34,3 +34,4 @@ build/
 
 front-end/knowledge-islands/.env
 .env
+spring.log*

@@ -43,16 +43,16 @@ public class SharedLinkCommitService {
 				.findByGitRepositoryId(gitRepositoryVersion.getGitRepository().getId());
 		List<Commit> commits = gitRepositoryVersion.getCommits();
 		Collections.sort(commits);
-		for (FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinksCommits) {
-			try(Git git = Git.open(new File(fileGitRepositorySharedLinkCommit.getGitRepository().getCurrentFolderPath()));) {
-				Repository repository = git.getRepository();
-//				if(fileGitRepositorySharedLinkCommit.getFile().getPath().equals("Programers/Day5/42626_\\354\\212\\244\\354\\275\\224\\353\\271\\214.java")) {
-//					System.out.println();
-//				}
+		try(Git git = Git.open(new File(gitRepositoryVersion.getGitRepository().getCurrentFolderPath()));) {
+			Repository repository = git.getRepository();
+			for (FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinksCommits) {
+				//				if(fileGitRepositorySharedLinkCommit.getFile().getPath().equals("Programers/Day5/42626_\\354\\212\\244\\354\\275\\224\\353\\271\\214.java")) {
+				//					System.out.println();
+				//				}
 				for (Commit commit : commits) {
-//					if(commit.getSha().equals("86119b6991e4a5789002fbde85109be279aa9395")) {
-//						System.out.println();
-//					}
+					//					if(commit.getSha().equals("86119b6991e4a5789002fbde85109be279aa9395")) {
+					//						System.out.println();
+					//					}
 					for (CommitFile commitFile : commit.getCommitFiles()) {
 						if(commitFile.getFile().isFile(fileGitRepositorySharedLinkCommit.getFile().getPath())) {
 							List<String> addedCodeLines = commitService.getCodeLinesAddedCommitFile(repository, commit, fileGitRepositorySharedLinkCommit.getFile());
@@ -89,10 +89,10 @@ public class SharedLinkCommitService {
 						System.out.println();
 					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				log.error(e.getMessage());
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
 		}
 	}
 

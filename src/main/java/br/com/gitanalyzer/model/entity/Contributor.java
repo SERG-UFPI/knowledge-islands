@@ -1,5 +1,7 @@
 package br.com.gitanalyzer.model.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -31,11 +33,27 @@ public class Contributor {
 	@JsonIgnore
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
+	private boolean emailSharedLinkSent;
 
 	public Contributor(String name, String email) {
 		super();
 		this.name = name;
 		this.email = email;
+	}
+
+	public List<Contributor> contributorAlias(){
+		List<Contributor> contributorAlias = new ArrayList<>();
+		contributorAlias.add(this);
+		if(alias != null && !alias.isEmpty()) {
+			contributorAlias.addAll(alias);
+		}
+		return contributorAlias;
+	}
+	
+	public void clearAlias() {
+		if(this.alias != null && !this.alias.isEmpty()) {
+			this.alias.clear();
+		}
 	}
 
 	@Override

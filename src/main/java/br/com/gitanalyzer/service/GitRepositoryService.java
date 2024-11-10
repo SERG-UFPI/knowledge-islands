@@ -30,6 +30,7 @@ import com.opencsv.exceptions.CsvException;
 import br.com.gitanalyzer.dto.GenerateFolderProjectLogDTO;
 import br.com.gitanalyzer.extractors.CommitExtractor;
 import br.com.gitanalyzer.model.entity.GitRepository;
+import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
@@ -44,6 +45,8 @@ public class GitRepositoryService {
 	private String projectLogsFolder;
 	@Value("${configuration.permanent-clone.path}")
 	private String permanentClonePath;
+	@Autowired
+	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 
 	public GitRepository returnProjectByPath(String projectPath) {
 		String projectName = extractProjectName(projectPath);
@@ -395,6 +398,12 @@ public class GitRepositoryService {
 
 	public void removeAll() {
 		repository.deleteAll();
+	}
+
+	public void generateLogsProjectsSharedLink() {
+		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCurrentFolderPathIsNotNull();
+		List<String> paths = repositories.stream().map(r -> r.getCurrentFolderPath()).toList();
+		generateLogFilesRepositoriesPaths(paths);
 	}
 
 }

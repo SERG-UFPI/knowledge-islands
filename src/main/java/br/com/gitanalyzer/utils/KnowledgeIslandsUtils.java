@@ -71,20 +71,20 @@ public class KnowledgeIslandsUtils {
 	public static final int intervalYearsProjectConsideredInactivate = 1;
 	public static final int intervalYearsProjectAgeFilter = 2;
 
-	public static final int numMaxThreads = 10;
+	public static final int numMaxThreads = 11;
 	public static final int numThreadsToTf = 7;
 	public static final int numThreadsToDownload = 5;
 
 	public static final String commandGetDependencyRepo = "curl -s -H \"Authorization: bearer $TOKEN\" -H \"Accept: application/vnd.github.hawkgirl-preview+json\" -X POST -d '{\"query\":\"{ repository(owner:\\\"$OWNER\\\",name:\\\"$PROJECT\\\") { dependencyGraphManifests { edges { node { dependencies { nodes { packageName requirements hasDependencies packageManager repository { name nameWithOwner } } } } } } } }\"}' https://api.github.com/graphql";
 
-	public static final String noreply = ".noreply";
-	public static final String chatGptShare = "https://chat.openai.com/share/";
+	public static final String emailNoreply = ".noreply";
 
 	public static final String openAiJsonStart = "window.__remixContext = ";
-	public static final String openAiJsonEnd = "</script><script nonce=";
+	public static final String openAiJsonEnd = ";__remixContext.p";
 	public static final String openAiCodeJsonDelimiter = "```";
 
-	public static final String regexOpenAiRegex = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
+	public static final String regexOpenAiRegexChat = "https:\\/\\/chat\\.openai\\.com\\/share\\/[a-zA-Z0-9-]{36}";
+	public static final String regexOpenAiRegexChatGPT = "https:\\/\\/chatgpt\\.com\\/share\\/[a-zA-Z0-9-]{36}";
 
 	public static final String githubApiBaseUrl = "https://api.github.com";
 
@@ -94,6 +94,8 @@ public class KnowledgeIslandsUtils {
 	public static final String dateStringBeginSharedLink = "2023-01-01";
 
 	public static final String gitHubBaseUrl = "https://github.com/";
+
+	public static final String emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,7}";
 
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
@@ -144,22 +146,34 @@ public class KnowledgeIslandsUtils {
 
 	public static List<String> getProgrammingLanguagesAliasGithub(){
 		List<String> alias = new ArrayList<>();
-		//		alias.add("python");
-		//		alias.add("javascript");
-		//		alias.add("java");
-		//		alias.add("typescript");
-		//		alias.add("csharp");
-				alias.add("cpp");
-		//		alias.add("c");
-		//		alias.add("php");
-		//		alias.add("ruby");
-		//		alias.add("shell");
+		alias.add("python");
+		alias.add("javascript");
+		alias.add("java");
+		alias.add("typescript");
+		alias.add("csharp");
+		alias.add("cpp");
+		alias.add("c");
+		alias.add("php");
+		alias.add("ruby");
+		alias.add("shell");
 		//		alias.add("go");
 		//		alias.add("nix");
 		//		alias.add("rust");
 		//		alias.add("scala");
 		//		alias.add("kotlin");
 		return alias;
+	}
+
+	public static List<String> getChatGPTSearchTerms(){
+		return Arrays.asList("https://chat.openai.com/share/", "https://chatgpt.com/share/");
+	}
+
+	public static List<Double> getPercentageOfGenAiUseFiles(){
+		List<Double> percentages = new ArrayList<>();
+		percentages.add(0.05);
+		percentages.add(0.1);
+		percentages.add(0.15);
+		return percentages;
 	}
 
 	public static void saveToCSV(String filePath, List<String> headers, List<List<String>> data) {
@@ -211,6 +225,13 @@ public class KnowledgeIslandsUtils {
 			return text.substring(1, text.length() - 1);
 		}
 		return text; // Return as-is if not enclosed by double quotes
+	}
+
+	public static boolean checkIfEmailNoreply(String email) {
+		if (email == null) {
+			return false; // Handle null emails to avoid NullPointerException
+		}
+		return email.toLowerCase().contains(emailNoreply);
 	}
 
 }

@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -79,6 +81,28 @@ public class CommitService {
 		}
 	}
 
+	private String cleanEmail(String email) {
+		email = email.trim();
+		if(email.contains(" ")) {
+			List<String> emails = new ArrayList<>();
+			Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.emailRegex);
+			Matcher matcher = pattern.matcher(email);
+			while (matcher.find()) {
+				emails.add(matcher.group());
+			}
+			if(!emails.isEmpty()) {
+				String smallest = emails.get(0);
+				for (String str : emails) {
+					if (str.length() < smallest.length()) {
+						smallest = str;
+					}
+				}
+				return smallest;
+			}
+		}
+		return email;
+	}
+
 	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = new ArrayList<>();
@@ -90,7 +114,9 @@ public class CommitService {
 				if(commitSplited.length >= 4) {
 					String idCommit = commitSplited[0];
 					String authorName = commitSplited[1];
+					authorName = authorName.trim();
 					String authorEmail = commitSplited[2];
+					authorEmail = cleanEmail(authorEmail);
 					if(authorName != null && authorEmail != null) {
 						String time = commitSplited[3];
 						String message = null;
@@ -99,17 +125,12 @@ public class CommitService {
 						}
 						Contributor contributorCommit = null;
 						for (Contributor contributor : contributors) {
-							if(contributor.getName().equals(authorName)
-									&& contributor.getEmail().equals(authorEmail)) {
-								contributorCommit = contributor;
-								break;
-							}else if(contributor.getAlias() != null) {
-								for (Contributor alias : contributor.getAlias()) {
-									if(alias.getName().equals(authorName)
-											&& alias.getEmail().equals(authorEmail)) {
-										contributorCommit = contributor;
-										break;
-									}
+							List<Contributor> contributorAliases = contributor.contributorAlias();
+							for (Contributor alias : contributorAliases) {
+								if(alias.getName().equals(authorName)
+										&& alias.getEmail().equals(authorEmail)) {
+									contributorCommit = contributor;
+									break;
 								}
 							}
 						}
@@ -118,7 +139,7 @@ public class CommitService {
 							contributors.add(contributorCommit);
 						}
 						Date commitDate = Date.from(Instant.ofEpochSecond(Integer.parseInt(time)));
-						commits.add(new Commit(contributorCommit, commitDate, idCommit, message));
+						commits.add(new Commit(contributorCommit, commitDate, idCommit, message != null && message.length() > 1000 ? message.substring(0,1000): message));
 					}
 				}
 			}
@@ -171,11 +192,13 @@ public class CommitService {
 							String[] splited3 = path.split("=>");
 							String path1 = splited3[0];
 							path1 = path1.trim();
+							path1 = KnowledgeIslandsUtils.removeEnclosingQuotes(path1);
 							String file1 = commonString1+path1+commonString2;
 							file1 = file1.replace("//", "/");
 
 							String path2 = splited3[1];
 							path2 = path2.trim();
+							path2 = KnowledgeIslandsUtils.removeEnclosingQuotes(path2);
 							String file2 = commonString1+path2+commonString2;
 							file2 = file2.replace("//", "/");
 
@@ -192,6 +215,7 @@ public class CommitService {
 								}
 							}
 						}else {
+							path = KnowledgeIslandsUtils.removeEnclosingQuotes(path);
 							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
 								if(commitFile.getFile().isFile(path)) {
 									try {

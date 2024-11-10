@@ -12,6 +12,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,7 @@ public class SharedLinkCommit {
 	private SharedLink sharedLink;
 	@OneToOne(cascade = {CascadeType.PERSIST})
 	private CommitFile commitFileAddedLink;
+	@JsonIgnore
 	@ManyToOne
 	private FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit;
 

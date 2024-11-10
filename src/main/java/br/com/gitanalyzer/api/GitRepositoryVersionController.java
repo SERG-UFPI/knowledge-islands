@@ -22,7 +22,7 @@ public class GitRepositoryVersionController {
 	private GitRepositoryVersionService service;
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> remove(@PathVariable Long id){
+	public ResponseEntity<String> remove(@PathVariable Long id){
 		service.remove(id);
 		return ResponseEntity.ok("Ok");
 	}
@@ -34,13 +34,13 @@ public class GitRepositoryVersionController {
 	}
 
 	@PostMapping("/remove-from-repos-filtered")
-	public ResponseEntity<?> removeFromProjectsFiltered(){
+	public ResponseEntity<String> removeFromProjectsFiltered(){
 		service.removeFromProjectsFiltered();
 		return ResponseEntity.ok("ok");
 	}
 
 	@DeleteMapping("/all")
-	public ResponseEntity<?> removeAll(){
+	public ResponseEntity<String> removeAll(){
 		service.removeAll();
 		return ResponseEntity.ok("Ok");
 	}
@@ -49,16 +49,28 @@ public class GitRepositoryVersionController {
 	public ResponseEntity<?> saveGitRepositoryTruckFactor(@RequestBody String repositoryPath) throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoryAndGitRepositoryVersion(repositoryPath));
 	}
-	
+
 	@PostMapping("/save-git-repository-version-genai")
-	public ResponseEntity<?> saveGitRepositoryVersionGenai(@RequestBody String repositoryPath) throws Exception{
+	public ResponseEntity<String> saveGitRepositoryVersionGenai(@RequestBody String repositoryPath) throws Exception{
 		service.saveGitRepositoryVersionGenai(repositoryPath);
 		return ResponseEntity.ok("Finished");
 	}
-	
-	@PostMapping("/save-git-repositories-version-genai")
-	public ResponseEntity<?> saveGitRepositoriesVersionGenai() throws Exception{
-		service.saveGitRepositoriesVersionGenai();
+
+	@PostMapping("/save-git-repositories-version-genAi-use")
+	public ResponseEntity<String> saveGitRepositoriesVersionGenAiUse() throws Exception{
+		service.saveGitRepositoriesVersionGenAiUse();
+		return ResponseEntity.ok("Finished");
+	}
+
+	@PostMapping("/save-git-repositories-version-genAi-shared-link")
+	public ResponseEntity<String> saveGitRepositoriesVersionGenAiSharedLink() throws Exception{
+		service.saveGitRepositoriesVersionGenAiSharedLink();
+		return ResponseEntity.ok("Finished");
+	}
+
+	@PostMapping("/save-git-repositories-version-shared-link")
+	public ResponseEntity<String> saveGitRepositoriesVersionSharedLink() throws Exception{
+		service.saveGitRepositoriesVersionSharedLink();
 		return ResponseEntity.ok("Finished");
 	}
 
@@ -66,5 +78,5 @@ public class GitRepositoryVersionController {
 	public ResponseEntity<?> getGitRepositoryVersionById(@PathVariable("id") Long id) throws Exception{
 		return ResponseEntity.ok(service.getGitRepositoryVersionById(id));
 	}
-	
+
 }

@@ -32,11 +32,12 @@ public class SharedLink {
 	@Lob
 	@Column(columnDefinition="TEXT")
 	private String textMatchFragment;
-	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private ChatGptConversation conversation;
+	@JsonIgnore
 	@Enumerated(EnumType.STRING)
 	private SharedLinkSourceType type;
+	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private SharedLinkErrorLog error;
 
