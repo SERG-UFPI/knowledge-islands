@@ -4,27 +4,23 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
 @Data
-@Builder
+@Entity
 @AllArgsConstructor
 @NoArgsConstructor
-public class GitRepositoryGenAi {
-	
+public class CommitFileGenAi {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private Double percentageFilesAffected;
-	
-	public GitRepositoryGenAi(Double percentageFilesAffected) {
-		super();
-		this.percentageFilesAffected = percentageFilesAffected;
-	}
-	
+	@OneToOne
+	private CommitFile commitFile;
+	private int removedCode;
+
 }

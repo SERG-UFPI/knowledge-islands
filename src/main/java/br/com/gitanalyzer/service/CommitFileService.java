@@ -28,4 +28,9 @@ public class CommitFileService {
 		}
 		return commitFilesAuthor;
 	}
+
+	public void setCommitFileGenai() {
+		
+		
+	}
 }

@@ -20,7 +20,6 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.repository.FileRepository;
 import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
-import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.utils.FileUtils;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
@@ -31,8 +30,6 @@ public class FileService {
 
 	@Autowired
 	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
-	@Autowired
-	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 	@Autowired
 	private FileRepository repository;
 
@@ -51,12 +48,16 @@ public class FileService {
 		return patterns;
 	}
 
-	private void addFilesRepositoryVersions(List<File> filesRepository, Long gitRepositoryId) {
-		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepositoryId);
-		if(versions != null) {
-			for (GitRepositoryVersion version : versions) {
+	private void addFilesRepositoryVersions(List<File> filesRepository, GitRepository gitRepository) {
+		if(gitRepository.getGitRepositoryVersion() != null) {
+			for (GitRepositoryVersion version : gitRepository.getGitRepositoryVersion()) {
 				if(version.getFiles() != null) {
-					filesRepository.addAll(version.getFiles());
+					for (File file : version.getFiles()) {
+						if(filesRepository.stream().anyMatch(f -> f.getPath().equals(file.getPath()))) {
+							continue;
+						}
+						filesRepository.addAll(version.getFiles());
+					}
 				}
 			}
 		}
@@ -67,7 +68,7 @@ public class FileService {
 		List<File> files = new ArrayList<>();
 		List<File> filesWithoutSize = new ArrayList<>();
 		List<File> filesRepository = new ArrayList<>();
-		addFilesRepositoryVersions(filesRepository, gitRepository.getId());
+		addFilesRepositoryVersions(filesRepository, gitRepository);
 		List<FileRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
 			for(FileRepositorySharedLinkCommit fileSharedLink: filesSharedLinks) {
@@ -106,32 +107,31 @@ public class FileService {
 							break;
 						}
 					}
+					boolean addFilesWithoutSize = true;
 					if (splitedLine.length == 3) {
 						String fileSizeString = splitedLine[2];
-						if (fileSizeString != null && !fileSizeString.equals("")) {
-							if(!fileSizeString.equals("0")) {
-								int size = Integer.parseInt(fileSizeString);
-								if(file == null) {
-									file = new File(filePath, size);
-								}else {
-									file.setSize(size);
-								}
-								files.add(file);
+						if (fileSizeString != null && !fileSizeString.equals("") && !fileSizeString.equals("0")) {
+							addFilesWithoutSize = false;
+							int size = Integer.parseInt(fileSizeString);
+							if(file == null) {
+								file = new File(filePath, size);
+							}else {
+								file.setSize(size);
 							}
-						}else {
-							filesWithoutSize.add(file == null ? new File(filePath):file);
+							files.add(file);
 						}
-					}else {
+					}
+					if(addFilesWithoutSize) {
 						filesWithoutSize.add(file == null ? new File(filePath):file);
 					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
+				log.error(e.getMessage());
 			}
 			for (FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit : filesSharedLinks) {
 				String fileLinkPath = fileRepositorySharedLinkCommit.getFile().getPath();
-				if(files.stream().anyMatch(f -> f.isFile(fileLinkPath)) || 
-						filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
+				if(filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath)) || files.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
 					continue;
 				}
 				if(fileRepositorySharedLinkCommit.getFile().getSize() == 0) {
@@ -167,6 +167,9 @@ public class FileService {
 		}
 		if(!filesWithoutSize.isEmpty()) {
 			for (File file : filesWithoutSize) {
+				if(KnowledgeIslandsUtils.containsOctalEncoding(file.getPath())) {
+					file.setPath(KnowledgeIslandsUtils.decodeOctalString(file.getPath()));
+				}
 				try(BufferedReader reader = new BufferedReader(new FileReader(gitRepository.getCurrentFolderPath()+file.getPath()));){
 					int lines = 0;
 					while (reader.readLine() != null) lines++;
@@ -175,10 +178,12 @@ public class FileService {
 						files.add(file);
 					}
 				}catch(Exception e) {
+					e.printStackTrace();
 					log.error(e.getMessage());
 				}
 			}
 		}
+		fixNonAsciiFilePaths(files);
 		return files;
 	}
 
@@ -223,10 +228,14 @@ public class FileService {
 
 	public void fixChinesePaths() {
 		List<File> files = repository.findAll();
+		fixNonAsciiFilePaths(files);
+		repository.saveAll(files);
+	}
+
+	private void fixNonAsciiFilePaths(List<File> files) {
 		for (File file : files) {
 			if(KnowledgeIslandsUtils.containsNonAscii(file.getPath())) {
 				file.setPath(KnowledgeIslandsUtils.encodeNonAsciiOnly(file.getPath()));
-				repository.save(file);
 			}
 		}
 	}

@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -168,7 +170,7 @@ public class KnowledgeIslandsUtils {
 		return Arrays.asList("https://chat.openai.com/share/", "https://chatgpt.com/share/");
 	}
 
-	public static List<Double> getPercentageOfGenAiUseFiles(){
+	public static List<Double> getPercentageOfGenAiFiles(){
 		List<Double> percentages = new ArrayList<>();
 		percentages.add(0.05);
 		percentages.add(0.1);
@@ -232,6 +234,40 @@ public class KnowledgeIslandsUtils {
 			return false; // Handle null emails to avoid NullPointerException
 		}
 		return email.toLowerCase().contains(emailNoreply);
+	}
+
+	public static boolean containsOctalEncoding(String text) {
+		Pattern octalPattern = Pattern.compile("\\\\[0-3]?[0-7]{2}");
+		Matcher matcher = octalPattern.matcher(text);
+		return matcher.find();
+	}
+
+	public static String decodeOctalString(String octalEncoded) {
+		StringBuilder decodedString = new StringBuilder();
+		int length = octalEncoded.length();
+		for (int i = 0; i < length; i++) {
+			char currentChar = octalEncoded.charAt(i);
+			// Check for an octal sequence (e.g., "\101")
+			if (currentChar == '\\' && i + 3 < length && isOctalDigit(octalEncoded.charAt(i + 1))
+					&& isOctalDigit(octalEncoded.charAt(i + 2)) && isOctalDigit(octalEncoded.charAt(i + 3))) {
+				// Extract the octal sequence (next 3 characters)
+				String octalSequence = octalEncoded.substring(i + 1, i + 4);
+
+				// Convert the octal sequence to an integer, then to a character
+				int charCode = Integer.parseInt(octalSequence, 8);
+				decodedString.append((char) charCode);
+				// Skip the octal sequence
+				i += 3;
+			} else {
+				// Append regular characters as is
+				decodedString.append(currentChar);
+			}
+		}
+		return new String(decodedString.toString().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+	}
+
+	private static boolean isOctalDigit(char c) {
+		return c >= '0' && c <= '7';
 	}
 
 }

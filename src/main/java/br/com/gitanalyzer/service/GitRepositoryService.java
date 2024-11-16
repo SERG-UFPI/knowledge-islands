@@ -381,8 +381,10 @@ public class GitRepositoryService {
 		String projectName = extractProjectName(repositoryPath);
 		GitRepository gitRepository = null;
 		if(repository.existsByName(projectName)) {
-			gitRepository = repository.findByName(projectName);
-		}else {
+			return repository.findByName(projectName);
+		}else if(repository.existsByCurrentFolderPath(repositoryPath)){
+			return repository.findByCurrentFolderPath(repositoryPath);
+		}else{
 			try {
 				gitRepository = new GitRepository(projectName, repositoryPath, 
 						extractProjectFullName(repositoryPath), getCurrentRevisionHash(repositoryPath));
@@ -390,10 +392,9 @@ public class GitRepositoryService {
 				gitRepository = new GitRepository(projectName, repositoryPath, 
 						null, getCurrentRevisionHash(repositoryPath));
 			}
-			repository.save(gitRepository);
+			log.info("ENDING SAVING GIT REPOSITORY: "+repositoryPath);
+			return repository.save(gitRepository);
 		}
-		log.info("ENDING SAVING GIT REPOSITORY: "+repositoryPath);
-		return gitRepository;
 	}
 
 	public void removeAll() {

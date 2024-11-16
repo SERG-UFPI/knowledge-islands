@@ -19,9 +19,21 @@ public class ContributorGenAiUseController {
 	@Autowired
 	private ContributorGenAiUseService service;
 
+	@PostMapping("/contributor-genAi-use-shared-link")
+	public ResponseEntity<String> createContributorGenAiUseSharedLink() throws InterruptedException, IOException {
+		service.createContributorGenAiUseSharedLink();
+		return ResponseEntity.ok("Finished");
+	}
+	
 	@PostMapping("/contributor-genAi-use")
 	public ResponseEntity<String> createContributorGenAiUse() throws InterruptedException, IOException {
 		service.createContributorGenAiUse();
+		return ResponseEntity.ok("Finished");
+	}
+	
+	@PostMapping("/contributor-genAi-use-full")
+	public ResponseEntity<String> createContributorGenAiUseFull() throws InterruptedException, IOException {
+		service.createContributorGenAiUseFull();
 		return ResponseEntity.ok("Finished");
 	}
 

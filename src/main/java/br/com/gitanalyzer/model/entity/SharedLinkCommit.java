@@ -26,15 +26,16 @@ public class SharedLinkCommit {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@OneToMany(cascade= {CascadeType.PERSIST, CascadeType.REMOVE})
-	private List<CodeLine> copiedLines;
 	@OneToOne
 	private SharedLink sharedLink;
-	@OneToOne(cascade = {CascadeType.PERSIST})
-	private CommitFile commitFileAddedLink;
 	@JsonIgnore
 	@ManyToOne
 	private FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit;
+	@OneToOne
+	private CommitFile commitFileAddedLink;
+	@OneToMany(cascade= {CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<CodeLine> copiedLines;
+	private int numberCopiedLines;
 
 	public SharedLinkCommit(SharedLink sharedLink, FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit) {
 		super();

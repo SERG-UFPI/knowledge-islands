@@ -21,11 +21,11 @@ public class ContributorGenAiUse {
 	@OneToOne
 	private Contributor contributor;
 	private int totalNumCopiedLines;
-	private double avgCopiedLines;
-	public ContributorGenAiUse(Contributor contributor, int totalNumCopiedLines, double avgCopiedLines) {
+	private double avgCopiedLinesCommits;
+	public ContributorGenAiUse(Contributor contributor, int totalNumCopiedLines, double avgCopiedLinesCommits) {
 		super();
 		this.contributor = contributor;
 		this.totalNumCopiedLines = totalNumCopiedLines;
-		this.avgCopiedLines = avgCopiedLines;
+		this.avgCopiedLinesCommits = avgCopiedLinesCommits;
 	}
 }

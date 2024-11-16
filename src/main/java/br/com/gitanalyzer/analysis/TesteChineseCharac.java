@@ -1,30 +1,47 @@
 package br.com.gitanalyzer.analysis;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 public class TesteChineseCharac {
+	public static String decodeOctalString(String octalEncoded) {
+		StringBuilder decodedString = new StringBuilder();
+		int length = octalEncoded.length();
+
+		for (int i = 0; i < length; i++) {
+			char currentChar = octalEncoded.charAt(i);
+
+			// Check for an octal sequence (e.g., "\101")
+			if (currentChar == '\\' && i + 3 < length && isOctalDigit(octalEncoded.charAt(i + 1))
+					&& isOctalDigit(octalEncoded.charAt(i + 2)) && isOctalDigit(octalEncoded.charAt(i + 3))) {
+
+				// Extract the octal sequence (next 3 characters)
+				String octalSequence = octalEncoded.substring(i + 1, i + 4);
+
+				// Convert the octal sequence to an integer, then to a character
+				int charCode = Integer.parseInt(octalSequence, 8);
+				decodedString.append((char) charCode);
+
+				// Skip the octal sequence
+				i += 3;
+			} else {
+				// Append regular characters as is
+				decodedString.append(currentChar);
+			}
+		}
+
+		return new String(decodedString.toString().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+	}
+
+	private static boolean isOctalDigit(char c) {
+		return c >= '0' && c <= '7';
+	}
+
 	public static void main(String[] args) {
-//        String text = "vivekhebs@gmail.comhuggingface-cli login --token \"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\""
-//                    + "wandb login 42f92cd30e98dd827d409693246504bc33a15ca4git config --global user.name \"VH-abc\""
-//                    + "git config --global user.name \"VH-abc\"git config --global user.email vivekhebs@gmail.com";
-//
-//        // Regular expression to match email addresses
-//        String emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,7}";
-//        Pattern pattern = Pattern.compile(emailRegex);
-//        Matcher matcher = pattern.matcher(text);
-//
-//        while (matcher.find()) {
-//            System.out.println("Found email: " + matcher.group());
-//        }
-        
-        
-        Pattern pattern = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegexChatGPT);
-        Matcher matcher = pattern.matcher("https://chatgpt.com/share/6730ac9a-1a80-8005-bbab-520e69f239f0");
-        matchWhile:while(matcher.find()) {
-        	System.out.println(matcher.group());
-        }
-    }
+		String octalEncoded = "Exerc\\303\\255cios F\\303\\241ceis/ex02/index.html"; // represents "ABC" in octal
+		String decoded = decodeOctalString(octalEncoded);
+		System.out.println("Decoded string: " + decoded);
+	}
 }

@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import br.com.gitanalyzer.model.enums.OperationType;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,6 @@ public class CommitFile {
 	private Long id;
 	private int additions;
 	private int additionsCodes;
-	private int removingsCodes;
 	@Enumerated(EnumType.STRING)
 	private OperationType status;
 	private int deletions;
@@ -45,6 +45,8 @@ public class CommitFile {
 	private File file;
 	@ManyToOne
 	private Commit commit;
+	@OneToOne
+	private CommitFileGenAi commitFileGenAi;
 
 	public CommitFile(File file, OperationType status, Commit commit) {
 		super();

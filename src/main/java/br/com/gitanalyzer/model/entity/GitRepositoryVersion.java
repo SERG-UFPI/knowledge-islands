@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -40,8 +39,6 @@ public class GitRepositoryVersion {
 	private int numberAnalysedCommits;
 	private double timeToExtract;
 	private String versionId;
-	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-	private GitRepositoryGenAi gitRepositoryGenAi;
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateVersion; 
@@ -87,19 +84,6 @@ public class GitRepositoryVersion {
 	public String getRepositoryLanguage() {
 		return gitRepository.getLanguage();
 	}
-
-	//	public GitRepositoryTruckFactorDTO toDto() {
-	//		SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-	//		return GitRepositoryTruckFactorDTO.builder()
-	//				.project(gitRepository.toDto())
-	//				.activeContributors(contributors!=null?contributors.stream().filter(c -> c.isActive()).map(c -> c.toDto()).toList():null)
-	//				.dateVersion(dateVersion!=null?fmt.format(dateVersion):null)
-	//				.numberAnalysedCommits(numberAnalysedCommits)
-	//				.numberAnalysedDevs(numberAnalysedDevs)
-	//				.numberAnalysedFiles(numberAnalysedFiles)
-	//				.versionId(versionId)
-	//				.build();
-	//	}
 
 	public boolean validGitRepositoryVersion() {
 		return this.getContributors() != null && this.getCommits() != null && 

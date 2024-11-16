@@ -17,6 +17,7 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	GitRepository findByFullName(String fullName);
 	List<GitRepository> findByNameEndingWith(String suffix);
 	GitRepository findByCurrentFolderPath(String currentFolderPath);
+	boolean existsByCurrentFolderPath(String path);
 
 	@Query("SELECT DISTINCT gr FROM GitRepository gr " +
 			"JOIN FileRepositorySharedLinkCommit grf ON grf.gitRepository = gr " +
@@ -35,5 +36,5 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 			"JOIN SharedLink sl ON sl MEMBER OF grf.sharedLinksCommits " +
 			"WHERE sl.conversation IS NOT NULL and gr.cloneUrl is NOT NULL and gr.currentFolderPath is NULL")
 	List<GitRepository> findAllWithSharedLinkConversationNotNullAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-	
+
 }

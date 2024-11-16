@@ -98,7 +98,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 			}
 			files.forEach(f -> filesVersion.add(new FileVersion(f)));
 		}
-		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(c -> new ContributorVersion(c)).toList();
+		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		for(ContributorVersion contributorVersion: contributorsVersion) {
 			List<File> filesContributor = filesTouchedByContributor(contributorVersion, gitRepositoryVersion.getCommits());
 			for (File fileContributor : filesContributor) {
@@ -368,7 +368,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	public void saveRepositoryVersionKnowledgeSharedLinks() {
-		List<SharedLinkCommit> sharedLinkCommits = sharedLinkCommitRepository.findByCommitFileAddedLinkIsNotNull();
+		List<SharedLinkCommit> sharedLinkCommits = new ArrayList<>();//sharedLinkCommitRepository.findByCommitFileAddedLinkWithRemovedLines();
 		Set<GitRepository> repositories = new HashSet<>();
 		sharedLinkCommits.forEach(slc -> repositories.add(slc.getFileRepositorySharedLinkCommit().getGitRepository()));
 		for (GitRepository gitRepository : repositories) {

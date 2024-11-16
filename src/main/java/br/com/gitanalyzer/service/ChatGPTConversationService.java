@@ -3,6 +3,7 @@ package br.com.gitanalyzer.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,15 +24,18 @@ import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 @Service
 public class ChatGPTConversationService {
 
-	public List<String> getLinesCopied(List<String> code, List<String> addedLines) {
+	public List<String> getLinesCopiedAndRemoveFromAddedLines(List<String> addedLines, List<String> code) {
 		List<String> linesCopied = new ArrayList<>();
-		addedLineFor: for (String addedLine: addedLines) {
+		Iterator<String> iteratorAddedLines = addedLines.iterator();
+		while(iteratorAddedLines.hasNext()) {
+			String addedLine = iteratorAddedLines.next();
 			if(!addedLine.isBlank()) {
 				for(String lineCode : code) {
 					if(!lineCode.isBlank() && 
 							lineCode.toLowerCase().trim().equals(addedLine.toLowerCase().trim())) {
 						linesCopied.add(addedLine);
-						continue addedLineFor;
+						iteratorAddedLines.remove();
+						break;
 					}
 				}
 			}

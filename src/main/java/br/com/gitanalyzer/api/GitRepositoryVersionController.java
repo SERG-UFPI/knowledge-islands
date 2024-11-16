@@ -56,21 +56,15 @@ public class GitRepositoryVersionController {
 		return ResponseEntity.ok("Finished");
 	}
 
-	@PostMapping("/save-git-repositories-version-genAi-use")
-	public ResponseEntity<String> saveGitRepositoriesVersionGenAiUse() throws Exception{
-		service.saveGitRepositoriesVersionGenAiUse();
-		return ResponseEntity.ok("Finished");
-	}
-
-	@PostMapping("/save-git-repositories-version-genAi-shared-link")
-	public ResponseEntity<String> saveGitRepositoriesVersionGenAiSharedLink() throws Exception{
-		service.saveGitRepositoriesVersionGenAiSharedLink();
-		return ResponseEntity.ok("Finished");
-	}
-
 	@PostMapping("/save-git-repositories-version-shared-link")
 	public ResponseEntity<String> saveGitRepositoriesVersionSharedLink() throws Exception{
 		service.saveGitRepositoriesVersionSharedLink();
+		return ResponseEntity.ok("Finished");
+	}
+
+	@PostMapping("/save-git-repositories-version-shared-link-genAi")
+	public ResponseEntity<String> saveGitRepositoriesVersionGenAiSharedLink() throws Exception{
+		service.saveGitRepositoriesVersionSharedLinkGenAi();
 		return ResponseEntity.ok("Finished");
 	}
 

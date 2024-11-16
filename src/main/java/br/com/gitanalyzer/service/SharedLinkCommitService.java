@@ -46,7 +46,7 @@ public class SharedLinkCommitService {
 		try(Git git = Git.open(new File(gitRepositoryVersion.getGitRepository().getCurrentFolderPath()));) {
 			Repository repository = git.getRepository();
 			for (FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit : filesSharedLinksCommits) {
-				//				if(fileGitRepositorySharedLinkCommit.getFile().getPath().equals("Programers/Day5/42626_\\354\\212\\244\\354\\275\\224\\353\\271\\214.java")) {
+				//				if(fileGitRepositorySharedLinkCommit.getFile().getPath().equals("index.js")) {
 				//					System.out.println();
 				//				}
 				for (Commit commit : commits) {
@@ -56,27 +56,24 @@ public class SharedLinkCommitService {
 					for (CommitFile commitFile : commit.getCommitFiles()) {
 						if(commitFile.getFile().isFile(fileGitRepositorySharedLinkCommit.getFile().getPath())) {
 							List<String> addedCodeLines = commitService.getCodeLinesAddedCommitFile(repository, commit, fileGitRepositorySharedLinkCommit.getFile());
-							commitFile.setAdditionsCodes(addedCodeLines.size());
 							if(addedCodeLines != null && !addedCodeLines.isEmpty()) {
+								commitFile.setAdditionsCodes(addedCodeLines.size());
 								addedCodeLines.forEach(c -> commitFile.getAddedCodeLines().add(new CodeLine(c)));
-								List<SharedLinkCommit> sharedLinksCommits = fileGitRepositorySharedLinkCommit.getSharedLinksCommits().stream().filter(slc -> slc.getSharedLink().getConversation() != null).toList();
+								List<SharedLinkCommit> sharedLinksCommits = fileGitRepositorySharedLinkCommit.getSharedLinksCommits().stream()
+										.filter(slc -> slc.getSharedLink().getConversation() != null).toList();
 								for(SharedLinkCommit sharedLinkCommit: sharedLinksCommits) {
 									if(addedCodeLines.stream().anyMatch(l -> l.contains(sharedLinkCommit.getSharedLink().getLink())) && 
 											sharedLinkCommit.getCommitFileAddedLink() == null) {
 										List<String> chatGPTCodeLines = chatGPTConversationService.getCodesFromConversation(sharedLinkCommit.getSharedLink().getConversation().getConversationTurns());
-										List<String> codeLinesCopied = chatGPTConversationService.getLinesCopied(chatGPTCodeLines, addedCodeLines);
-										if(codeLinesCopied != null && !codeLinesCopied.isEmpty()) {
-											codeLinesCopied.forEach(c -> sharedLinkCommit.getCopiedLines().add(new CodeLine(c)));
-											commitFile.setRemovingsCodes(codeLinesCopied.size());
-											commitFile.setAdditions(commitFile.getAdditions()-codeLinesCopied.size());
-											commitFile.setAdditionsCodes(commitFile.getAdditionsCodes()-codeLinesCopied.size());
-										}
+										List<String> codeLinesCopied = chatGPTConversationService.getLinesCopiedAndRemoveFromAddedLines(addedCodeLines, chatGPTCodeLines);
+										codeLinesCopied.forEach(c -> sharedLinkCommit.getCopiedLines().add(new CodeLine(c)));
+										sharedLinkCommit.setNumberCopiedLines(codeLinesCopied.size());
 										sharedLinkCommit.setCommitFileAddedLink(commitFile);
 										sharedLinkCommitRepository.save(sharedLinkCommit);
 									}
 								}
 								if(commitFile.getAdditions() < 0) {
-									System.out.println();
+									log.info("Additions negative, file: "+commitFile.getFile().getPath()+", commit: "+commitFile.getCommit().getSha()+", repository: "+gitRepositoryVersion.getGitRepository().getFullName());
 								}
 								commitFileRepository.save(commitFile);
 							}
@@ -86,7 +83,7 @@ public class SharedLinkCommitService {
 				for(SharedLinkCommit sharedLinkCommit: fileGitRepositorySharedLinkCommit.getSharedLinksCommits()) {
 					if(sharedLinkCommit.getSharedLink().getConversation() != null && 
 							sharedLinkCommit.getCommitFileAddedLink() == null) {
-						System.out.println();
+						log.info("No commitFile found, file: "+sharedLinkCommit.getFileRepositorySharedLinkCommit().getFile().getPath()+", link: "+sharedLinkCommit.getSharedLink().getLink());
 					}
 				}
 			}

@@ -11,6 +11,9 @@ import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 
 @Repository
 public interface SharedLinkCommitRepository extends JpaRepository<SharedLinkCommit, Long>{
+	//	@Query(("SELECT slc FROM SharedLinkCommit slc " +
+	//			"WHERE slc.commitFileAddedLink.removingsCodes > 0"))
+	//	List<SharedLinkCommit> findByCommitFileAddedLinkWithRemovedLines();
 	List<SharedLinkCommit> findByCommitFileAddedLinkIsNotNull();
 	@Query("SELECT DISTINCT slc.fileRepositorySharedLinkCommit.gitRepository FROM SharedLinkCommit slc " +
 			"WHERE slc.commitFileAddedLink IS NOT NULL")

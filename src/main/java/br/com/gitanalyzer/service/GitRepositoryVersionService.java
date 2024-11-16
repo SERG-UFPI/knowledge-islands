@@ -22,14 +22,12 @@ import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileVersion;
 import br.com.gitanalyzer.model.entity.GitRepository;
 import br.com.gitanalyzer.model.entity.GitRepositoryFolder;
-import br.com.gitanalyzer.model.entity.GitRepositoryGenAi;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
 import br.com.gitanalyzer.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
-import br.com.gitanalyzer.repository.SharedLinkCommitRepository;
 import br.com.gitanalyzer.repository.SharedLinkRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 import lombok.extern.log4j.Log4j2;
@@ -60,8 +58,6 @@ public class GitRepositoryVersionService {
 	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 	@Autowired
 	private SharedLinkCommitService sharedLinkCommitService;
-	@Autowired
-	private SharedLinkCommitRepository sharedLinkCommitRepository;
 
 	public void remove(Long id) {
 		gitRepositoryVersionRepository.deleteById(id);
@@ -127,21 +123,19 @@ public class GitRepositoryVersionService {
 
 	@Transactional
 	public GitRepositoryVersion saveGitRepositoryAndGitRepositoryVersion(String repositoryPath) throws Exception {
-		GitRepository gitRepository = gitRepositoryService.saveGitRepository(repositoryPath);
-		return saveGitRepositoryVersion(gitRepository, null);
+		return saveGitRepositoryVersion(gitRepositoryService.saveGitRepository(repositoryPath));
 	}
 
 	@Async("taskExecutor")
-	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository, GitRepositoryGenAi genAiAnalysis) throws Exception {
-		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
+	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
+		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
 		if(gitRepositoryVersion.validGitRepositoryVersion()) {
-			gitRepositoryVersion.setGitRepositoryGenAi(genAiAnalysis);
 			gitRepositoryVersionRepository.save(gitRepositoryVersion);
 		}else {
 			throw new Exception("GitRepository version not valid");
 		}
-		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getCurrentFolderPath());
+		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		return gitRepositoryVersion;
 	}
 
@@ -210,11 +204,11 @@ public class GitRepositoryVersionService {
 		return GitRepositoryVersion.builder().numberAnalysedCommits(numberAllCommits).numberAnalysedDevs(numberAnalysedDevs).build();
 	}
 
-	public void saveGitRepositoriesVersionGenAiSharedLink() {
-		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCurrentFolderPathIsNotNull();
-		for (GitRepository gitRepository: repositories) {
+	public void saveGitRepositoriesVersionSharedLinkGenAi() {
+		List<GitRepositoryVersion> grvs = saveGitRepositoriesVersionSharedLink();
+		for (GitRepositoryVersion gitRepositoryVersion: grvs) {
 			try {
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository, new GitRepositoryGenAi()));
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
@@ -222,40 +216,28 @@ public class GitRepositoryVersionService {
 		}
 	}
 
-	public void saveGitRepositoriesVersionSharedLink() {
+	public List<GitRepositoryVersion> saveGitRepositoriesVersionSharedLink() {
+		List<GitRepositoryVersion> grvs = new ArrayList<>();
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCurrentFolderPathIsNotNull();
 		for (GitRepository gitRepository: repositories) {
 			try {
-				saveGitRepositoryVersion(gitRepository, null);
+				grvs.add(saveGitRepositoryVersion(gitRepository));
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
 			}
 		}
+		return grvs;
 	}
 
 	public void saveGitRepositoryVersionGenai(String repositoryPath) {
 		GitRepository gitRepository = gitRepositoryRepository.findByCurrentFolderPath(repositoryPath);
 		try {
-			saveGitRepositoryVersion(gitRepository, null);
-			sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository, new GitRepositoryGenAi()));
+			saveGitRepositoryVersion(gitRepository);
+			sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository));
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
-		}
-	}
-
-	public void saveGitRepositoriesVersionGenAiUse() {
-		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
-		for (Double percentage : KnowledgeIslandsUtils.getPercentageOfGenAiUseFiles()) {
-			for (GitRepository gitRepository : repositories) {
-				try {
-					saveGitRepositoryVersion(gitRepository, new GitRepositoryGenAi(percentage));
-				} catch (Exception e) {
-					e.printStackTrace();
-					log.error(e.getMessage());
-				}
-			}
 		}
 	}
 

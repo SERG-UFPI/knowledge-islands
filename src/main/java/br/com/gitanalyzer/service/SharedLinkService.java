@@ -36,7 +36,6 @@ import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
-import br.com.gitanalyzer.model.entity.GitRepositoryGenAi;
 import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
@@ -432,8 +431,8 @@ public class SharedLinkService {
 		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
 		for (GitRepository gitRepository: repositories) {
 			try {
-				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, null);
-				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository, new GitRepositoryGenAi());
+				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
+				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
 				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
 				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null));
 				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null));

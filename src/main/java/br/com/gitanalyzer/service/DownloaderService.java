@@ -228,24 +228,24 @@ public class DownloaderService {
 
 	public List<GitRepository> cloneRepositoriesSharedLinks() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> repositories = fileGitRepositorySharedLinkCommitRepository.findDistinctGitRepositoriesWithNonNullConversationAndCloneUrlNotNullAndCurrentFolderPathIsNull();
-		//		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceDownload();
-		//		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceDownload();
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (GitRepository repository : repositories) {
-			//			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
-			try {
-				cloneAndSaveRepository(repository);
-			}catch (Exception e) {
-				e.printStackTrace();
-				log.error(e.getMessage());
-			}
-			//			}, executorService);
-			//			futures.add(future);
+			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+				try {
+					cloneAndSaveRepository(repository);
+				}catch (Exception e) {
+					e.printStackTrace();
+					log.error(e.getMessage());
+				}
+			}, executorService);
+			futures.add(future);
 		}
-		//		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		//		executorService.shutdown();
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		executorService.shutdown();
 		return repositories;
 	}
-	
+
 	@Transactional
 	private void cloneAndSaveRepository(GitRepository repository) throws GitAPIException {
 		repository.setCurrentFolderPath(cloneProject(CloneRepoForm.builder()

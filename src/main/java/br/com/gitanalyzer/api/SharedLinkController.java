@@ -23,7 +23,7 @@ public class SharedLinkController {
 	private SharedLinkService service;
 
 	@PostMapping("/create-shared-link-full")
-	public ResponseEntity<?> createSharedLinkFull() throws Exception{
+	public ResponseEntity<String> createSharedLinkFull() throws Exception{
 		service.createSharedLinkFull();
 		return ResponseEntity.ok("Finished");
 	}
@@ -34,7 +34,7 @@ public class SharedLinkController {
 	}
 
 	@PostMapping("/create-file-shared-links")
-	public ResponseEntity<?> createFileSharedLinks() {
+	public ResponseEntity<String> createFileSharedLinks() {
 		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
 			service.saveFileSharedLinks(term);
 		}
@@ -42,7 +42,7 @@ public class SharedLinkController {
 	}
 
 	@PostMapping("/set-conversation-shared-links")
-	public ResponseEntity<?> setConversationSharedLinks() {
+	public ResponseEntity<String> setConversationSharedLinks() {
 		service.setConversationSharedLinks();
 		return ResponseEntity.ok("Finished");
 	}

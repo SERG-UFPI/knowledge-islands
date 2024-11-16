@@ -11,6 +11,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -34,6 +35,8 @@ public class Contributor {
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
 	private boolean emailSharedLinkSent;
+	@OneToOne
+	private ContributorGenAiUse contributorGenAiUse;
 
 	public Contributor(String name, String email) {
 		super();
@@ -49,7 +52,7 @@ public class Contributor {
 		}
 		return contributorAlias;
 	}
-	
+
 	public void clearAlias() {
 		if(this.alias != null && !this.alias.isEmpty()) {
 			this.alias.clear();

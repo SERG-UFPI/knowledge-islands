@@ -12,6 +12,8 @@ import br.com.gitanalyzer.model.entity.Contributor;
 public interface ContributorRepository extends JpaRepository<Contributor, Long>{
 
 	boolean existsByEmail(String email);
-	@Query("SELECT DISTINCT cf.commit.author FROM CommitFile cf where cf.removingsCodes > 0 and cf.commit.author.emailSharedLinkSent is false")
+	@Query("SELECT DISTINCT cf.commit.author FROM CommitFile cf where cf.commit.author.emailSharedLinkSent is false")
 	List<Contributor> findContributorFromCommitFilesWithRemovedCodes();
+	@Query("select c from Contributor c where not exists (select cgu from ContributorGenAiUse cgu where cgu.contributor.id = c.id)")
+	List<Contributor> findContributorNotExistsContributorGenAiUse();
 }
