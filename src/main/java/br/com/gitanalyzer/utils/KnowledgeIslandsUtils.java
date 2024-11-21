@@ -146,6 +146,10 @@ public class KnowledgeIslandsUtils {
 		return path;
 	}
 
+	public static int getIntFromPercentage(int size, double percentage) {
+		return (int) Math.ceil(size*percentage);
+	}
+
 	public static List<String> getProgrammingLanguagesAliasGithub(){
 		List<String> alias = new ArrayList<>();
 		alias.add("python");

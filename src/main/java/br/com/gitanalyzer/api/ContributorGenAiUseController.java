@@ -31,6 +31,12 @@ public class ContributorGenAiUseController {
 		return ResponseEntity.ok("Finished");
 	}
 	
+	@PostMapping("/fix-contributor-genAi-use")
+	public ResponseEntity<String> fixCreateContributorGenAiUse() throws InterruptedException, IOException {
+		service.fixCreateContributorGenAiUse();
+		return ResponseEntity.ok("Finished");
+	}
+	
 	@PostMapping("/contributor-genAi-use-full")
 	public ResponseEntity<String> createContributorGenAiUseFull() throws InterruptedException, IOException {
 		service.createContributorGenAiUseFull();

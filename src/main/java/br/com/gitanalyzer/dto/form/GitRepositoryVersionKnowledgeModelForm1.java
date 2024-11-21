@@ -2,6 +2,7 @@ package br.com.gitanalyzer.dto.form;
 
 import java.util.List;
 
+import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModelGenAi;
 import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,5 +18,6 @@ public class GitRepositoryVersionKnowledgeModelForm1 {
 	private Long idGitRepositoryVersion;
 	private KnowledgeModel knowledgeMetric;
 	private List<String> foldersPaths;
+	private GitRepositoryVersionKnowledgeModelGenAi modelGenAi;
 
 }

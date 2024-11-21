@@ -30,10 +30,16 @@ public class GitRepositoryVersionKnowledgeModelController {
 	public ResponseEntity<?> getByGitRepositoryVersionId(@PathVariable("id") Long id) throws Exception{
 		return ResponseEntity.ok(service.getByGitRepositoryVersionId(id));
 	}
-	
+
 	@PostMapping("/save-repository-version-knowledge-shared-links")
-	public ResponseEntity<?> saveRepositoryVersionKnowledgeSharedLinks() throws Exception{
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinks() throws Exception{
 		service.saveRepositoryVersionKnowledgeSharedLinks();
+		return ResponseEntity.ok("Finished");
+	}
+	
+	@PostMapping("/save-repository-version-knowledge-shared-links-genai")
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinksGenAi() throws Exception{
+		service.saveRepositoryVersionKnowledgeSharedLinksGenAi();
 		return ResponseEntity.ok("Finished");
 	}
 }

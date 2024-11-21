@@ -126,7 +126,7 @@ public class GitRepositoryVersionService {
 		return saveGitRepositoryVersion(gitRepositoryService.saveGitRepository(repositoryPath));
 	}
 
-	@Async("taskExecutor")
+	//@Async("taskExecutor")
 	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
 		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);

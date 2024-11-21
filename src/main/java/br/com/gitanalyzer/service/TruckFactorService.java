@@ -123,7 +123,7 @@ public class TruckFactorService {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionService.saveGitRepositoryAndGitRepositoryVersion(repo.getRepositoryPath());
 		List<GitRepositoryVersionKnowledgeModel> models = new ArrayList<>();
 		models.add(gitRepositoryVersionKnowledgeModelService.
-				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths())));
+				saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(gitRepositoryVersion.getId(), repo.getKnowledgeMetric(), repo.getFoldersPaths(), null)));
 		List<TruckFactor> truckFactors = new ArrayList<>();
 		for(GitRepositoryVersionKnowledgeModel model: models) {
 			truckFactors.add(saveTruckFactor(model.getId()));
@@ -225,7 +225,7 @@ public class TruckFactorService {
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeTruckFactor(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelService.
 				saveGitRepositoryVersionKnowledgeModel(
-						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths()));
+						new GitRepositoryVersionKnowledgeModelForm1(form.getIdGitRepositoryVersion(), form.getKnowledgeMetric(), form.getFoldersPaths(), null));
 		saveTruckFactor(gitRepositoryVersionKnowledgeModel.getId());
 		return gitRepositoryVersionKnowledgeModel;
 	}

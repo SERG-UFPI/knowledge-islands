@@ -434,8 +434,8 @@ public class SharedLinkService {
 				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
 				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
 				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
-				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null));
-				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null));
+				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null, null));
+				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null, null));
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());

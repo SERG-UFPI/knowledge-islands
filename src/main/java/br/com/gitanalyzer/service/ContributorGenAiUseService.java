@@ -47,8 +47,13 @@ public class ContributorGenAiUseService {
 				}
 			}
 			if(totalNumCopiedLines > 0) {
-				contributosGenAiUses.add(contributorGenAiUseRepository.save(new ContributorGenAiUse(entry.getKey(), totalNumCopiedLines, 
-						sumAvgCopied/numCopiedLinks)));
+				Contributor contributor = entry.getKey();
+				ContributorGenAiUse contributorGenAiUse = contributorGenAiUseRepository.save(new ContributorGenAiUse(contributor, totalNumCopiedLines, 
+						sumAvgCopied/numCopiedLinks));
+				contributosGenAiUses.add(contributorGenAiUse);
+				contributor.setContributorGenAiUse(contributorGenAiUse);
+				contributorRepository.save(contributor);
+
 			}
 		}
 		int numCopiedCode = 0;
@@ -68,14 +73,27 @@ public class ContributorGenAiUseService {
 		GlobalGenAiUse globalGenAiUse = globalGenAiUseRepository.findAll().get(0);
 		List<Contributor> contributors = contributorRepository.findContributorNotExistsContributorGenAiUse();
 		for (Contributor contributor : contributors) {
-			contributorGenAiUseRepository.save(new ContributorGenAiUse(contributor, 0, 
-					globalGenAiUse.getAvgPctCopiedCode()));
+			ContributorGenAiUse contributorGenAiUse = new ContributorGenAiUse(contributor, 0, 
+					globalGenAiUse.getAvgPctCopiedCode());
+			contributorGenAiUseRepository.save(contributorGenAiUse);
+			contributor.setContributorGenAiUse(contributorGenAiUse);
+			contributorRepository.save(contributor);
 		}
 	}
 
 	public void createContributorGenAiUseFull() {
 		createContributorGenAiUseSharedLink();
 		createContributorGenAiUse();
+	}
+
+	@Transactional
+	public void fixCreateContributorGenAiUse() {
+		List<ContributorGenAiUse> contributorGenAiUses = contributorGenAiUseRepository.findAll();
+		for (ContributorGenAiUse contributorGenAiUse : contributorGenAiUses) {
+			Contributor contributor = contributorGenAiUse.getContributor();
+			contributor.setContributorGenAiUse(contributorGenAiUse);
+			contributorRepository.save(contributor);
+		}
 	}
 
 }

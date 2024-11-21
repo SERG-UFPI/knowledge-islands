@@ -56,8 +56,10 @@ public class GitRepositoryVersionKnowledgeModel {
 	@ElementCollection
 	@Column(length=500)
 	private List<String> foldersPaths;
+	@ManyToOne
+	private GitRepositoryVersionKnowledgeModelGenAi gitRepositoryVersionKnowledgeModelGenAi;
 
-	public GitRepositoryVersionKnowledgeModel(GitRepositoryVersion repositoryVersion, KnowledgeModel knowledgeModel, List<String> foldersPaths) {
+	public GitRepositoryVersionKnowledgeModel(GitRepositoryVersion repositoryVersion, KnowledgeModel knowledgeModel, List<String> foldersPaths, GitRepositoryVersionKnowledgeModelGenAi gitRepositoryVersionKnowledgeModelGenAi) {
 		this.repositoryVersion = repositoryVersion;
 		this.knowledgeModel = knowledgeModel;
 		this.foldersPaths = foldersPaths;
@@ -65,6 +67,7 @@ public class GitRepositoryVersionKnowledgeModel {
 		this.contributors = new ArrayList<>();
 		this.files = new ArrayList<>();
 		this.authorsFiles = new ArrayList<>(); 
+		this.gitRepositoryVersionKnowledgeModelGenAi = gitRepositoryVersionKnowledgeModelGenAi;
 	}
 
 	public GitRepositoryVersionKnowledgeModel() {
