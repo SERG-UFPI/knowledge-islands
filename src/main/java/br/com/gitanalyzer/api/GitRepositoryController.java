@@ -29,7 +29,7 @@ public class GitRepositoryController {
 	private FilterGitRepositoryService filterProjectService;
 
 	@PostMapping("delete-downloaded-repos")
-	public ResponseEntity<?> deleteDownloadedRepos() throws IOException{
+	public ResponseEntity<?> deleteDownloadedRepos() {
 		gitRepositoryService.deleteDownloadedRepos();
 		return ResponseEntity.ok("");
 	}
@@ -54,6 +54,18 @@ public class GitRepositoryController {
 	public ResponseEntity<?> filteringProjects(@RequestBody FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filter(form);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
+	}
+
+	@PostMapping("/filter-projects-shared-links")
+	public ResponseEntity<?> filteringSharedLinkProjects() {
+		filterProjectService.filteringSharedLinkProjects();
+		return ResponseEntity.status(HttpStatus.OK).body("Finished");
+	}
+	
+	@PostMapping("/filter-projects-shared-links2")
+	public ResponseEntity<?> filteringSharedLinkProjects2() throws IOException {
+		filterProjectService.filteringSharedLinkProjects2();
+		return ResponseEntity.status(HttpStatus.OK).body("Finished");
 	}
 
 	@PostMapping("/filtering-eco-spring")

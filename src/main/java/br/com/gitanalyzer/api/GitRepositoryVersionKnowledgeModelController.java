@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm2;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.service.GitRepositoryVersionKnowledgeModelService;
 
 @RestController
@@ -32,14 +33,20 @@ public class GitRepositoryVersionKnowledgeModelController {
 	}
 
 	@PostMapping("/save-repository-version-knowledge-shared-links")
-	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinks() throws Exception{
-		service.saveRepositoryVersionKnowledgeSharedLinks();
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinks(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
+		service.saveRepositoryVersionKnowledgeSharedLinks(knowledgeMetric);
 		return ResponseEntity.ok("Finished");
 	}
-	
+
 	@PostMapping("/save-repository-version-knowledge-shared-links-genai")
-	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinksGenAi() throws Exception{
-		service.saveRepositoryVersionKnowledgeSharedLinksGenAi();
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinksGenAi(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
+		service.saveRepositoryVersionKnowledgeSharedLinksGenAi(knowledgeMetric);
 		return ResponseEntity.ok("Finished");
 	}
+
+	//	@PostMapping("/save-repository-version-knowledge-shared-links-genai-full")
+	//	public ResponseEntity<String> saveRepositoryVersionKnowledgeSharedLinksGenAiFull() throws Exception{
+	//		service.saveRepositoryVersionKnowledgeSharedLinksGenAiFull();
+	//		return ResponseEntity.ok("Finished");
+	//	}
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
@@ -32,4 +33,24 @@ public interface FileRepositorySharedLinkCommitRepository extends JpaRepository<
 	List<FileRepositorySharedLinkCommit> findWithNonNullConversation();
 
 	List<FileRepositorySharedLinkCommit> findByGitRepositoryId(Long id);
+
+	FileRepositorySharedLinkCommit findByFileIdAndGitRepositoryId(Long fileId, Long gitRepositoryId);
+
+	@Query("SELECT frslc " +
+			"FROM FileRepositorySharedLinkCommit frslc " +
+			"WHERE frslc.file.id = :fileId " +
+			"AND frslc.gitRepository.id = :gitRepositoryId " +
+			"AND frslc.id <> :excludeId")
+	List<FileRepositorySharedLinkCommit> findByFileAndGitRepositoryExcludingId(@Param("fileId") Long fileId, @Param("gitRepositoryId") Long gitRepositoryId, 
+			@Param("excludeId") Long excludeId);
+
+	@Query("SELECT frslc " +
+			"FROM FileRepositorySharedLinkCommit frslc " +
+			"WHERE frslc.file IN (" +
+			"    SELECT frslcInner.file " +
+			"    FROM FileRepositorySharedLinkCommit frslcInner " +
+			"    GROUP BY frslcInner.file " +
+			"    HAVING COUNT(frslcInner.id) > 1" +
+			")")
+	List<FileRepositorySharedLinkCommit> findEntitiesWithDuplicateFiles();
 }

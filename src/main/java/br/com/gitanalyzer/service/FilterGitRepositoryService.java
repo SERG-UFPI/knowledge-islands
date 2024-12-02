@@ -25,6 +25,8 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.enums.FilteredEnum;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.repository.GitRepositoryRepository;
+import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
+import br.com.gitanalyzer.repository.SharedLinkCommitRepository;
 import br.com.gitanalyzer.utils.KnowledgeIslandsUtils;
 
 @Service
@@ -40,6 +42,10 @@ public class FilterGitRepositoryService {
 	private CommitService commitService;
 	@Autowired
 	private GitRepositoryVersionService gitRepositoryVersionService;
+	@Autowired
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
+	@Autowired
+	private SharedLinkCommitRepository sharedLinkCommitRepository;
 
 	public void filterEcoSpringHistory() throws URISyntaxException, IOException, InterruptedException {
 		List<GitRepository> projects = projectRepository.findAll();
@@ -84,12 +90,10 @@ public class FilterGitRepositoryService {
 		filterNotSoftwareProjects(projects);
 		filterProjectsByInactive(projects);
 		for(GitRepositoryVersion version: versions) {
-			if(!version.getGitRepository().isFiltered()) {
-				if(filterProjectByCommits(version)) {
-					version.getGitRepository().setFiltered(true);
-					version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
-					projectRepository.save(version.getGitRepository());
-				}
+			if(!version.getGitRepository().isFiltered() && filterProjectByCommits(version)) {
+				version.getGitRepository().setFiltered(true);
+				version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+				projectRepository.save(version.getGitRepository());
 			}
 		}
 	}
@@ -136,13 +140,11 @@ public class FilterGitRepositoryService {
 	}
 
 	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
-		List<File> files = fileService.getFilesFromClocFile(version.getGitRepository());
-		fileService.getRenamesFiles(version.getGitRepository().getCurrentFolderPath(), files);
-		List<Commit> commits = commitService.getCommitsFromLogFiles(version.getGitRepository());
+		List<File> allFiles = version.getFiles();
+		List<Commit> commits = version.getCommits();
 		Collections.sort(commits);
-		commits = getFirst20Commits(commits);
-		commits = commitService.getCommitsFiles(version.getGitRepository(), commits, files);
-		int numberOfFiles = files.size();
+		commits = commits.subList(0, 20);
+		int numberOfFiles = allFiles.size();
 		List<File> addedFiles = new ArrayList<>();
 		for(Commit commit: commits) {
 			for (CommitFile commitFile : commit.getCommitFiles()) {
@@ -153,53 +155,34 @@ public class FilterGitRepositoryService {
 		}
 		int numberOfCurrentFilesAdded = 0;
 		for (File file : addedFiles) {
-			if(files.stream().anyMatch(f -> f.isFile(file.getPath()))) {
+			if(allFiles.stream().anyMatch(f -> f.isFile(file.getPath()))) {
 				numberOfCurrentFilesAdded++;
 			}
 		}
-		if(numberOfCurrentFilesAdded > (numberOfFiles*0.5)) {
-			return true;
-		}
-		return false;
+		return numberOfCurrentFilesAdded >= (numberOfFiles*0.5);
 	}
 
-	private List<Commit> getFirst20Commits(List<Commit> commits) {
-		List<Commit> firstCommits = new ArrayList<Commit>();
-		Collections.reverse(commits);
-		for(int i = 0; i < 20; i++) {
-			firstCommits.add(commits.get(i));
-		}
-		return firstCommits;
-	}
-
-	private void filterProjectBySize(List<GitRepositoryVersion> versions) {
+	private List<GitRepository> filterProjectBySize(List<GitRepositoryVersion> versions) {
 		List<Double> devs = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedDevs())).toList();
 		List<Double> commits = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedCommits())).toList();
 		List<Double> files = versions.stream().map(v -> Double.valueOf(v.getNumberAnalysedFiles())).toList();
 		double[] devsArray = new double[devs.size()];
-		int i=0;
-		for(Double dev: devs) {
-			devsArray[i] = dev;
-			i++;
+		for (int i = 0; i < devs.size(); i++) {
+			devsArray[i] = devs.get(i);
 		}
 		double[] commitsArray = new double[commits.size()];
-		i=0;
-		for(Double commit: commits) {
-			commitsArray[i] = commit;
-			i++;
+		for (int i = 0; i < commits.size(); i++) {
+			commitsArray[i] = commits.get(i);
 		}
 		double[] filesArray = new double[files.size()];
-		i=0;
-		for(Double file: files) {
-			filesArray[i] = file;
-			i++;
+		for (int i = 0; i < files.size(); i++) {
+			filesArray[i] = files.get(i);
 		}
-
 		Percentile p = new Percentile();
-		double firstQDevs = p.evaluate(devsArray, 25);
-		double firstQCommits = p.evaluate(commitsArray, 25);
-		double firstQFiles = p.evaluate(filesArray, 25);
-		Set<GitRepository> projects = new HashSet<GitRepository>();
+		double firstQDevs = p.evaluate(devsArray, 75);
+		double firstQCommits = p.evaluate(commitsArray, 50);
+		double firstQFiles = p.evaluate(filesArray, 50);
+		Set<GitRepository> projects = new HashSet<>();
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getGitRepository()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedCommits() < firstQCommits).map(v -> v.getGitRepository()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedFiles() < firstQFiles).map(v -> v.getGitRepository()).toList());
@@ -208,6 +191,39 @@ public class FilterGitRepositoryService {
 		for (GitRepository project : projects) {
 			projectRepository.save(project);
 		}
+		return new ArrayList<>(projects);
+	}
+
+	public void filteringSharedLinkProjects() {
+		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
+		List<GitRepositoryVersion> versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
+		filterProjectBySize(versions);
+	}
+
+	public void filteringSharedLinkProjects2() throws IOException {
+		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
+		List<GitRepositoryVersion> versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
+		List<GitRepository> repositoriesFilteredBySize = filterProjectBySize2(versions);
+		repositories.removeAll(repositoriesFilteredBySize);
+		versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
+		for(GitRepositoryVersion version: versions) {
+			if(filterProjectByCommits(version)) {
+				version.getGitRepository().setFiltered(true);
+				version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+				projectRepository.save(version.getGitRepository());
+			}
+		}
+	}
+
+	private List<GitRepository> filterProjectBySize2(List<GitRepositoryVersion> versions) {
+		Set<GitRepository> projects = new HashSet<>();
+		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < 39).map(v -> v.getGitRepository()).toList());
+		projects.stream().forEach(pr -> pr.setFilteredReason(FilteredEnum.SIZE));
+		projects.stream().forEach(pr -> pr.setFiltered(true));
+		for (GitRepository project : projects) {
+			projectRepository.save(project);
+		}
+		return new ArrayList<>(projects);
 	}
 
 }

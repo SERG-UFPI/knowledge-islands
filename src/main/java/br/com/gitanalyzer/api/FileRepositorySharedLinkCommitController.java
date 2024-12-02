@@ -25,5 +25,11 @@ public class FileRepositorySharedLinkCommitController {
 		service.exportFileRepositorySharedLinkCommit();
 		return ResponseEntity.status(HttpStatus.CREATED).body("Finished");
 	}
+	
+	@PostMapping("/fix-file-repository-shared-link-commit")
+	public ResponseEntity<?> fixFileRepositorySharedLinkCommit() throws IOException {
+		service.fixFileRepositorySharedLinkCommit();
+		return ResponseEntity.status(HttpStatus.CREATED).body("Finished");
+	}
 
 }

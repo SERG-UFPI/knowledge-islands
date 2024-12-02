@@ -8,6 +8,6 @@ import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModelGenAi;
 @Repository
 public interface GitRepositoryVersionKnowledgeModelGenAiRepository extends JpaRepository<GitRepositoryVersionKnowledgeModelGenAi, Long>{
 
-	boolean existsByAvgPctFilesGenAi(double avgPctFilesGenAi);
+	GitRepositoryVersionKnowledgeModelGenAi findByAvgPctFilesGenAi(double avgPctFilesGenAi);
 }
 

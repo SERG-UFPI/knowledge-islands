@@ -3,7 +3,6 @@ package br.com.gitanalyzer.service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.gitanalyzer.analysis.dev_gpt.GitHubCall;
-import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm1;
 import br.com.gitanalyzer.exceptions.CommandExecutionException;
 import br.com.gitanalyzer.exceptions.FetchPageException;
 import br.com.gitanalyzer.exceptions.PageJsonProcessingException;
@@ -36,12 +34,10 @@ import br.com.gitanalyzer.model.entity.ErrorLog;
 import br.com.gitanalyzer.model.entity.File;
 import br.com.gitanalyzer.model.entity.FileRepositorySharedLinkCommit;
 import br.com.gitanalyzer.model.entity.GitRepository;
-import br.com.gitanalyzer.model.entity.GitRepositoryVersion;
 import br.com.gitanalyzer.model.entity.SharedLink;
 import br.com.gitanalyzer.model.entity.SharedLinkCommit;
 import br.com.gitanalyzer.model.entity.SharedLinkErrorLog;
 import br.com.gitanalyzer.model.entity.SharedLinkSearch;
-import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.enums.SharedLinkFetchError;
 import br.com.gitanalyzer.model.enums.SharedLinkSourceType;
 import br.com.gitanalyzer.repository.FileRepository;
@@ -67,19 +63,9 @@ public class SharedLinkService {
 	@Autowired
 	private SharedLinkSearchRepository sharedLinkSearchRepository;
 	@Autowired
-	private DownloaderService downloaderService;
-	@Autowired
-	private GitRepositoryService gitRepositoryService;
-	@Autowired
-	private GitRepositoryVersionService gitRepositoryVersionService;
-	@Autowired
 	private FileRepositorySharedLinkCommitRepository fileGitRepositorySharedLinkCommitRepository;
 	@Autowired
 	private ChatGPTConversationService chatGPTConversationService;
-	@Autowired
-	private SharedLinkCommitService sharedLinkCommitService;
-	@Autowired
-	private GitRepositoryVersionKnowledgeModelService gitRepositoryVersionKnowledgeModelService;
 	@Value("${configuration.github.token}")
 	private String token;
 
@@ -245,7 +231,10 @@ public class SharedLinkService {
 						file.setLanguage(language);
 						fileRepository.save(file);
 					}
-					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
+					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = fileGitRepositorySharedLinkCommitRepository.findByFileIdAndGitRepositoryId(file.getId(), gitRepository.getId());
+					if(fileGitRepositorySharedLinkCommit == null) {
+						fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
+					}
 					JsonNode matchesNode = item.get("text_matches");
 					if(!matchesNode.isEmpty()) {
 						for (JsonNode matchNode : matchesNode) {
@@ -413,34 +402,12 @@ public class SharedLinkService {
 		log.info("Third Quartile (Q3): " + q3);
 	}
 
-	public void createSharedLinkConversationRepoInfo() throws InterruptedException, IOException {
+	public void createSharedLinkConversationRepo() throws InterruptedException, IOException {
 		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
 			saveFileSharedLinks(term);
 		}
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
-	}
-
-	public void createSharedLinkFull() throws InterruptedException, IOException, URISyntaxException {
-		for (String term : KnowledgeIslandsUtils.getChatGPTSearchTerms()) {
-			saveFileSharedLinks(term);
-		}
-		setConversationSharedLinks();
-		saveGitRepositoriesApi();
-		List<GitRepository> repositories = downloaderService.cloneRepositoriesSharedLinks();
-		gitRepositoryService.generateLogFilesRepositoriesPaths(repositories.stream().map(r -> r.getCurrentFolderPath()).toList());
-		for (GitRepository gitRepository: repositories) {
-			try {
-				GitRepositoryVersion grv1 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
-				GitRepositoryVersion grv2 = gitRepositoryVersionService.saveGitRepositoryVersion(gitRepository);
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(grv2);
-				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv1.getId(), KnowledgeModel.DOE, null, null));
-				gitRepositoryVersionKnowledgeModelService.saveGitRepositoryVersionKnowledgeModel(new GitRepositoryVersionKnowledgeModelForm1(grv2.getId(), KnowledgeModel.DOE, null, null));
-			} catch (Exception e) {
-				e.printStackTrace();
-				log.error(e.getMessage());
-			}
-		}
 	}
 
 }

@@ -98,7 +98,8 @@ public class KnowledgeIslandsUtils {
 	public static final String gitHubBaseUrl = "https://github.com/";
 
 	public static final String emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,7}";
-
+	public static final String mantenedor = "MANTENEDOR";
+	
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
@@ -179,6 +180,11 @@ public class KnowledgeIslandsUtils {
 		percentages.add(0.05);
 		percentages.add(0.1);
 		percentages.add(0.15);
+		percentages.add(0.2);
+		percentages.add(0.25);
+		percentages.add(0.3);
+		percentages.add(0.35);
+		percentages.add(0.4);
 		return percentages;
 	}
 
@@ -272,6 +278,22 @@ public class KnowledgeIslandsUtils {
 
 	private static boolean isOctalDigit(char c) {
 		return c >= '0' && c <= '7';
+	}
+
+	public static double getDOE(int adds, int fa, int numDays, int size) {
+		double addsModel = KnowledgeIslandsUtils.addsCoefDoe*Math.log(adds + 1);
+		double faModel = KnowledgeIslandsUtils.faCoefDoe*fa;
+		double numDaysModel = KnowledgeIslandsUtils.numDaysCoefDoe*Math.log(numDays + 1);
+		double sizeModel = KnowledgeIslandsUtils.sizeCoefDoe*Math.log(size);
+		return KnowledgeIslandsUtils.interceptDoe + addsModel + faModel
+				+ numDaysModel + sizeModel;
+	}
+
+	public static double getDOA(int fa, int dl, int ac) {
+		double faModel = KnowledgeIslandsUtils.faCoefDoa*fa;
+		double dlModel = KnowledgeIslandsUtils.dlCoefDoa*dl;
+		double acModel = KnowledgeIslandsUtils.acCoefDoa*Math.log(ac + 1);
+		return KnowledgeIslandsUtils.interceptDoa + faModel + dlModel + acModel;
 	}
 
 }

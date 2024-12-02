@@ -13,5 +13,5 @@ public class MlOutput {
 
 	private String author;
 	private String file;
-	private String decision;
+	private String expertise;
 }

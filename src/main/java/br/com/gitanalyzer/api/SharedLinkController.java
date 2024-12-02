@@ -22,12 +22,6 @@ public class SharedLinkController {
 	@Autowired
 	private SharedLinkService service;
 
-	@PostMapping("/create-shared-link-full")
-	public ResponseEntity<String> createSharedLinkFull() throws Exception{
-		service.createSharedLinkFull();
-		return ResponseEntity.ok("Finished");
-	}
-
 	@PostMapping("/save-git-repositories-api")
 	public ResponseEntity<?> saveGitRepositoriesApi() throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoriesApi());
@@ -47,9 +41,9 @@ public class SharedLinkController {
 		return ResponseEntity.ok("Finished");
 	}
 
-	@PostMapping("/create-links-conversations-repo-info")
+	@PostMapping("/create-links-conversations-repo")
 	public ResponseEntity<String> createSharedLinkConversationRepoInfo() throws InterruptedException, IOException {
-		service.createSharedLinkConversationRepoInfo();
+		service.createSharedLinkConversationRepo();
 		return ResponseEntity.ok("Finished");
 	}
 

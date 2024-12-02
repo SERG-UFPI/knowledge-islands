@@ -40,18 +40,18 @@ public class DownloaderController {
 		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
 	}
 
-	@PostMapping("clone-repository")
+	@PostMapping("/clone-repository")
 	public ResponseEntity<?> cloneProject(@RequestBody CloneRepoForm form) throws InvalidRemoteException, TransportException, GitAPIException {
 		return ResponseEntity.ok(service.cloneProject(form));
 	}
 
-	@PostMapping("clone-shared-links-repositories")
+	@PostMapping("/clone-shared-links-repositories")
 	public ResponseEntity<?> cloneSharedLinkRepositories() throws URISyntaxException, IOException, InterruptedException{
 		service.cloneRepositoriesSharedLinks();
 		return ResponseEntity.ok("Download finished");
 	}
 
-	@PostMapping("clone-shared-links-repositories-generate-logs")
+	@PostMapping("/clone-shared-links-repositories-generate-logs")
 	public ResponseEntity<?> cloneRepositoriesSharedLinksGenerateLogs() throws URISyntaxException, IOException, InterruptedException{
 		service.cloneRepositoriesSharedLinksGenerateLogs();
 		return ResponseEntity.status(HttpStatus.CREATED).body("Download finished");
