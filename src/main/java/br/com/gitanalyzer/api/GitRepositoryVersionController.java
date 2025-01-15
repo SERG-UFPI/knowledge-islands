@@ -67,6 +67,12 @@ public class GitRepositoryVersionController {
 		service.saveGitRepositoriesVersionSharedLinkGenAi();
 		return ResponseEntity.ok("Finished");
 	}
+	
+	@PostMapping("/save-shared-link-commits-versions")
+	public ResponseEntity<?> saveSharedLinkCommitsVersions() throws Exception{
+		service.saveSharedLinkCommitsVersions();
+		return ResponseEntity.ok("Finished");
+	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getGitRepositoryVersionById(@PathVariable("id") Long id) throws Exception{

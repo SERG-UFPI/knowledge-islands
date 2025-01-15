@@ -4,8 +4,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -146,15 +144,9 @@ public class GitRepositoryVersionKnowledgeModelService {
 	private void roundTotalKnowledgeFilesVersion(List<FileVersion> filesVersion) {
 		for(FileVersion version: filesVersion) {
 			if(version.getTotalKnowledge() > 0) {
-				version.setTotalKnowledge(returnRoundedValue(version.getTotalKnowledge()));
+				version.setTotalKnowledge(KnowledgeIslandsUtils.roundValue(version.getTotalKnowledge()));
 			}
 		}
-	}
-
-	private double returnRoundedValue(double value) {
-		BigDecimal bd = BigDecimal.valueOf(value);
-		BigDecimal rounded = bd.setScale(4, RoundingMode.HALF_UP);
-		return rounded.doubleValue();
 	}
 
 	private void addFileToFilesAuthor(List<ContributorVersion> contributorsVersion, AuthorFileExpertise authorFile, File file) {
@@ -253,7 +245,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 		for (ContributorVersion contributorVersion : contributorsVersion) {
 			if(contributorVersion.getNumberFilesAuthor() > 0) {
-				contributorVersion.setPercentOfFilesAuthored(returnRoundedValue((double)contributorVersion.getNumberFilesAuthor()/numberAnalysedFiles));
+				contributorVersion.setPercentOfFilesAuthored(KnowledgeIslandsUtils.roundValue((double)contributorVersion.getNumberFilesAuthor()/numberAnalysedFiles));
 			}
 		}
 	}
@@ -333,7 +325,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 			adds = adds - toRemoveAdds;
 		}
 		double doeValue = KnowledgeIslandsUtils.getDOE(adds, fa, numDays, file.getSize());
-		return new DOE(adds, fa, numDays, file.getSize(), doeValue);
+		return new DOE(adds, fa, numDays, file.getSize(), KnowledgeIslandsUtils.roundValue(doeValue));
 	}
 
 	private DOA getDoaContributorFile(Contributor contributor, 

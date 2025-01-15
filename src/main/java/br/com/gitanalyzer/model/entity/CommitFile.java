@@ -39,7 +39,7 @@ public class CommitFile {
 	@Lob
 	@Column(columnDefinition="TEXT")
 	private String patch;
-	@OneToMany(cascade = {CascadeType.PERSIST})
+	@OneToMany(mappedBy="commitFile", cascade= CascadeType.REMOVE)
 	private List<CodeLine> addedCodeLines;
 	@ManyToOne
 	private File file;

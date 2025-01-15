@@ -33,9 +33,10 @@ public class SharedLinkCommit {
 	private FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit;
 	@OneToOne
 	private CommitFile commitFileAddedLink;
-	@OneToMany(cascade= {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(mappedBy="sharedLinkCommit", cascade= CascadeType.REMOVE)
 	private List<CodeLine> copiedLines;
 	private int numberCopiedLines;
+	private int maxLengthCopiedLines;
 
 	public SharedLinkCommit(SharedLink sharedLink, FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit) {
 		super();

@@ -64,6 +64,18 @@ public class TruckFactorController {
 		}
 		return null;
 	}
+	
+	@PostMapping("/save-all-truck-factor")
+	public ResponseEntity<String> saveAllTruckFactor(){
+		service.saveAllTruckFactor();
+		return ResponseEntity.ok("Finished");
+	}
+	
+	@PostMapping("/save-all-truck-factor-is-null")
+	public ResponseEntity<String> saveAllTruckFactorIsNull(){
+		service.saveAllTruckFactorIsNull();
+		return ResponseEntity.ok("Finished");
+	}
 
 	@PostMapping("generate-logs-repo-truck-factor")
 	public ResponseEntity<List<TruckFactor>> generateLogsTruckFactorRepository(@RequestBody RepositoryKnowledgeMetricForm form){
@@ -96,7 +108,7 @@ public class TruckFactorController {
 	}
 	
 	@DeleteMapping("/all")
-	public ResponseEntity<?> removeAll(){
+	public ResponseEntity<String> removeAll(){
 		service.removeAll();
 		return ResponseEntity.ok("Ok");
 	}

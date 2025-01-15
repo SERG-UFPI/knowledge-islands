@@ -194,13 +194,13 @@ public class FilterGitRepositoryService {
 		return new ArrayList<>(projects);
 	}
 
-	public void filteringSharedLinkProjects() {
-		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
-		List<GitRepositoryVersion> versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
-		filterProjectBySize(versions);
-	}
+	//	public void filteringSharedLinkProjects() {
+	//		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
+	//		List<GitRepositoryVersion> versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
+	//		filterProjectBySize(versions);
+	//	}
 
-	public void filteringSharedLinkProjects2() throws IOException {
+	public void filteringSharedLinkProjects() throws IOException {
 		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesBySharedLinkCommitWithCommitFile();
 		List<GitRepositoryVersion> versions = repositories.stream().map(r -> r.getGitRepositoryVersion().get(0)).toList();
 		List<GitRepository> repositoriesFilteredBySize = filterProjectBySize2(versions);

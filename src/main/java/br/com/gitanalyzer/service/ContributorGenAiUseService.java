@@ -33,7 +33,7 @@ public class ContributorGenAiUseService {
 	@Transactional
 	public void createContributorGenAiUseSharedLink() {
 		List<ContributorGenAiUse> contributosGenAiUses = new ArrayList<>();
-		List<SharedLinkCommit> sharedLinksCommits = sharedLinkCommitRepository.findByCommitFileAddedLinkIsNotNull();
+		List<SharedLinkCommit> sharedLinksCommits = sharedLinkCommitRepository.findSharedLinkWithCopiedLinesMoreThanOne();
 		Map<Contributor, List<SharedLinkCommit>> map = sharedLinksCommits.stream().collect(Collectors.groupingBy(slc -> slc.getCommitFileAddedLink().getCommit().getAuthor()));
 		for (Map.Entry<Contributor, List<SharedLinkCommit>> entry: map.entrySet()) {
 			int totalNumCopiedLines = 0;
@@ -41,8 +41,8 @@ public class ContributorGenAiUseService {
 			int numCopiedLinks = 0;
 			for (SharedLinkCommit sharedLinkCommit : entry.getValue()) {
 				if(sharedLinkCommit.getNumberCopiedLines() > 0) {
-					totalNumCopiedLines = totalNumCopiedLines+sharedLinkCommit.getNumberCopiedLines();
-					sumAvgCopied = sumAvgCopied+(double)sharedLinkCommit.getNumberCopiedLines()/sharedLinkCommit.getCommitFileAddedLink().getAdditionsCodes();
+					totalNumCopiedLines += sharedLinkCommit.getNumberCopiedLines();
+					sumAvgCopied += (double)sharedLinkCommit.getNumberCopiedLines()/sharedLinkCommit.getCommitFileAddedLink().getAdditionsCodes();
 					numCopiedLinks++;
 				}
 			}
@@ -50,10 +50,9 @@ public class ContributorGenAiUseService {
 				Contributor contributor = entry.getKey();
 				ContributorGenAiUse contributorGenAiUse = contributorGenAiUseRepository.save(new ContributorGenAiUse(contributor, totalNumCopiedLines, 
 						sumAvgCopied/numCopiedLinks));
-				contributosGenAiUses.add(contributorGenAiUse);
 				contributor.setContributorGenAiUse(contributorGenAiUse);
 				contributorRepository.save(contributor);
-
+				contributosGenAiUses.add(contributorGenAiUse);
 			}
 		}
 		int numCopiedCode = 0;

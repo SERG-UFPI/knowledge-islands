@@ -3,6 +3,8 @@ package br.com.gitanalyzer.utils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -99,7 +101,9 @@ public class KnowledgeIslandsUtils {
 
 	public static final String emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,7}";
 	public static final String mantenedor = "MANTENEDOR";
-	
+
+	public static final double TRUCKFACTOR_COVERAGE_THRESHOLD = 0.5;
+
 	public static List<String> projectsToRemoveInFiltering(){
 		List<String> notProjectSoftwareNames = new ArrayList<>();
 		notProjectSoftwareNames.add("spring-projects/spring-data-examples");
@@ -177,14 +181,12 @@ public class KnowledgeIslandsUtils {
 
 	public static List<Double> getPercentageOfGenAiFiles(){
 		List<Double> percentages = new ArrayList<>();
-		percentages.add(0.05);
-		percentages.add(0.1);
-		percentages.add(0.15);
-		percentages.add(0.2);
-		percentages.add(0.25);
-		percentages.add(0.3);
-		percentages.add(0.35);
-		percentages.add(0.4);
+//		percentages.add(0.1);
+//		percentages.add(0.2);
+//		percentages.add(0.3);
+//		percentages.add(0.4);
+//		percentages.add(0.5);
+		percentages.add(1.0);
 		return percentages;
 	}
 
@@ -294,6 +296,12 @@ public class KnowledgeIslandsUtils {
 		double dlModel = KnowledgeIslandsUtils.dlCoefDoa*dl;
 		double acModel = KnowledgeIslandsUtils.acCoefDoa*Math.log(ac + 1);
 		return KnowledgeIslandsUtils.interceptDoa + faModel + dlModel + acModel;
+	}
+
+	public static double roundValue(double value) {
+		BigDecimal bd = BigDecimal.valueOf(value);
+		BigDecimal rounded = bd.setScale(3, RoundingMode.HALF_UP);
+		return rounded.doubleValue();
 	}
 
 }

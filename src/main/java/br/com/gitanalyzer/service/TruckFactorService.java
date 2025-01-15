@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,7 +95,8 @@ public class TruckFactorService {
 	@Transactional
 	public TruckFactor saveTruckFactor(Long idGitRepositoryVersionKnowledgeModel) {
 		long start = System.currentTimeMillis();
-		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelRepository.findById(idGitRepositoryVersionKnowledgeModel).get();
+		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelRepository.findById(idGitRepositoryVersionKnowledgeModel)
+				.orElseThrow(()->new EntityNotFoundException("GitRepositoryVersionKnowledgeModel not found with id: " + idGitRepositoryVersionKnowledgeModel));
 		gitRepositoryVersionKnowledgeModel.getContributors().removeIf(ckm -> ckm.getNumberFilesAuthor() == 0);
 		Collections.sort(gitRepositoryVersionKnowledgeModel.getContributors(), Collections.reverseOrder());
 		List<ContributorVersion> topContributors = new ArrayList<>();
@@ -102,7 +105,7 @@ public class TruckFactorService {
 		while(!gitRepositoryVersionKnowledgeModel.getContributors().isEmpty()) {
 			double numberFilesCovarage = getCoverageFiles(gitRepositoryVersionKnowledgeModel.getContributors(), gitRepositoryVersionKnowledgeModel.getFiles()).size();
 			double coverage = numberFilesCovarage/fileSize;
-			if(coverage < 0.5) 
+			if(coverage < KnowledgeIslandsUtils.TRUCKFACTOR_COVERAGE_THRESHOLD) 
 				break;
 			topContributors.add(gitRepositoryVersionKnowledgeModel.getContributors().get(0));
 			gitRepositoryVersionKnowledgeModel.getContributors().remove(0);
@@ -110,7 +113,7 @@ public class TruckFactorService {
 		}
 		List<FileVersion> coveredFiles = getCoverageFiles(topContributors, gitRepositoryVersionKnowledgeModel.getFiles());
 		long end = System.currentTimeMillis();
-		float sec = (end - start) / 1000F;
+		double sec = (end - start) / 1000.0;
 		TruckFactor truckFactor = new TruckFactor(tf, gitRepositoryVersionKnowledgeModel, coveredFiles, topContributors, (double) sec);
 		truckFactorRepository.save(truckFactor);
 		gitRepositoryVersionKnowledgeModel.setTruckFactor(truckFactor);
@@ -259,5 +262,19 @@ public class TruckFactorService {
 
 	public void removeAll() {
 		truckFactorRepository.deleteAll();
+	}
+
+	public void saveAllTruckFactor() {
+		List<Long> idsModels = gitRepositoryVersionKnowledgeModelRepository.findAllIds();
+		for (Long id : idsModels) {
+			saveTruckFactor(id);
+		}
+	}
+
+	public void saveAllTruckFactorIsNull() {
+		List<Long> idsModels = gitRepositoryVersionKnowledgeModelRepository.findIdByTruckFactorIsNull();
+		for (Long id : idsModels) {
+			saveTruckFactor(id);
+		}
 	}
 }

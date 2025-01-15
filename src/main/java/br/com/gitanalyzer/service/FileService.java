@@ -48,7 +48,8 @@ public class FileService {
 		return patterns;
 	}
 
-	private void addFilesRepositoryVersions(List<File> filesRepository, GitRepository gitRepository) {
+	private List<File> addFilesRepositoryVersions(GitRepository gitRepository) {
+		List<File> filesRepository = new ArrayList<>();
 		if(gitRepository.getGitRepositoryVersion() != null) {
 			for (GitRepositoryVersion version : gitRepository.getGitRepositoryVersion()) {
 				if(version.getFiles() != null) {
@@ -61,14 +62,14 @@ public class FileService {
 				}
 			}
 		}
+		return filesRepository;
 	}
 
 	public List<File> getFilesFromClocFile(GitRepository gitRepository) throws IOException {
 		String[] patterns = addProjectPatterns(gitRepository);
 		List<File> files = new ArrayList<>();
 		List<File> filesWithoutSize = new ArrayList<>();
-		List<File> filesRepository = new ArrayList<>();
-		addFilesRepositoryVersions(filesRepository, gitRepository);
+		List<File> filesRepository = addFilesRepositoryVersions(gitRepository);
 		List<FileRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
 			for(FileRepositorySharedLinkCommit fileSharedLink: filesSharedLinks) {

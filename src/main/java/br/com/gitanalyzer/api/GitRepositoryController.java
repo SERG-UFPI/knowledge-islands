@@ -56,15 +56,15 @@ public class GitRepositoryController {
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 
-	@PostMapping("/filter-projects-shared-links")
-	public ResponseEntity<?> filteringSharedLinkProjects() {
-		filterProjectService.filteringSharedLinkProjects();
-		return ResponseEntity.status(HttpStatus.OK).body("Finished");
-	}
+//	@PostMapping("/filter-projects-shared-links")
+//	public ResponseEntity<?> filteringSharedLinkProjects() {
+//		filterProjectService.filteringSharedLinkProjects();
+//		return ResponseEntity.status(HttpStatus.OK).body("Finished");
+//	}
 	
-	@PostMapping("/filter-projects-shared-links2")
-	public ResponseEntity<?> filteringSharedLinkProjects2() throws IOException {
-		filterProjectService.filteringSharedLinkProjects2();
+	@PostMapping("/filter-projects-shared-links")
+	public ResponseEntity<?> filteringSharedLinkProjects() throws IOException {
+		filterProjectService.filteringSharedLinkProjects();
 		return ResponseEntity.status(HttpStatus.OK).body("Finished");
 	}
 

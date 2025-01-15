@@ -74,11 +74,13 @@ public class CommitService {
 		return commits;
 	}
 
-	private void addContributorsRepositoryVersions(List<Contributor> contributors, Long gitRepositoryId) {
+	private List<Contributor> addContributorsRepositoryVersions(Long gitRepositoryId) {
+		List<Contributor> contributors = new ArrayList<>();
 		List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepositoryId);
 		if(versions != null) {
 			versions.forEach(v -> contributors.addAll(v.getContributors()));
 		}
+		return contributors;
 	}
 
 	private String cleanEmail(String email) {
@@ -105,8 +107,7 @@ public class CommitService {
 
 	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
 		List<Commit> commits = new ArrayList<>();
-		List<Contributor> contributors = new ArrayList<>();
-		addContributorsRepositoryVersions(contributors, gitRepository.getId());
+		List<Contributor> contributors = addContributorsRepositoryVersions(gitRepository.getId());
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
 			String strLine;
 			while ((strLine = br.readLine()) != null) {

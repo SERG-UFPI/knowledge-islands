@@ -45,10 +45,10 @@ public class ContributorService {
 
 	public List<Contributor> getContributorFromCommits(List<Commit> commits){
 		List<Contributor> contributors = new ArrayList<>();
-		forCommit: for (Commit commit : commits) {
+		for (Commit commit : commits) {
 			Contributor contributor = commit.getAuthor();
 			if(contributors.stream().anyMatch(c -> c.equals(contributor))) {
-				continue forCommit;
+				continue;
 			}
 			contributors.add(contributor);
 		}
@@ -149,10 +149,15 @@ public class ContributorService {
 	}
 
 	public void sendEmailsContributorsSharedLinks() {
-		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithRemovedCodes();
-		contributors = contributors.stream().filter(c -> KnowledgeIslandsUtils.checkIfEmailNoreply(c.getEmail())).toList();
+		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithCopiedLines();
+		contributors = contributors.stream().filter(c -> !KnowledgeIslandsUtils.checkIfEmailNoreply(c.getEmail())).toList();
 		for (Contributor contributor : contributors) {
-			//TODO SEND EMAILS TO CONTRIBUTORS
+			String subject = emailService.getSubjectEmailSurveyGenAI(); //emailService.getSubjectEmailSurveyGoogleForm();
+			String text = emailService.getTextEmailSurveyGenAIRawText(contributor.getName());
+//			if(emailService.sendEmail(contributor.getEmail(), subject, text)) {
+//				contributor.setEmailSharedLinkSent(true);
+//				contributorRepository.save(contributor);
+//			}
 		}
 	}
 }

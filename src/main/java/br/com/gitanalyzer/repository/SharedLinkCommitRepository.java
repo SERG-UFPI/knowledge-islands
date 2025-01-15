@@ -21,5 +21,11 @@ public interface SharedLinkCommitRepository extends JpaRepository<SharedLinkComm
 	@Query("SELECT DISTINCT slc.fileRepositorySharedLinkCommit.gitRepository FROM SharedLinkCommit slc " +
 			"WHERE slc.commitFileAddedLink IS NOT NULL and slc.fileRepositorySharedLinkCommit.gitRepository.filtered is false")
 	List<GitRepository> findRepositoriesNotFilteredBySharedLinkCommitWithCommitFile();
+	
+	@Query("SELECT slc from SharedLinkCommit slc where slc.commitFileAddedLink IS NOT NULL and slc.numberCopiedLines > 0")
+	List<SharedLinkCommit> findSharedLinkWithCopiedLines();
+	
+	@Query("SELECT slc from SharedLinkCommit slc where slc.commitFileAddedLink IS NOT NULL and slc.numberCopiedLines > 0 and slc.maxLengthCopiedLines > 1")
+	List<SharedLinkCommit> findSharedLinkWithCopiedLinesMoreThanOne();
 
 }

@@ -207,7 +207,7 @@ public class GitRepositoryVersionService {
 		List<GitRepositoryVersion> grvs = saveGitRepositoriesVersionSharedLink();
 		for (GitRepositoryVersion gitRepositoryVersion: grvs) {
 			try {
-				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion);
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion.getId());
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
@@ -233,10 +233,23 @@ public class GitRepositoryVersionService {
 		GitRepository gitRepository = gitRepositoryRepository.findByCurrentFolderPath(repositoryPath);
 		try {
 			saveGitRepositoryVersion(gitRepository);
-			sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository));
+			sharedLinkCommitService.setCommitCopiedLineOfRepository(saveGitRepositoryVersion(gitRepository).getId());
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
+		}
+	}
+
+	public void saveSharedLinkCommitsVersions() {
+		List<GitRepositoryVersion> grvs = gitRepositoryVersionRepository.findAll();
+		for (GitRepositoryVersion gitRepositoryVersion: grvs) {
+			try {
+				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion.getId());
+				System.out.println();
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage());
+			}
 		}
 	}
 
