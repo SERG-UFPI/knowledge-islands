@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.gitanalyzer.dto.FilteringProjectsDTO;
 import br.com.gitanalyzer.model.entity.Commit;
@@ -224,6 +225,16 @@ public class FilterGitRepositoryService {
 			projectRepository.save(project);
 		}
 		return new ArrayList<>(projects);
+	}
+
+	@Transactional
+	public void filteringProjectsNotSoftware(List<String> fullNames) {
+		List<GitRepository> repositories = projectRepository.findByFullNameIn(fullNames);
+		repositories.stream().forEach(r -> {
+			r.setFiltered(true);
+			r.setFilteredReason(FilteredEnum.NOT_SOFTWARE_PROJECT);
+		});
+		projectRepository.saveAll(repositories);
 	}
 
 }

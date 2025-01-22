@@ -61,7 +61,7 @@ public class GitRepositoryService {
 
 	public void createFolderLogsAndCopyFiles(String path, String projectName, String versionId) {
 		try {
-			if(path.substring(path.length()-1).equals("/") == false) {
+			if(!path.substring(path.length()-1).equals("/")) {
 				path = path+"/";
 			}
 			String folderPath = createFolderProjectLogs(GenerateFolderProjectLogDTO.builder().projectName(projectName).versionId(versionId).build());
@@ -259,7 +259,7 @@ public class GitRepositoryService {
 		log.info("======= Generating logs from folder "+folderPath+" =======");
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
+				String projectPath = KnowledgeIslandsUtils.fixFolderPath(fileDir.getAbsolutePath());
 				repositoriesPaths.add(projectPath);
 			}
 		}
@@ -273,11 +273,13 @@ public class GitRepositoryService {
 		for (String repositoryPath: paths) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
-					generateLogFiles(repositoryPath);
 					GitRepository gitRepository = repository.findByCurrentFolderPath(repositoryPath);
-					if(gitRepository != null) {
-						gitRepository.setGeneratedLogs(true);
-						repository.save(gitRepository);
+					if(!gitRepository.isFiltered()) {
+						generateLogFiles(repositoryPath);
+						if(gitRepository != null) {
+							gitRepository.setGeneratedLogs(true);
+							repository.save(gitRepository);
+						}
 					}
 				} catch (URISyntaxException | IOException | InterruptedException e) {
 					e.printStackTrace();

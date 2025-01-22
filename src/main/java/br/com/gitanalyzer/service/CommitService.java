@@ -3,14 +3,18 @@ package br.com.gitanalyzer.service;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -47,23 +51,28 @@ public class CommitService {
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 
 	public List<Commit> getCommitsFiles(GitRepository gitRepository, List<Commit> commits, List<File> files) throws IOException {
+		Map<String, File> fileMap = new HashMap<>();
+		for (File file : files) {
+			fileMap.put(file.getPath(), file);
+			for (String renamePath : file.getRenamePaths()) {
+				fileMap.put(renamePath, file);
+			}
+		}
+		Map<String, Commit> commitMap = commits.stream()
+				.collect(Collectors.toMap(Commit::getSha, commit -> commit));
 		FileInputStream fstream = new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileFileName);
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(fstream));){
 			String strLine;
-			whileFile: while ((strLine = br.readLine()) != null) {
+			while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				String id = splited[0];
-				for (Commit commit : commits) {
-					if (id.equals(commit.getSha())) {
-						String operation = splited[1];
-						String filePath = splited[3];
-						filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(filePath);
-						for (File file : files) {
-							if (file.isFile(filePath)) {
-								commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation), commit));
-								continue whileFile;
-							}
-						}
+				Commit commit = commitMap.get(id);
+				if (commit != null) {
+					String operation = splited[1];
+					String filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(splited[3]);
+					File file = fileMap.get(filePath);
+					if (file != null) {
+						commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation), commit));
 					}
 				}
 			}
@@ -105,12 +114,26 @@ public class CommitService {
 		return email;
 	}
 
+	private int setMaxLinesToRead(GitRepository gitRepository) throws FileNotFoundException, IOException {
+		boolean isLinuxRepo = "torvalds/linux".equals(gitRepository.getFullName());
+		int maxLines = Integer.MAX_VALUE; // Lê todas as linhas por padrão
+		if (isLinuxRepo) {
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
+				maxLines = (int) br.lines().count() / 2; // Determina metade das linhas
+			}
+		}
+		return maxLines;
+	}
+
 	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
+		int maxLines = Integer.MAX_VALUE;//setMaxLinesToRead(gitRepository);
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = addContributorsRepositoryVersions(gitRepository.getId());
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
 			String strLine;
-			while ((strLine = br.readLine()) != null) {
+			int lineCount = 0;
+			while ((strLine = br.readLine()) != null && lineCount < maxLines) {
+				lineCount++;
 				String[] commitSplited = strLine.split(";");
 				if(commitSplited.length >= 4) {
 					String idCommit = commitSplited[0];
@@ -139,12 +162,17 @@ public class CommitService {
 							contributorCommit = new Contributor(authorName, authorEmail);
 							contributors.add(contributorCommit);
 						}
-						Date commitDate = Date.from(Instant.ofEpochSecond(Integer.parseInt(time)));
-						commits.add(new Commit(contributorCommit, commitDate, idCommit, message != null && message.length() > 1000 ? message.substring(0,1000): message));
+						try {
+							Date commitDate = Date.from(Instant.ofEpochSecond(Integer.parseInt(time)));
+							commits.add(new Commit(contributorCommit, commitDate, idCommit, message != null && message.length() > 1000 ? message.substring(0,1000): message));
+						} catch (java.lang.NumberFormatException e) {
+							log.error(e.getMessage());
+						}
 					}
 				}
 			}
 		} catch (Exception e) {
+			log.error(e.getMessage());
 			e.printStackTrace();
 			return new ArrayList<>();
 		}
@@ -152,6 +180,8 @@ public class CommitService {
 	}
 
 	public List<Commit> getCommitsFileAndDiffsOfCommits(String projectPath, List<Commit> commits) throws IOException {
+		Map<String, Commit> commitMap = commits.stream()
+				.collect(Collectors.toMap(Commit::getSha, commit -> commit));
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(projectPath+KnowledgeIslandsUtils.diffFileName)));) {
 			String strLine;
 			Commit commitAnalyzed = null;
@@ -162,13 +192,7 @@ public class CommitService {
 				String[] splited1 = strLine.split(" ");
 				if (splited1.length > 1 && splited1[0].equals("commit")) {
 					String idCommitString = splited1[1];
-					for (Commit commit : commits) {
-						if (idCommitString.trim().equals(commit.getSha())) {
-							commitAnalyzed = commit;
-							continue whileFile;
-						}
-					}
-					commitAnalyzed = null;
+					commitAnalyzed = commitMap.get(idCommitString.trim());
 					continue whileFile;
 				}
 				if (commitAnalyzed != null) {

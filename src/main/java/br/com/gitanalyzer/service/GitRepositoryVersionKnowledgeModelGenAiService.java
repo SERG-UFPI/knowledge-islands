@@ -18,8 +18,7 @@ public class GitRepositoryVersionKnowledgeModelGenAiService {
 
 	public List<GitRepositoryVersionKnowledgeModelGenAi> createGitRepositoryVersionKnowledgeModelGenAi(){
 		List<GitRepositoryVersionKnowledgeModelGenAi> returnGenAi = new ArrayList<>();
-		List<Double> percentages = KnowledgeIslandsUtils.getPercentageOfGenAiFiles();
-		for (Double percentage : percentages) {
+		for (Double percentage : KnowledgeIslandsUtils.getPercentageOfGenAiFiles()) {
 			GitRepositoryVersionKnowledgeModelGenAi modelGenAi = repository.findByAvgPctFilesGenAi(percentage);
 			if(modelGenAi == null) {
 				returnGenAi.add(repository.save(GitRepositoryVersionKnowledgeModelGenAi.builder().avgPctFilesGenAi(percentage).build()));

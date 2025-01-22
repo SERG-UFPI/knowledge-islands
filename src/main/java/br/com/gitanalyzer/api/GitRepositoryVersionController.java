@@ -44,6 +44,12 @@ public class GitRepositoryVersionController {
 		service.removeAll();
 		return ResponseEntity.ok("Ok");
 	}
+	
+	@PostMapping("/save-git-repository-version-not-filtered")
+	public ResponseEntity<?> saveGitRepositoryVersionNotFiltered() throws Exception{
+		service.saveGitRepositoryVersionNotFiltered();
+		return ResponseEntity.ok("Finished");
+	}
 
 	@PostMapping("/save-git-repository-version")
 	public ResponseEntity<?> saveGitRepositoryTruckFactor(@RequestBody String repositoryPath) throws Exception{

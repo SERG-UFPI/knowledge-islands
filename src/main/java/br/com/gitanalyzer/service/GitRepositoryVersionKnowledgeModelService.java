@@ -7,7 +7,11 @@ import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +43,7 @@ import br.com.gitanalyzer.model.enums.KnowledgeModel;
 import br.com.gitanalyzer.model.enums.OperationType;
 import br.com.gitanalyzer.model.vo.MlOutput;
 import br.com.gitanalyzer.repository.GitRepositoryFolderRepository;
+import br.com.gitanalyzer.repository.GitRepositoryRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionKnowledgeModelRepository;
 import br.com.gitanalyzer.repository.GitRepositoryVersionRepository;
 import br.com.gitanalyzer.repository.SharedLinkCommitRepository;
@@ -58,6 +63,8 @@ public class GitRepositoryVersionKnowledgeModelService {
 	@Autowired
 	private GitRepositoryVersionKnowledgeModelGenAiService gitRepositoryVersionKnowledgeModelGenAiService;
 	@Autowired
+	private GitRepositoryRepository gitRepositoryRepository;
+	@Autowired
 	private SharedLinkCommitRepository sharedLinkCommitRepository;
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
@@ -72,9 +79,17 @@ public class GitRepositoryVersionKnowledgeModelService {
 		return form1;
 	}
 
+	@Transactional
 	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionRepository.findById(form.getIdGitRepositoryVersion()).get();
-		log.info("BEGIN SAVING MODEL FOR "+gitRepositoryVersion.getGitRepository().getFullName());
+		if((form.getModelGenAi() != null && gitRepositoryVersionKnowledgeModelRepository
+				.existsByRepositoryVersionIdAndKnowledgeModelAndGitRepositoryVersionKnowledgeModelGenAiAvgPctFilesGenAi(gitRepositoryVersion.getId(), form.getKnowledgeMetric(), form.getModelGenAi().getAvgPctFilesGenAi()))
+				|| (form.getModelGenAi() == null && gitRepositoryVersionKnowledgeModelRepository
+				.existsByRepositoryVersionIdAndKnowledgeModelAndGitRepositoryVersionKnowledgeModelGenAiIsNull(gitRepositoryVersion.getId(), form.getKnowledgeMetric()))) {
+			log.warn("GitRepositoryVersionKnowledgeModel already created");
+			return null;
+		}
+		log.info("====== BEGIN SAVING MODEL FOR "+gitRepositoryVersion.getGitRepository().getFullName());
 		Collections.sort(gitRepositoryVersion.getCommits());
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = new GitRepositoryVersionKnowledgeModel(gitRepositoryVersion, form.getKnowledgeMetric(), 
 				form.getFoldersPaths(), form.getModelGenAi());
@@ -91,48 +106,72 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
+		Map<String, FileVersion> fileMap = createFileVersionMap(filesVersion);
 		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
+		Map<String, List<Commit>> fileCommitsMap = new HashMap<>();
+		log.info("Setting expertise models...");
 		for(ContributorVersion contributorVersion: contributorsVersion) {
 			List<File> filesContributor = filesTouchedByContributor(contributorVersion.getContributor(), gitRepositoryVersion.getCommits());
 			Collections.shuffle(filesContributor);
-			int fileToProcess = -1;
-			if(gitRepositoryVersionKnowledgeModel.getGitRepositoryVersionKnowledgeModelGenAi() != null) {
-				fileToProcess = KnowledgeIslandsUtils.getIntFromPercentage(filesContributor.size(), 
-						gitRepositoryVersionKnowledgeModel.getGitRepositoryVersionKnowledgeModelGenAi().getAvgPctFilesGenAi());
-			}
+			int fileToProcess = getIntFilesToProcess(gitRepositoryVersionKnowledgeModel, filesContributor);
 			int genAiCounter = 0;
-			for (File fileContributor : filesContributor) {
-				for (FileVersion fileVersion : filesVersion) {
-					if(fileVersion.getFile().isFile(fileContributor.getPath())) {
-						List<Commit> commitsFiles = getCommitsFile(gitRepositoryVersion.getCommits(), fileVersion.getFile());
-						CreateAuthorFileExpertiseDTO createAuthorFileExpertiseDTO = CreateAuthorFileExpertiseDTO.builder().knowledgeMetric(form.getKnowledgeMetric())
-								.commits(commitsFiles).contributorVersion(contributorVersion).fileVersion(fileVersion)
-								.genAi(fileToProcess != -1 && genAiCounter < fileToProcess).build();
-						AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO);
-						addToFileTotalKnowledge(form.getKnowledgeMetric(), fileVersion, authorFile);
-						authorFiles.add(authorFile);
-						genAiCounter++;
-						break;
+			for (File fileContributor: filesContributor) {
+				FileVersion fileVersion = fileMap.get(fileContributor.getPath());
+				if(fileVersion != null) {
+					List<Commit> commits = null;
+					if(!fileCommitsMap.containsKey(fileVersion.getFile().getPath())) {
+						commits = getCommitsFile(gitRepositoryVersion.getCommits(), fileVersion.getFile());
+						fileCommitsMap.put(fileVersion.getFile().getPath(), commits);
+					}else {
+						commits = fileCommitsMap.get(fileVersion.getFile().getPath());
 					}
+					CreateAuthorFileExpertiseDTO createAuthorFileExpertiseDTO = CreateAuthorFileExpertiseDTO.builder().knowledgeMetric(form.getKnowledgeMetric())
+							.commits(commits).contributorVersion(contributorVersion).fileVersion(fileVersion)
+							.genAi(fileToProcess != -1 && genAiCounter < fileToProcess).build();
+					AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO);
+					addToFileTotalKnowledge(form.getKnowledgeMetric(), fileVersion, authorFile);
+					authorFiles.add(authorFile);
+					genAiCounter++;
 				}
 			}
 		}
+		log.info("Setting authorships...");
 		roundTotalKnowledgeFilesVersion(filesVersion);
 		gitRepositoryVersionKnowledgeModel.setFiles(filesVersion);
 		setContributorExpertiseData(contributorsVersion, authorFiles, gitRepositoryVersion.getFiles(), form.getKnowledgeMetric(), gitRepositoryVersion.getNumberAnalysedFiles());
 		gitRepositoryVersionKnowledgeModel.setContributors(contributorsVersion);
 		gitRepositoryVersionKnowledgeModel.setAuthorsFiles(authorFiles);
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
-		log.info("ENDING SAVING MODEL FOR "+gitRepositoryVersion.getGitRepository().getFullName());
+		log.info("====== ENDING SAVING MODEL FOR "+gitRepositoryVersion.getGitRepository().getFullName());
 		return gitRepositoryVersionKnowledgeModel;
+	}
+
+	private int getIntFilesToProcess(GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel, List<File> filesContributor) {
+		int fileToProcess = -1;
+		if(gitRepositoryVersionKnowledgeModel.getGitRepositoryVersionKnowledgeModelGenAi() != null) {
+			fileToProcess = KnowledgeIslandsUtils.getIntFromPercentage(filesContributor.size(), 
+					gitRepositoryVersionKnowledgeModel.getGitRepositoryVersionKnowledgeModelGenAi().getAvgPctFilesGenAi());
+		}
+		return fileToProcess;
+	}
+
+	private Map<String, FileVersion> createFileVersionMap(List<FileVersion> filesVersion) {
+		Map<String, FileVersion> fileMap = new HashMap<>();
+		for (FileVersion fileVersion : filesVersion) {
+			fileMap.put(fileVersion.getFile().getPath(), fileVersion);
+			for (String renamePath : fileVersion.getFile().getRenamePaths()) {
+				fileMap.put(renamePath, fileVersion);
+			}
+		}
+		return fileMap;
 	}
 
 	private List<Commit> getCommitsFile(List<Commit> commits, File file) {
 		List<Commit> commitsFile = new ArrayList<>();
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
-				if (commitFile.getFile().isFile(file.getPath())) {
+				if (file.isFile(commitFile.getFile().getPath())) {
 					commitsFile.add(commit);
 					break;
 				}
@@ -259,18 +298,19 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 	}
 
-	private List<File> filesTouchedByContributor(Contributor contributor, List<Commit> commits){
+	private List<File> filesTouchedByContributor(Contributor contributor, List<Commit> commits) {
+		if (contributor == null || commits == null) {
+			throw new IllegalArgumentException("Contributor and commits must not be null.");
+		}
 		List<File> files = new ArrayList<>();
+		Set<String> filePaths = new HashSet<>();
 		List<Contributor> contributors = contributor.contributorAlias();
 		for (Commit commit : commits) {
-			for (Contributor contributorAux : contributors) {
-				if (contributorAux.equals(commit.getAuthor())) {
-					for (CommitFile commitFile: commit.getCommitFiles()) {
-						if(files.stream().noneMatch(f -> f.isFile(commitFile.getFile().getPath()))) {
-							files.add(commitFile.getFile());
-						}
+			if (contributors.contains(commit.getAuthor())) {
+				for (CommitFile commitFile : commit.getCommitFiles()) {
+					if (filePaths.add(commitFile.getFile().getPath())) {
+						files.add(commitFile.getFile());
 					}
-					break;
 				}
 			}
 		}
@@ -375,6 +415,18 @@ public class GitRepositoryVersionKnowledgeModelService {
 		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
 		List<GitRepository> repositories = sharedLinkCommitRepository.findRepositoriesNotFilteredBySharedLinkCommitWithCommitFile();
 		repositories = repositories.stream().filter(r -> !r.isFiltered()).toList();
+		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
+	}
+
+	public void saveRepositoryVersionKnowledgeGenAi(KnowledgeModel knowledgeMetric) {
+		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
+		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
+		repositories = repositories.stream().filter(r -> !r.isFiltered()).toList();
+		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
+	}
+
+	private void saveGitRepositoryVersionKnowledgeModelPercentages(List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi,
+			List<GitRepository> repositories, KnowledgeModel knowledgeMetric) {
 		try {
 			for (GitRepositoryVersionKnowledgeModelGenAi modelGenAi : modelsGenAi) {
 				log.info("----- "+modelGenAi.getAvgPctFilesGenAi()+" PERCENTAGE ANALYSIS");

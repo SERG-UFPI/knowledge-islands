@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import br.com.gitanalyzer.model.entity.GitRepositoryVersionKnowledgeModel;
+import br.com.gitanalyzer.model.enums.KnowledgeModel;
 
 @Repository
 public interface GitRepositoryVersionKnowledgeModelRepository extends JpaRepository<GitRepositoryVersionKnowledgeModel, Long>{
@@ -16,4 +17,7 @@ public interface GitRepositoryVersionKnowledgeModelRepository extends JpaReposit
 	List<Long> findAllIds();
 	@Query("select model.id from GitRepositoryVersionKnowledgeModel model where model.truckFactor is null")
 	List<Long> findIdByTruckFactorIsNull();
+	boolean existsByRepositoryVersionIdAndKnowledgeModelAndGitRepositoryVersionKnowledgeModelGenAiAvgPctFilesGenAi(Long gitRepositoryVersionId, 
+			KnowledgeModel model, double avgPctFilesGenAi);
+	boolean existsByRepositoryVersionIdAndKnowledgeModelAndGitRepositoryVersionKnowledgeModelGenAiIsNull(Long gitRepositoryVersionId, KnowledgeModel model);
 }

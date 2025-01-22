@@ -13,8 +13,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -37,13 +37,13 @@ public class GitRepositoryVersionKnowledgeModel {
 	@Enumerated(EnumType.STRING)
 	private KnowledgeModel knowledgeModel;
 	@JsonIgnore
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<ContributorVersion> contributors;
 	@JsonIgnore
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<FileVersion> files;
 	@JsonIgnore
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<AuthorFileExpertise> authorsFiles;
 	@JsonIgnore
 	@ManyToOne

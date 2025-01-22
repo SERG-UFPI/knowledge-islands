@@ -94,17 +94,22 @@ public class GitRepositoryVersionService {
 	public GitRepositoryVersion getProjectVersion(GitRepository repository) throws IOException, NoCommitForRepositoryException {
 		long start = System.currentTimeMillis();
 		repository.setCurrentFolderPath(KnowledgeIslandsUtils.fixFolderPath(repository.getCurrentFolderPath()));
+		log.info("Reading files...");
 		List<File> files = fileService.getFilesFromClocFile(repository);
 		fileService.getRenamesFiles(repository.getCurrentFolderPath(), files);
+		log.info("Reading commits...");
 		List<Commit> commits = commitService.getCommitsFromLogFiles(repository);
 		if(commits != null && !commits.isEmpty()) {
 			Collections.sort(commits, Collections.reverseOrder());
 			Date dateVersion = commits.get(0).getAuthorDate();
 			String versionId = commits.get(0).getSha();
+			log.info("Reading commit files...");
 			commitService.getCommitsFiles(repository, commits, files);
 			commits.removeIf(c -> c.getCommitFiles().isEmpty());
+			log.info("Reading diffs...");
 			commitService.getCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits);
 			List<Contributor> contributors = contributorService.getContributorFromCommits(commits);
+			log.info("Setting aliases...");
 			contributors = contributorService.setAlias(contributors);
 			contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 			long end = System.currentTimeMillis();
@@ -127,14 +132,14 @@ public class GitRepositoryVersionService {
 
 	//@Async("taskExecutor")
 	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
-		log.info("BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
+		log.info("====== BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
 		if(gitRepositoryVersion.validGitRepositoryVersion()) {
 			gitRepositoryVersionRepository.save(gitRepositoryVersion);
 		}else {
 			throw new Exception("GitRepository version not valid");
 		}
-		log.info("ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
+		log.info("====== ENDING SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		return gitRepositoryVersion;
 	}
 
@@ -245,11 +250,17 @@ public class GitRepositoryVersionService {
 		for (GitRepositoryVersion gitRepositoryVersion: grvs) {
 			try {
 				sharedLinkCommitService.setCommitCopiedLineOfRepository(gitRepositoryVersion.getId());
-				System.out.println();
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
 			}
+		}
+	}
+
+	public void saveGitRepositoryVersionNotFiltered() throws Exception {
+		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
+		for (GitRepository repository : repositories) {
+			saveGitRepositoryVersion(repository);
 		}
 	}
 

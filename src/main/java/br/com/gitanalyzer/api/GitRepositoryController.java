@@ -2,6 +2,7 @@ package br.com.gitanalyzer.api;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,12 @@ public class GitRepositoryController {
 	@PostMapping("/create-folder-project-log")
 	public ResponseEntity<?> createFolderProjectLog(@RequestBody GenerateFolderProjectLogDTO form) throws IOException{
 		return ResponseEntity.ok(gitRepositoryService.createFolderProjectLogs(form));
+	}
+	
+	@PostMapping("/filter-repositories-not-software")
+	public ResponseEntity<?> filteringProjectsNotSoftware(@RequestBody List<String> fullNames) throws URISyntaxException, IOException, InterruptedException{
+		filterProjectService.filteringProjectsNotSoftware(fullNames);
+		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 
 	@PostMapping("/filter-projects-folder")

@@ -14,7 +14,9 @@ public interface GitRepositoryRepository extends JpaRepository<GitRepository, Lo
 	boolean existsByName(String name);
 	GitRepository findByName(String name);
 	List<GitRepository> findByFilteredTrue();
+	List<GitRepository> findByFilteredFalse();
 	GitRepository findByFullName(String fullName);
+	List<GitRepository> findByFullNameIn(List<String> fullNames);
 	List<GitRepository> findByNameEndingWith(String suffix);
 	GitRepository findByCurrentFolderPath(String currentFolderPath);
 	boolean existsByCurrentFolderPath(String path);

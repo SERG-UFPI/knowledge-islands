@@ -174,6 +174,17 @@ public class KnowledgeIslandsUtils {
 		//		alias.add("kotlin");
 		return alias;
 	}
+	
+	public static List<String> getProgrammingLanguages(){
+		List<String> alias = new ArrayList<>();
+		alias.add("python");
+		alias.add("javascript");
+		alias.add("java");
+		alias.add("typescript");
+		alias.add("csharp");
+		alias.add("cpp");
+		return alias;
+	}
 
 	public static List<String> getChatGPTSearchTerms(){
 		return Arrays.asList("https://chat.openai.com/share/", "https://chatgpt.com/share/");
@@ -181,11 +192,11 @@ public class KnowledgeIslandsUtils {
 
 	public static List<Double> getPercentageOfGenAiFiles(){
 		List<Double> percentages = new ArrayList<>();
-//		percentages.add(0.1);
-//		percentages.add(0.2);
-//		percentages.add(0.3);
-//		percentages.add(0.4);
-//		percentages.add(0.5);
+		percentages.add(0.1);
+		percentages.add(0.2);
+		percentages.add(0.3);
+		percentages.add(0.4);
+		percentages.add(0.5);
 		percentages.add(1.0);
 		return percentages;
 	}

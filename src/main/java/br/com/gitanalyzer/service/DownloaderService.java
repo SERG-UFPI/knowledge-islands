@@ -63,22 +63,22 @@ public class DownloaderService {
 		form.setPath(KnowledgeIslandsUtils.fixFolderPath(form.getPath()));
 		try {
 			if(form.getLanguage().equals(LanguageEnum.ALL)) {
-				ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
-				List<CompletableFuture<Void>> futures = new ArrayList<>();
-				for (LanguageEnum language : LanguageEnum.values()) {
-					if(language.equals(LanguageEnum.ALL) == false) {
-						CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
+//				ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceMax();
+//				List<CompletableFuture<Void>> futures = new ArrayList<>();
+				for (String language : KnowledgeIslandsUtils.getProgrammingLanguagesAliasGithub()) {
+					if(!language.equals(LanguageEnum.ALL)) {
+						//CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 							try {
-								downloaderPerLanguage("language:"+language.getName()+" stars:>500", form);
+								downloaderPerLanguage("language:"+language+" stars:>500", form);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-						}, executorService);
-						futures.add(future);
+//						}, executorService);
+//						futures.add(future);
 					}
 				}
-				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-				executorService.shutdown();
+//				CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+//				executorService.shutdown();
 				log.info("=========== End of project cloning ==================");
 			}else {
 				log.info("=========== Download "+form.getLanguage().getName()+" project ==================");
@@ -143,10 +143,10 @@ public class DownloaderService {
 	private void cloneAndSaveRepos(List<ProjectGitHub> projectsInfo, String path) {
 		for (ProjectGitHub projectInfo : projectsInfo) {
 			try {
-				log.info("Cloning " + projectInfo.getFullName());
 				boolean flag = cloneIfNotExists(projectInfo, path);
 				if(flag) {
-					String projectPath = path+projectInfo.getName()+"/";
+					log.info("Cloning " + projectInfo.getFullName());
+					String projectPath = KnowledgeIslandsUtils.fixFolderPath(path+projectInfo.getName());
 					GitRepository project = new GitRepository(projectInfo.getName(), projectInfo.getFullName(), 
 							projectInfo.getLanguage(), projectPath, projectInfo.getDefault_branch(), 
 							projectInfo.getStargazers_count(), gitRepositoryService.getCurrentRevisionHash(projectPath));
