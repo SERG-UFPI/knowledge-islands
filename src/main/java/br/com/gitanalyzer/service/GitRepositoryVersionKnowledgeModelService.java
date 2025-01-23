@@ -106,11 +106,12 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
-		Map<String, String> fileFirstAuthorMap = new HashMap<>();
-		Map<String, FileVersion> fileMap = createFileVersionMap(filesVersion);
+		
 		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
+		Map<String, String> fileFirstAuthorMap = new HashMap<>();
 		Map<String, List<Commit>> fileCommitsMap = new HashMap<>();
+		Map<String, FileVersion> fileMap = createFileVersionMap(filesVersion);
 		log.info("Setting expertise models...");
 		for(ContributorVersion contributorVersion: contributorsVersion) {
 			List<File> filesContributor = filesTouchedByContributor(contributorVersion.getContributor(), gitRepositoryVersion.getCommits());
@@ -120,12 +121,10 @@ public class GitRepositoryVersionKnowledgeModelService {
 			for (File fileContributor: filesContributor) {
 				FileVersion fileVersion = fileMap.get(fileContributor.getPath());
 				if(fileVersion != null) {
-					List<Commit> commits = null;
-					if(!fileCommitsMap.containsKey(fileVersion.getFile().getPath())) {
+					List<Commit> commits = fileCommitsMap.get(fileVersion.getFile().getPath());
+					if(commits == null) {
 						commits = getCommitsFile(gitRepositoryVersion.getCommits(), fileVersion.getFile());
 						fileCommitsMap.put(fileVersion.getFile().getPath(), commits);
-					}else {
-						commits = fileCommitsMap.get(fileVersion.getFile().getPath());
 					}
 					CreateAuthorFileExpertiseDTO createAuthorFileExpertiseDTO = CreateAuthorFileExpertiseDTO.builder().knowledgeMetric(form.getKnowledgeMetric())
 							.commits(commits).contributorVersion(contributorVersion).fileVersion(fileVersion)
@@ -332,11 +331,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		String emailName = fileFirstAuthorMap.get(file.getPath());
 		if(emailName != null) {
 			List<String> emailsNames = contributors.stream().map(c -> c.getEmail()+c.getName()).toList();
-			if (emailsNames.contains(emailName)) {
-				return 1;
-			}else {
-				return 0;
-			}
+			return emailsNames.contains(emailName) ? 1: 0;
 		}
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
@@ -345,10 +340,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 					if(!fileFirstAuthorMap.containsKey(file.getPath())) {
 						fileFirstAuthorMap.put(file.getPath(), commit.getAuthor().getEmail()+commit.getAuthor().getName());
 					}
-					if(contributors.contains(commit.getAuthor())) {
-						return 1;
-					}
-					return 0;
+					return contributors.contains(commit.getAuthor()) ? 1: 0;
 				}
 			}
 		}
