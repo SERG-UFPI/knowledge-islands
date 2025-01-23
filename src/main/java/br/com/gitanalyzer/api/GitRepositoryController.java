@@ -56,6 +56,12 @@ public class GitRepositoryController {
 		filterProjectService.filteringProjectsNotSoftware(fullNames);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
+	
+	@PostMapping("/filter-repositories-size")
+	public ResponseEntity<?> filteringProjectsSize(@RequestBody List<String> fullNames) throws URISyntaxException, IOException, InterruptedException{
+		filterProjectService.filteringProjectsSize(fullNames);
+		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
+	}
 
 	@PostMapping("/filter-projects-folder")
 	public ResponseEntity<?> filteringProjects(@RequestBody FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException{

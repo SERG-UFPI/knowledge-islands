@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -278,6 +279,7 @@ public class CommitService {
 	}
 
 	public List<String> getCodeLinesAddedCommitFile(Repository repository, Commit commit, File file) {
+		Set<String> filePaths = file.getFilePaths();
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		ObjectId commitId = ObjectId.fromString(commit.getSha());
 		try(RevWalk revWalk = new RevWalk(repository)) {
@@ -292,7 +294,7 @@ public class CommitService {
 				if(KnowledgeIslandsUtils.containsNonAscii(newPath)) {
 					oldPath = KnowledgeIslandsUtils.encodeNonAsciiOnly(oldPath);
 				}
-				if(file.isFile(newPath) || file.isFile(oldPath)) {
+				if(filePaths.contains(newPath) || filePaths.contains(oldPath)) {
 					DiffFormatter diffFormatter = new DiffFormatter( stream );
 					diffFormatter.setRepository(repository);
 					diffFormatter.format(diff);

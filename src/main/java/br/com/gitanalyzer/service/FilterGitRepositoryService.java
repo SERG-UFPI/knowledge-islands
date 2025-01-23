@@ -237,4 +237,14 @@ public class FilterGitRepositoryService {
 		projectRepository.saveAll(repositories);
 	}
 
+	@Transactional
+	public void filteringProjectsSize(List<String> fullNames) {
+		List<GitRepository> repositories = projectRepository.findByFullNameIn(fullNames);
+		repositories.stream().forEach(r -> {
+			r.setFiltered(true);
+			r.setFilteredReason(FilteredEnum.SIZE);
+		});
+		projectRepository.saveAll(repositories);
+	}
+
 }

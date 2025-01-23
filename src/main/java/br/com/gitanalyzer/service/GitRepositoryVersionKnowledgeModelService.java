@@ -106,7 +106,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
-		
+
 		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
 		Map<String, String> fileFirstAuthorMap = new HashMap<>();
@@ -142,6 +142,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		setContributorExpertiseData(contributorsVersion, authorFiles, gitRepositoryVersion.getFiles(), form.getKnowledgeMetric(), gitRepositoryVersion.getNumberAnalysedFiles());
 		gitRepositoryVersionKnowledgeModel.setContributors(contributorsVersion);
 		gitRepositoryVersionKnowledgeModel.setAuthorsFiles(authorFiles);
+		log.info("Saving data...");
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
 		log.info("====== ENDING SAVING MODEL FOR "+gitRepositoryVersion.getGitRepository().getFullName());
 		return gitRepositoryVersionKnowledgeModel;
@@ -168,10 +169,11 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private List<Commit> getCommitsFile(List<Commit> commits, File file) {
+		Set<String> filePaths = file.getFilePaths();
 		List<Commit> commitsFile = new ArrayList<>();
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
-				if (file.isFile(commitFile.getFile().getPath())) {
+				if (filePaths.contains(commitFile.getFile().getPath())) {
 					commitsFile.add(commit);
 					break;
 				}
@@ -248,11 +250,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 					});
 				}
 				writer.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			List<MlOutput> output = new ArrayList<>();
-			try {
+				List<MlOutput> output = new ArrayList<>();
 				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", KnowledgeIslandsUtils.pathScriptMlFile);
 				pb.redirectOutput(Redirect.INHERIT);
 				pb.redirectError(Redirect.INHERIT);
@@ -264,22 +262,23 @@ public class GitRepositoryVersionKnowledgeModelService {
 					output.add(new MlOutput(lineInArray[5], lineInArray[6], lineInArray[7]));
 				}
 				output.remove(0);
-			} catch (IOException | InterruptedException | CsvValidationException e) {
-				e.printStackTrace();
-				log.info(e.getMessage());
-			}
-			for (File file: files) {
-				for (MlOutput mlOutput : output) {
-					if(file.isFile(mlOutput.getFile()) && mlOutput.getExpertise().equals(KnowledgeIslandsUtils.mantenedor)) {
-						for (ContributorVersion contributorKnowledgeModel: contributorsVersion) {
-							if (contributorKnowledgeModel.getContributor().getEmail().equals(mlOutput.getAuthor())) {
-								contributorKnowledgeModel.getFilesAuthor().add(file);
-								contributorKnowledgeModel.setNumberFilesAuthor(contributorKnowledgeModel.getNumberFilesAuthor()+1);
-								break;
+				for (File file: files) {
+					Set<String> filePaths = file.getFilePaths();
+					for (MlOutput mlOutput : output) {
+						if(filePaths.contains(mlOutput.getFile()) && mlOutput.getExpertise().equals(KnowledgeIslandsUtils.mantenedor)) {
+							for (ContributorVersion contributorKnowledgeModel: contributorsVersion) {
+								if (contributorKnowledgeModel.getContributor().getEmail().equals(mlOutput.getAuthor())) {
+									contributorKnowledgeModel.getFilesAuthor().add(file);
+									contributorKnowledgeModel.setNumberFilesAuthor(contributorKnowledgeModel.getNumberFilesAuthor()+1);
+									break;
+								}
 							}
 						}
 					}
 				}
+			} catch (IOException | InterruptedException | CsvValidationException e) {
+				e.printStackTrace();
+				log.error(e.getMessage());
 			}
 		}
 		for (ContributorVersion contributorVersion : contributorsVersion) {
@@ -290,8 +289,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private void addToFileTotalKnowledge(KnowledgeModel knowledgeMetric, FileVersion fileVersion, AuthorFileExpertise authorFile) {
-		if (knowledgeMetric.equals(KnowledgeModel.DOE) 
-				|| knowledgeMetric.equals(KnowledgeModel.MACHINE_LEARNING)) {
+		if (!knowledgeMetric.equals(KnowledgeModel.DOA)) {
 			fileVersion.setTotalKnowledge(fileVersion.getTotalKnowledge()+authorFile.getDoe().getDoeValue());
 		}else {
 			fileVersion.setTotalKnowledge(fileVersion.getTotalKnowledge()+authorFile.getDoa().getDoaValue());
@@ -328,6 +326,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private int isContributorFa(List<Contributor> contributors, File file, List<Commit> commits, Map<String, String> fileFirstAuthorMap) {
+		Set<String> filePaths = file.getFilePaths();
 		String emailName = fileFirstAuthorMap.get(file.getPath());
 		if(emailName != null) {
 			List<String> emailsNames = contributors.stream().map(c -> c.getEmail()+c.getName()).toList();
@@ -335,7 +334,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
-				if(file.isFile(commitFile.getFile().getPath()) && 
+				if(filePaths.contains(commitFile.getFile().getPath()) && 
 						commitFile.getStatus().equals(OperationType.ADDED)) {
 					if(!fileFirstAuthorMap.containsKey(file.getPath())) {
 						fileFirstAuthorMap.put(file.getPath(), commit.getAuthor().getEmail()+commit.getAuthor().getName());
@@ -353,10 +352,11 @@ public class GitRepositoryVersionKnowledgeModelService {
 		int adds = 0;
 		int fa = isContributorFa(contributors, file, commits, fileFirstAuthorMap);
 		Date dateLastCommit = commits.get(0).getAuthorDate();
+		Set<String> filePaths = file.getFilePaths();
 		for (Commit commit : commits) {
 			if (!contributors.contains(commit.getAuthor())) continue;
 			for (CommitFile commitFile : commit.getCommitFiles()) {
-				if (!file.isFile(commitFile.getFile().getPath())) continue;
+				if (!filePaths.contains(commitFile.getFile().getPath())) continue;
 				adds += commitFile.getAdditions();
 				if (commit.getAuthorDate().after(dateLastCommit)) {
 					dateLastCommit = commit.getAuthorDate();

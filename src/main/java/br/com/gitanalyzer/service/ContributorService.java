@@ -72,8 +72,7 @@ public class ContributorService {
 				}
 			}
 			for(int j = i+1; j < contributors.size(); j++) {
-				if(!contributors.get(i).equals(contributors.get(j)) && 
-						checkAliasContributors(contributors.get(i), contributors.get(j))) {
+				if(checkAliasContributors(contributors.get(i), contributors.get(j))) {
 					if(contributors.get(i).getAlias() == null) {
 						contributors.get(i).setAlias(new HashSet<>());
 					}
@@ -154,10 +153,10 @@ public class ContributorService {
 		for (Contributor contributor : contributors) {
 			String subject = emailService.getSubjectEmailSurveyGenAI(); //emailService.getSubjectEmailSurveyGoogleForm();
 			String text = emailService.getTextEmailSurveyGenAIRawText(contributor.getName());
-//			if(emailService.sendEmail(contributor.getEmail(), subject, text)) {
-//				contributor.setEmailSharedLinkSent(true);
-//				contributorRepository.save(contributor);
-//			}
+			//			if(emailService.sendEmail(contributor.getEmail(), subject, text)) {
+			//				contributor.setEmailSharedLinkSent(true);
+			//				contributorRepository.save(contributor);
+			//			}
 		}
 	}
 }
