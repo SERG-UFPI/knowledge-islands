@@ -106,6 +106,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
+		Map<String, String> fileFirstAuthorMap = new HashMap<>();
 		Map<String, FileVersion> fileMap = createFileVersionMap(filesVersion);
 		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
@@ -129,7 +130,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 					CreateAuthorFileExpertiseDTO createAuthorFileExpertiseDTO = CreateAuthorFileExpertiseDTO.builder().knowledgeMetric(form.getKnowledgeMetric())
 							.commits(commits).contributorVersion(contributorVersion).fileVersion(fileVersion)
 							.genAi(fileToProcess != -1 && genAiCounter < fileToProcess).build();
-					AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO);
+					AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO, fileFirstAuthorMap);
 					addToFileTotalKnowledge(form.getKnowledgeMetric(), fileVersion, authorFile);
 					authorFiles.add(authorFile);
 					genAiCounter++;
@@ -317,21 +318,33 @@ public class GitRepositoryVersionKnowledgeModelService {
 		return files;
 	}
 
-	private AuthorFileExpertise getAuthorFileByKnowledgeMetric(CreateAuthorFileExpertiseDTO dto) {
+	private AuthorFileExpertise getAuthorFileByKnowledgeMetric(CreateAuthorFileExpertiseDTO dto, Map<String, String> fileFirstAuthorMap) {
 		if (!dto.getKnowledgeMetric().equals(KnowledgeModel.DOA)) {
-			DOE doe = getDoeContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), dto.isGenAi());
+			DOE doe = getDoeContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), dto.isGenAi(), fileFirstAuthorMap);
 			return new AuthorFileExpertise(dto.getContributorVersion(), dto.getFileVersion(), doe, dto.isGenAi());
 		}else {
-			DOA doa = getDoaContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits());
+			DOA doa = getDoaContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), fileFirstAuthorMap);
 			return new AuthorFileExpertise(dto.getContributorVersion(), dto.getFileVersion(), doa, dto.isGenAi());
 		}
 	}
 
-	private int isContributorFa(List<Contributor> contributors, File file, List<Commit> commits) {
+	private int isContributorFa(List<Contributor> contributors, File file, List<Commit> commits, Map<String, String> fileFirstAuthorMap) {
+		String emailName = fileFirstAuthorMap.get(file.getPath());
+		if(emailName != null) {
+			List<String> emailsNames = contributors.stream().map(c -> c.getEmail()+c.getName()).toList();
+			if (emailsNames.contains(emailName)) {
+				return 1;
+			}else {
+				return 0;
+			}
+		}
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
 				if(file.isFile(commitFile.getFile().getPath()) && 
 						commitFile.getStatus().equals(OperationType.ADDED)) {
+					if(!fileFirstAuthorMap.containsKey(file.getPath())) {
+						fileFirstAuthorMap.put(file.getPath(), commit.getAuthor().getEmail()+commit.getAuthor().getName());
+					}
 					if(contributors.contains(commit.getAuthor())) {
 						return 1;
 					}
@@ -342,11 +355,11 @@ public class GitRepositoryVersionKnowledgeModelService {
 		return 0;
 	}
 
-	private DOE getDoeContributorFile(Contributor contributor, File file, List<Commit> commits, boolean genAi) {
+	private DOE getDoeContributorFile(Contributor contributor, File file, List<Commit> commits, boolean genAi, Map<String, String> fileFirstAuthorMap) {
 		List<Contributor> contributors = contributor.contributorAlias();
 		Date currentDate = new Date();
 		int adds = 0;
-		int fa = isContributorFa(contributors, file, commits);
+		int fa = isContributorFa(contributors, file, commits, fileFirstAuthorMap);
 		Date dateLastCommit = commits.get(0).getAuthorDate();
 		for (Commit commit : commits) {
 			if (!contributors.contains(commit.getAuthor())) continue;
@@ -369,11 +382,11 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private DOA getDoaContributorFile(Contributor contributor, 
-			File file, List<Commit> commits) {
+			File file, List<Commit> commits, Map<String, String> fileFirstAuthorMap) {
 		List<Contributor> contributors = contributor.contributorAlias();
 		int dl = 0;
 		int ac = 0; 
-		int fa = isContributorFa(contributors, file, commits);
+		int fa = isContributorFa(contributors, file, commits, fileFirstAuthorMap);
 		for (Commit commit : commits) {
 			for (CommitFile commitFile: commit.getCommitFiles()) {
 				if (commitFile.getFile().getPath().equals(file.getPath())) {
