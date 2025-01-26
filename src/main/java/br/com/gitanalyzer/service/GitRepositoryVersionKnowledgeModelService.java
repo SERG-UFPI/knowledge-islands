@@ -448,6 +448,16 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 	}
 
+	public void saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception {
+		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			GitRepositoryVersion version = versions.get(0);
+			saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+					.idGitRepositoryVersion(version.getId()).knowledgeMetric(KnowledgeModel.DOE).build());
+		}
+	}
+
 	//	public void saveRepositoryVersionKnowledgeSharedLinksGenAiFull() {
 	//		log.info("------ CREATING VERSION MODELS WITHOUT GEN-AI IMPACT");
 	//		saveRepositoryVersionKnowledgeSharedLinks();

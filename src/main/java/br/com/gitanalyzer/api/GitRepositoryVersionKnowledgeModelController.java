@@ -27,7 +27,13 @@ public class GitRepositoryVersionKnowledgeModelController {
 	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModel(@RequestBody GitRepositoryVersionKnowledgeModelForm2 form) throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoryVersionKnowledgeModel(service.convertModelForm1ModelForm2(form)));
 	}
-	
+
+	@PostMapping("/save-git-repository-version-knowledge-model-not-filtered")
+	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception{
+		service.saveGitRepositoryVersionKnowledgeModelNotFiltered();
+		return ResponseEntity.ok("Finished");
+	}
+
 	@PostMapping("/save-git-repository-version-knowledge-model-percentage")
 	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelPercentage(@RequestBody GitRepositoryVersionKnowledgeModelForm1 form) throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoryVersionKnowledgeModel(form));
@@ -49,7 +55,7 @@ public class GitRepositoryVersionKnowledgeModelController {
 		service.saveRepositoryVersionKnowledgeSharedLinksGenAi(knowledgeMetric);
 		return ResponseEntity.ok("Finished");
 	}
-	
+
 	@PostMapping("/save-repository-version-knowledge-genai")
 	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAi(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
 		service.saveRepositoryVersionKnowledgeGenAi(knowledgeMetric);
