@@ -25,6 +25,7 @@ import com.opencsv.exceptions.CsvValidationException;
 import br.com.gitanalyzer.dto.CreateAuthorFileExpertiseDTO;
 import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm1;
 import br.com.gitanalyzer.dto.form.GitRepositoryVersionKnowledgeModelForm2;
+import br.com.gitanalyzer.exceptions.MachineLearningUseException;
 import br.com.gitanalyzer.model.entity.AuthorFileExpertise;
 import br.com.gitanalyzer.model.entity.Commit;
 import br.com.gitanalyzer.model.entity.CommitFile;
@@ -80,7 +81,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	@Transactional
-	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1 form) throws Exception {
+	public GitRepositoryVersionKnowledgeModel saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1 form) throws MachineLearningUseException {
 		GitRepositoryVersion gitRepositoryVersion = gitRepositoryVersionRepository.findById(form.getIdGitRepositoryVersion()).get();
 		if((form.getModelGenAi() != null && gitRepositoryVersionKnowledgeModelRepository
 				.existsByRepositoryVersionIdAndKnowledgeModelAndGitRepositoryVersionKnowledgeModelGenAiAvgPctFilesGenAi(gitRepositoryVersion.getId(), form.getKnowledgeMetric(), form.getModelGenAi().getAvgPctFilesGenAi()))
@@ -201,7 +202,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 	}
 
 	private void setContributorExpertiseData(List<ContributorVersion> contributorsVersion, 
-			List<AuthorFileExpertise> authorsFiles, List<File> files, KnowledgeModel knowledgeMetric, int numberAnalysedFiles) {
+			List<AuthorFileExpertise> authorsFiles, List<File> files, KnowledgeModel knowledgeMetric, int numberAnalysedFiles) throws MachineLearningUseException {
 		if (!knowledgeMetric.equals(KnowledgeModel.MACHINE_LEARNING)) {
 			for (File file: files) {
 				List<AuthorFileExpertise> authorsFile = authorsFiles.stream().
@@ -279,6 +280,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 			} catch (IOException | InterruptedException | CsvValidationException e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
+				throw new MachineLearningUseException();
 			}
 		}
 		for (ContributorVersion contributorVersion : contributorsVersion) {
@@ -448,14 +450,18 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 	}
 
-	public void saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception {
+	public void saveGitRepositoryVersionKnowledgeModelNotFiltered(KnowledgeModel knowledgeMetric) throws Exception {
 		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
 		for (GitRepository gitRepository : repositories) {
 			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
 			GitRepositoryVersion version = versions.get(0);
 			saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
-					.idGitRepositoryVersion(version.getId()).knowledgeMetric(KnowledgeModel.DOE).build());
+					.idGitRepositoryVersion(version.getId()).knowledgeMetric(knowledgeMetric).build());
 		}
+	}
+
+	public void removeGitRepositoryVersionKnowledgeModel(Long id) {
+		gitRepositoryVersionKnowledgeModelRepository.deleteById(id);
 	}
 
 	//	public void saveRepositoryVersionKnowledgeSharedLinksGenAiFull() {

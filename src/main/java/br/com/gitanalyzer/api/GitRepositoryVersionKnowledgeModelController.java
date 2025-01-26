@@ -3,6 +3,7 @@ package br.com.gitanalyzer.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,8 +30,8 @@ public class GitRepositoryVersionKnowledgeModelController {
 	}
 
 	@PostMapping("/save-git-repository-version-knowledge-model-not-filtered")
-	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception{
-		service.saveGitRepositoryVersionKnowledgeModelNotFiltered();
+	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFiltered(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
+		service.saveGitRepositoryVersionKnowledgeModelNotFiltered(knowledgeMetric);
 		return ResponseEntity.ok("Finished");
 	}
 
@@ -59,6 +60,12 @@ public class GitRepositoryVersionKnowledgeModelController {
 	@PostMapping("/save-repository-version-knowledge-genai")
 	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAi(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
 		service.saveRepositoryVersionKnowledgeGenAi(knowledgeMetric);
+		return ResponseEntity.ok("Finished");
+	}
+	
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?> removeGitRepositoryVersionKnowledgeModel(@PathVariable Long id){
+		service.removeGitRepositoryVersionKnowledgeModel(id);
 		return ResponseEntity.ok("Finished");
 	}
 
