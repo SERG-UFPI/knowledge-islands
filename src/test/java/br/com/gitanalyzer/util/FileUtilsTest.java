@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import br.com.gitanalyzer.utils.FileUtils;
+import br.com.knowledgeislands.utils.FileUtils;
 
 public class FileUtilsTest {
 
