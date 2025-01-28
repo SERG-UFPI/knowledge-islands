@@ -21,13 +21,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KnowledgeIslandsUtils {
 
-	public static final String pathInputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv");
-	public static final String pathScriptMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/predictionScript.R");
-	public static final String pathOutputMlFile = new String("/home/otavio/analiseR/doutorado/master_data/ml_models/output.csv");
-
-	public static final String pathCommitFilesLog = new String("/home/otavio/estudo_ihealth/ihealth/commitFilesLog.csv");
-	public static final String pathCommitFilesFrequencyLog = new String("/home/otavio/Desktop/ihealth/ihealth/commitFilesFrequencyLog.csv");
-
 	public static List<String> invalidPaths = Arrays.asList(new String[]{"/dev/null"});
 
 	/**

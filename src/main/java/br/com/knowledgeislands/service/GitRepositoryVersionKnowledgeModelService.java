@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +69,10 @@ public class GitRepositoryVersionKnowledgeModelService {
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private SharedLinkCommitRepository sharedLinkCommitRepository;
+	@Value("${configuration.csv-input-ml.path}")
+	private String csvMlInput;
+	@Value("${configuration.csv-output-ml.path}")
+	private String csvMlOutput;
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	public GitRepositoryVersionKnowledgeModelForm1 convertModelForm1ModelForm2(GitRepositoryVersionKnowledgeModelForm2 form) {
@@ -234,7 +240,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}else {
-			java.io.File fileInput = new java.io.File(KnowledgeIslandsUtils.pathInputMlFile);
+			java.io.File fileInput = new java.io.File(csvMlInput);
 			FileWriter outputfile;
 			try {
 				outputfile = new FileWriter(fileInput);
@@ -252,12 +258,13 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 				writer.close();
 				List<MlOutput> output = new ArrayList<>();
-				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", KnowledgeIslandsUtils.pathScriptMlFile);
+				String pathsRScript = GitRepositoryVersionKnowledgeModelService.class.getResource("/scripts_r/predictionScript.R").toURI().getPath();
+				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", pathsRScript);
 				pb.redirectOutput(Redirect.INHERIT);
 				pb.redirectError(Redirect.INHERIT);
 				Process process = pb.start();
 				process.waitFor();
-				CSVReader reader = new CSVReader(new FileReader(KnowledgeIslandsUtils.pathOutputMlFile));
+				CSVReader reader = new CSVReader(new FileReader(csvMlOutput));
 				String[] lineInArray;
 				while ((lineInArray = reader.readNext()) != null) {
 					output.add(new MlOutput(lineInArray[5], lineInArray[6], lineInArray[7]));
@@ -277,7 +284,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 						}
 					}
 				}
-			} catch (IOException | InterruptedException | CsvValidationException e) {
+			} catch (IOException | InterruptedException | CsvValidationException | URISyntaxException e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
 				throw new MachineLearningUseException();
