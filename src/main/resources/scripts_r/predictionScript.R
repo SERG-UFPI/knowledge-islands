@@ -1,11 +1,20 @@
 library(caret)
 
-new_data <- read.csv("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv")
+args <- commandArgs(trailingOnly = TRUE)
+
+input_file <- args[1]
+output_file <- args[2]
+rds_file <- args[3]
+
+new_data <- read.csv(input_file)
 new_data <- new_data[1:4]
 new_data <- scale(new_data)
-final_model <- readRDS("/home/otavio/analiseR/doutorado/master_data/ml_models/final_model.rds")
+
+final_model <- readRDS(rds_file)
 
 predictions <- predict(final_model, new_data)
-tmp <- read.csv("/home/otavio/analiseR/doutorado/master_data/ml_models/input.csv")
+
+tmp <- read.csv(input_file)
 tmp <- cbind(tmp, predictions)
-write.csv(tmp, "/home/otavio/analiseR/doutorado/master_data/ml_models/output.csv")
+
+write.csv(tmp, output_file)
