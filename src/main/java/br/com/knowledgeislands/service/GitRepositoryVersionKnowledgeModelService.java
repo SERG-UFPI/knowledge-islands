@@ -73,8 +73,6 @@ public class GitRepositoryVersionKnowledgeModelService {
 	private String csvMlInput;
 	@Value("${configuration.csv-output-ml.path}")
 	private String csvMlOutput;
-	@Value("${configuration.rds-file.path}")
-	private String rdsFile;
 	private String[] header = new String[] {"Adds", "QuantDias", "TotalLinhas", "PrimeiroAutor", "Author", "File"};
 
 	public GitRepositoryVersionKnowledgeModelForm1 convertModelForm1ModelForm2(GitRepositoryVersionKnowledgeModelForm2 form) {
@@ -261,8 +259,9 @@ public class GitRepositoryVersionKnowledgeModelService {
 				writer.close();
 				List<MlOutput> output = new ArrayList<>();
 				CSVReader reader = new CSVReader(new FileReader(csvMlOutput));
-				String pathsRScript = GitRepositoryVersionKnowledgeModelService.class.getResource("/scripts_r/predictionScript.R").toURI().getPath();
-				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", pathsRScript, csvMlInput, csvMlOutput, rdsFile);
+				String pathsRScript = GitRepositoryVersionKnowledgeModelService.class.getResource("/models_scripts_r/predictionScript.R").toURI().getPath();
+				String pathRds = GitRepositoryVersionKnowledgeModelService.class.getResource("/models_scripts_r/final_model.rds").toURI().getPath();
+				ProcessBuilder pb = new ProcessBuilder("/usr/bin/Rscript", pathsRScript, csvMlInput, csvMlOutput, pathRds);
 				pb.redirectOutput(Redirect.INHERIT);
 				pb.redirectError(Redirect.INHERIT);
 				Process process = pb.start();
