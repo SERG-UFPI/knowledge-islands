@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -433,23 +434,23 @@ public class GitRepositoryVersionKnowledgeModelService {
 		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
 	}
 
-	public void saveRepositoryVersionKnowledgeGenAi(KnowledgeModel knowledgeMetric) {
+	public void saveRepositoryVersionKnowledgeGenAi() {
 		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
 		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
-		repositories = repositories.stream().filter(r -> !r.isFiltered()).toList();
-		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
+		for (KnowledgeModel knowledgeMetric : Arrays.asList(KnowledgeModel.DOE, KnowledgeModel.MACHINE_LEARNING)) {
+			saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
+		}
 	}
 
 	private void saveGitRepositoryVersionKnowledgeModelPercentages(List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi,
 			List<GitRepository> repositories, KnowledgeModel knowledgeMetric) {
 		try {
 			for (GitRepositoryVersionKnowledgeModelGenAi modelGenAi : modelsGenAi) {
-				log.info("----- "+modelGenAi.getAvgPctFilesGenAi()+" PERCENTAGE ANALYSIS");
+				log.info("----- "+modelGenAi.getAvgPctFilesGenAi()+" PERCENTAGE ANALYSIS - "+knowledgeMetric.name());
 				for (GitRepository gitRepository : repositories) {
 					List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
-					GitRepositoryVersion version = versions.get(0);
 					saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
-							.idGitRepositoryVersion(version.getId()).knowledgeMetric(knowledgeMetric).foldersPaths(null).modelGenAi(modelGenAi)
+							.idGitRepositoryVersion(versions.get(0).getId()).knowledgeMetric(knowledgeMetric).modelGenAi(modelGenAi)
 							.build());
 				}
 			}
@@ -458,13 +459,14 @@ public class GitRepositoryVersionKnowledgeModelService {
 		}
 	}
 
-	public void saveGitRepositoryVersionKnowledgeModelNotFiltered(KnowledgeModel knowledgeMetric) throws Exception {
+	public void saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception {
 		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
-		for (GitRepository gitRepository : repositories) {
-			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
-			GitRepositoryVersion version = versions.get(0);
-			saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
-					.idGitRepositoryVersion(version.getId()).knowledgeMetric(knowledgeMetric).build());
+		for (KnowledgeModel knowledgeMetric : Arrays.asList(KnowledgeModel.DOE, KnowledgeModel.MACHINE_LEARNING)) {
+			for (GitRepository gitRepository : repositories) {
+				List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+				saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+						.idGitRepositoryVersion(versions.get(0).getId()).knowledgeMetric(knowledgeMetric).build());
+			}
 		}
 	}
 

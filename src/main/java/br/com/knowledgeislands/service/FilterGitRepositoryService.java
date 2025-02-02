@@ -63,12 +63,12 @@ public class FilterGitRepositoryService {
 		projectRepository.saveAll(projects);
 	}
 
-	public void filter(FilteringProjectsDTO form) throws URISyntaxException, IOException, InterruptedException {
-		List<GitRepositoryVersion> versions = new ArrayList<GitRepositoryVersion>();
+	public void filter(FilteringProjectsDTO form) throws IOException{
+		List<GitRepositoryVersion> versions = new ArrayList<>();
 		java.io.File dir = new java.io.File(form.getFolderPath());
 		for (java.io.File fileDir: dir.listFiles()) {
 			if (fileDir.isDirectory()) {
-				String projectPath = fileDir.getAbsolutePath()+"/";
+				String projectPath = KnowledgeIslandsUtils.fixFolderPath(fileDir.getAbsolutePath());
 				GitRepository project = projectService.returnProjectByPath(projectPath);
 				GitRepositoryVersion version = gitRepositoryVersionService.getProjectVersionFiltering(projectPath);
 				version.setGitRepository(project);
@@ -180,9 +180,9 @@ public class FilterGitRepositoryService {
 			filesArray[i] = files.get(i);
 		}
 		Percentile p = new Percentile();
-		double firstQDevs = p.evaluate(devsArray, 75);
-		double firstQCommits = p.evaluate(commitsArray, 50);
-		double firstQFiles = p.evaluate(filesArray, 50);
+		double firstQDevs = p.evaluate(devsArray, 25);
+		double firstQCommits = p.evaluate(commitsArray, 25);
+		double firstQFiles = p.evaluate(filesArray, 25);
 		Set<GitRepository> projects = new HashSet<>();
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedDevs() < firstQDevs).map(v -> v.getGitRepository()).toList());
 		projects.addAll(versions.stream().filter(v -> v.getNumberAnalysedCommits() < firstQCommits).map(v -> v.getGitRepository()).toList());
@@ -245,6 +245,19 @@ public class FilterGitRepositoryService {
 			r.setFilteredReason(FilteredEnum.SIZE);
 		});
 		projectRepository.saveAll(repositories);
+	}
+
+	@Transactional
+	public void filteringSize() {
+		List<GitRepository> repositories = projectRepository.findByFilteredFalse();
+		List<GitRepositoryVersion> versions = new ArrayList<>();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> vs = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			if(vs != null && !vs.isEmpty()) {
+				versions.add(vs.get(0));
+			}
+		}
+		filterProjectBySize(versions);
 	}
 
 }

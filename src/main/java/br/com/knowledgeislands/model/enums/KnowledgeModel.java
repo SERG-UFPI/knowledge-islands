@@ -9,5 +9,5 @@ public enum KnowledgeModel {
 	DOA("DOA"), DOE("DOE"), MACHINE_LEARNING("Machine Learning");
 
 	private String name;
-
+	
 }

@@ -30,8 +30,8 @@ public class GitRepositoryVersionKnowledgeModelController {
 	}
 
 	@PostMapping("/save-git-repository-version-knowledge-model-not-filtered")
-	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFiltered(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
-		service.saveGitRepositoryVersionKnowledgeModelNotFiltered(knowledgeMetric);
+	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFiltered() throws Exception{
+		service.saveGitRepositoryVersionKnowledgeModelNotFiltered();
 		return ResponseEntity.ok("Finished");
 	}
 
@@ -58,8 +58,8 @@ public class GitRepositoryVersionKnowledgeModelController {
 	}
 
 	@PostMapping("/save-repository-version-knowledge-genai")
-	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAi(@RequestBody KnowledgeModel knowledgeMetric) throws Exception{
-		service.saveRepositoryVersionKnowledgeGenAi(knowledgeMetric);
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAi() throws Exception{
+		service.saveRepositoryVersionKnowledgeGenAi();
 		return ResponseEntity.ok("Finished");
 	}
 	
