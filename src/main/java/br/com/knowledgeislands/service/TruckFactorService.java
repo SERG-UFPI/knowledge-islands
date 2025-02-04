@@ -5,7 +5,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -112,9 +114,8 @@ public class TruckFactorService {
 			tf = tf+1;
 		}
 		List<FileVersion> coveredFiles = getCoverageFiles(topContributors, gitRepositoryVersionKnowledgeModel.getFiles());
-		long end = System.currentTimeMillis();
-		double sec = (end - start) / 1000.0;
-		TruckFactor truckFactor = new TruckFactor(tf, gitRepositoryVersionKnowledgeModel, coveredFiles, topContributors, (double) sec);
+		double sec = (System.currentTimeMillis() - start) / 1000.0;
+		TruckFactor truckFactor = new TruckFactor(tf, gitRepositoryVersionKnowledgeModel, coveredFiles, topContributors, sec);
 		truckFactorRepository.save(truckFactor);
 		gitRepositoryVersionKnowledgeModel.setTruckFactor(truckFactor);
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
@@ -152,18 +153,16 @@ public class TruckFactorService {
 		}
 	}
 
-	protected List<FileVersion> getCoverageFiles(List<ContributorVersion> contributorsVersion, List<FileVersion> filesVersion) {
+	private List<FileVersion> getCoverageFiles(List<ContributorVersion> contributorsVersion, List<FileVersion> filesVersion) {
 		List<FileVersion> files = new ArrayList<>();
-		forFiles:for(FileVersion file: filesVersion) {
-			for (ContributorVersion contributor : contributorsVersion) {
-				if(contributor.getNumberFilesAuthor() > 0) {
-					for(File fileContributor: contributor.getFilesAuthor()) {
-						if (file.getFile().isFile(fileContributor.getPath())) {
-							files.add(file);
-							continue forFiles;
-						}
-					}
-				}
+		Set<String> contributorFiles = new HashSet<>();
+		for (ContributorVersion contributor : contributorsVersion) {
+			contributorFiles.addAll(contributor.getFilesAuthor().stream().map(File::getPath).toList());
+		}
+		for(FileVersion file: filesVersion) {
+			Set<String> filePaths = file.getFile().getFilePaths();
+			if(!Collections.disjoint(filePaths, contributorFiles)) {
+				files.add(file);
 			}
 		}
 		return files;

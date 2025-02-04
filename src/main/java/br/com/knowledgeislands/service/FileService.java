@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -196,12 +195,10 @@ public class FileService {
 			while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
 				if (splited.length >= 4) {
-					String operation = splited[1];
+					String operation = splited[1].trim();
 					if (operation.equals(OperationType.RENAMED.name())) {
-						String oldPath = splited[2];
-						oldPath = KnowledgeIslandsUtils.removeEnclosingQuotes(oldPath);
-						String fileName = splited[3];
-						fileName = KnowledgeIslandsUtils.removeEnclosingQuotes(fileName);
+						String oldPath = KnowledgeIslandsUtils.removeEnclosingQuotes(splited[2].trim());
+						String fileName = KnowledgeIslandsUtils.removeEnclosingQuotes(splited[3].trim());
 						content.add(new FileCommitContent(oldPath, fileName));
 					}
 				}

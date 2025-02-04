@@ -140,8 +140,12 @@ public class FilterGitRepositoryService {
 		}
 	}
 
-	private boolean filterProjectByCommits(GitRepositoryVersion version) throws IOException {
+	private boolean filterProjectByCommits(GitRepositoryVersion version) {
 		List<File> allFiles = version.getFiles();
+		List<String> filesPaths = new ArrayList<>();
+		for (File file : allFiles) {
+			filesPaths.addAll(file.getFilePaths());
+		}
 		List<Commit> commits = version.getCommits();
 		Collections.sort(commits);
 		commits = commits.subList(0, 20);
@@ -156,7 +160,7 @@ public class FilterGitRepositoryService {
 		}
 		int numberOfCurrentFilesAdded = 0;
 		for (File file : addedFiles) {
-			if(allFiles.stream().anyMatch(f -> f.isFile(file.getPath()))) {
+			if(filesPaths.contains(file.getPath())) {
 				numberOfCurrentFilesAdded++;
 			}
 		}
@@ -258,6 +262,25 @@ public class FilterGitRepositoryService {
 			}
 		}
 		filterProjectBySize(versions);
+	}
+
+	@Transactional
+	public void filteringCommit() {
+		List<GitRepository> repositories = projectRepository.findByFilteredFalse();
+		List<GitRepositoryVersion> versions = new ArrayList<>();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> vs = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			if(vs != null && !vs.isEmpty()) {
+				versions.add(vs.get(0));
+			}
+		}
+		for(GitRepositoryVersion version: versions) {
+			if(filterProjectByCommits(version)) {
+				version.getGitRepository().setFiltered(true);
+				version.getGitRepository().setFilteredReason(FilteredEnum.HISTORY_MIGRATION);
+				projectRepository.save(version.getGitRepository());
+			}
+		}
 	}
 
 }

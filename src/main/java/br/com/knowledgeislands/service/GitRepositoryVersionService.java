@@ -101,21 +101,20 @@ public class GitRepositoryVersionService {
 		List<Commit> commits = commitService.getCommitsFromLogFiles(repository);
 		if(commits != null && !commits.isEmpty()) {
 			Collections.sort(commits, Collections.reverseOrder());
-			Date dateVersion = commits.get(0).getAuthorDate();
-			String versionId = commits.get(0).getSha();
+			Commit latestCommit = commits.get(0);
+			Date dateVersion = latestCommit.getAuthorDate();
+			String versionId = latestCommit.getSha();
 			log.info("Reading commit files...");
 			commitService.getCommitsFiles(repository, commits, files);
-			commits.removeIf(c -> c.getCommitFiles().isEmpty());
 			log.info("Reading diffs...");
 			commitService.getCommitsFileAndDiffsOfCommits(repository.getCurrentFolderPath(), commits);
 			List<Contributor> contributors = contributorService.getContributorFromCommits(commits);
 			log.info("Setting aliases...");
-			contributors = contributorService.setAlias(contributors);
 			contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
-			long end = System.currentTimeMillis();
+			contributors = contributorService.setAlias(contributors);
 			List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
 			GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
-			float sec = (end - start) / 1000F;
+			float sec = (System.currentTimeMillis() - start) / 1000F;
 			return new GitRepositoryVersion(repository, contributors.size(), 
 					files.size(), commits.size(), 
 					dateVersion, versionId, contributorService.setActiveContributors(contributors, commits),

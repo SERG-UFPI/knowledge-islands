@@ -66,11 +66,11 @@ public class CommitService {
 			String strLine;
 			while ((strLine = br.readLine()) != null) {
 				String[] splited = strLine.split(";");
-				String id = splited[0];
+				String id = splited[0].trim();
 				Commit commit = commitMap.get(id);
 				if (commit != null) {
-					String operation = splited[1];
-					String filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(splited[3]);
+					String operation = splited[1].trim();
+					String filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(splited[3].trim());
 					File file = fileMap.get(filePath);
 					if (file != null) {
 						commit.getCommitFiles().add(new CommitFile(file, OperationType.valueOf(operation), commit));
@@ -81,6 +81,7 @@ public class CommitService {
 			e.printStackTrace();
 			log.error(e.getMessage());
 		}
+		commits.removeIf(c -> c.getCommitFiles().isEmpty());
 		return commits;
 	}
 
@@ -127,7 +128,7 @@ public class CommitService {
 	}
 
 	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
-		int maxLines = Integer.MAX_VALUE;//setMaxLinesToRead(gitRepository);
+		int maxLines = Integer.MAX_VALUE;
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = addContributorsRepositoryVersions(gitRepository.getId());
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
@@ -137,25 +138,24 @@ public class CommitService {
 				lineCount++;
 				String[] commitSplited = strLine.split(";");
 				if(commitSplited.length >= 4) {
-					String idCommit = commitSplited[0];
-					String authorName = commitSplited[1];
-					authorName = authorName.trim();
-					String authorEmail = commitSplited[2];
-					authorEmail = cleanEmail(authorEmail);
-					if(authorName != null && authorEmail != null) {
-						String time = commitSplited[3];
+					String idCommit = commitSplited[0].trim();
+					String authorName = commitSplited[1].trim();
+					String authorEmail = cleanEmail(commitSplited[2]);
+					if(authorName != null && !authorName.isEmpty() && authorEmail != null && !authorEmail.isEmpty()) {
+						String time = commitSplited[3].trim();
 						String message = null;
 						if(commitSplited.length == 5) {
-							message = commitSplited[4];
+							message = commitSplited[4].trim();
+							message = message.length() > 1000 ? message.substring(0,1000): message;
 						}
 						Contributor contributorCommit = null;
-						for (Contributor contributor : contributors) {
+						forContributor:for (Contributor contributor : contributors) {
 							List<Contributor> contributorAliases = contributor.contributorAlias();
 							for (Contributor alias : contributorAliases) {
 								if(alias.getName().equals(authorName)
 										&& alias.getEmail().equals(authorEmail)) {
 									contributorCommit = contributor;
-									break;
+									break forContributor;
 								}
 							}
 						}
@@ -164,9 +164,10 @@ public class CommitService {
 							contributors.add(contributorCommit);
 						}
 						try {
-							Date commitDate = Date.from(Instant.ofEpochSecond(Integer.parseInt(time)));
-							commits.add(new Commit(contributorCommit, commitDate, idCommit, message != null && message.length() > 1000 ? message.substring(0,1000): message));
+							Date commitDate = Date.from(Instant.ofEpochSecond(Long.parseLong(time)));
+							commits.add(new Commit(contributorCommit, commitDate, idCommit, message));
 						} catch (java.lang.NumberFormatException e) {
+							e.printStackTrace();
 							log.error(e.getMessage());
 						}
 					}
@@ -186,85 +187,74 @@ public class CommitService {
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(projectPath+KnowledgeIslandsUtils.diffFileName)));) {
 			String strLine;
 			Commit commitAnalyzed = null;
-			whileFile:while ((strLine = br.readLine()) != null) {
-				if (strLine.trim().isEmpty()) {
-					continue whileFile;
-				}
+			while ((strLine = br.readLine()) != null) {
+				if (strLine.trim().isEmpty()) continue;
 				String[] splited1 = strLine.split(" ");
-				if (splited1.length > 1 && splited1[0].equals("commit")) {
-					String idCommitString = splited1[1];
-					commitAnalyzed = commitMap.get(idCommitString.trim());
-					continue whileFile;
+				if (splited1.length > 1 && splited1[0].trim().equals("commit")) {
+					String idCommitString = splited1[1].trim();
+					commitAnalyzed = commitMap.get(idCommitString);
+					continue;
 				}
 				if (commitAnalyzed != null) {
-					try {
-						String[] splited2 = strLine.split("\t");
-						if(splited2.length < 3) continue;
-						String path = splited2[2];
-						if (path.contains("=>")) {
-							String commonString1 = "";
-							String commonString2 = "";
-							if (path.contains("{") && path.contains("}")) {
-								String[] commonString =  path.split("\\{");
-								commonString1 = commonString[0];
-								commonString = path.split("}");
-								if (commonString.length > 1) {
-									commonString2 = commonString[1];
-								}
-								String stringAux = path.substring(path.indexOf("{") + 1);
-								path = stringAux.substring(0, stringAux.indexOf("}"));
+					String[] splited2 = strLine.split("\t");
+					if(splited2.length < 3) continue;
+					String path = splited2[2].trim();
+					if (path.contains("=>")) {
+						String commonString1 = "";
+						String commonString2 = "";
+						if (path.contains("{") && path.contains("}")) {
+							String[] commonString =  path.split("\\{");
+							commonString1 = commonString[0];
+							commonString = path.split("}");
+							if (commonString.length > 1) {
+								commonString2 = commonString[1];
 							}
+							String stringAux = path.substring(path.indexOf("{") + 1);
+							path = stringAux.substring(0, stringAux.indexOf("}"));
+						}
 
-							String[] splited3 = path.split("=>");
-							String path1 = splited3[0];
-							path1 = path1.trim();
-							path1 = KnowledgeIslandsUtils.removeEnclosingQuotes(path1);
-							String file1 = commonString1+path1+commonString2;
-							file1 = file1.replace("//", "/");
+						String[] splited3 = path.split("=>");
+						String path1 = splited3[0].trim();
+						path1 = KnowledgeIslandsUtils.removeEnclosingQuotes(path1);
+						String file1 = commonString1+path1+commonString2;
+						file1 = file1.replace("//", "/");
 
-							String path2 = splited3[1];
-							path2 = path2.trim();
-							path2 = KnowledgeIslandsUtils.removeEnclosingQuotes(path2);
-							String file2 = commonString1+path2+commonString2;
-							file2 = file2.replace("//", "/");
+						String path2 = splited3[1].trim();
+						path2 = KnowledgeIslandsUtils.removeEnclosingQuotes(path2);
+						String file2 = commonString1+path2+commonString2;
+						file2 = file2.replace("//", "/");
 
-							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
-								if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
-									try {
-										int linesAdded = Integer.parseInt(splited2[0]);
-										commitFile.setAdditions(linesAdded);
-									} catch (Exception e) {
-										e.printStackTrace();
-										log.error(e.getMessage());
-									}
-									continue whileFile;
-								}
+						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+							if(commitFile.getFile().isFile(file1) || commitFile.getFile().isFile(file2)) {
+								setLinesAdded(commitFile, splited2[0]);
+								break;
 							}
-						}else {
-							path = KnowledgeIslandsUtils.removeEnclosingQuotes(path);
-							for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
-								if(commitFile.getFile().isFile(path)) {
-									try {
-										int linesAdded = Integer.parseInt(splited2[0]);
-										commitFile.setAdditions(linesAdded);
-									} catch (Exception e) {
-										e.printStackTrace();
-										log.error(e.getMessage());
-									}
-									continue whileFile;
-								}
+						}
+					}else {
+						path = KnowledgeIslandsUtils.removeEnclosingQuotes(path);
+						for (CommitFile commitFile : commitAnalyzed.getCommitFiles()) {
+							if(commitFile.getFile().isFile(path)) {
+								setLinesAdded(commitFile, splited2[0]);
+								break;
 							}
-						}	
-					} catch (ArrayIndexOutOfBoundsException e) {
-						e.printStackTrace();
-						log.info("Error processing project diff "+e.getMessage());
-					}
+						}
+					}	
 				}
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
 		return commits;
+	}
+
+	private void setLinesAdded(CommitFile commitFile, String numLines) {
+		try {
+			int linesAdded = Integer.parseInt(numLines.trim());
+			commitFile.setAdditions(linesAdded);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
 	}
 
 	public List<Commit> getAllCommitsOfAuthor(List<Commit> commits, Contributor contributor){
