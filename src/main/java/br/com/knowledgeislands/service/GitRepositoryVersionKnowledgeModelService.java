@@ -114,7 +114,6 @@ public class GitRepositoryVersionKnowledgeModelService {
 				}
 			}
 		}
-
 		List<ContributorVersion> contributorsVersion = gitRepositoryVersion.getContributors().stream().map(ContributorVersion::new).toList();
 		List<AuthorFileExpertise> authorFiles = new ArrayList<>();
 		Map<String, String> fileFirstAuthorMap = new HashMap<>();
@@ -129,15 +128,16 @@ public class GitRepositoryVersionKnowledgeModelService {
 			for (File fileContributor: filesContributor) {
 				FileVersion fileVersion = fileMap.get(fileContributor.getPath());
 				if(fileVersion != null) {
-					List<Commit> commits = fileCommitsMap.get(fileVersion.getFile().getPath());
+					String fileVersionPath = fileVersion.getFile().getPath();
+					List<Commit> commits = fileCommitsMap.get(fileVersionPath);
 					if(commits == null) {
 						commits = getCommitsFile(gitRepositoryVersion.getCommits(), fileVersion.getFile());
-						fileCommitsMap.put(fileVersion.getFile().getPath(), commits);
+						fileCommitsMap.put(fileVersionPath, commits);
 					}
 					CreateAuthorFileExpertiseDTO createAuthorFileExpertiseDTO = CreateAuthorFileExpertiseDTO.builder().knowledgeMetric(form.getKnowledgeMetric())
 							.commits(commits).contributorVersion(contributorVersion).fileVersion(fileVersion)
 							.genAi(fileToProcess != -1 && genAiCounter < fileToProcess).build();
-					AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO, fileFirstAuthorMap);
+					AuthorFileExpertise authorFile = getAuthorFileByKnowledgeMetric(createAuthorFileExpertiseDTO, fileFirstAuthorMap, gitRepositoryVersion.getDateVersion());
 					addToFileTotalKnowledge(form.getKnowledgeMetric(), fileVersion, authorFile);
 					authorFiles.add(authorFile);
 					genAiCounter++;
@@ -326,9 +326,9 @@ public class GitRepositoryVersionKnowledgeModelService {
 		return files;
 	}
 
-	private AuthorFileExpertise getAuthorFileByKnowledgeMetric(CreateAuthorFileExpertiseDTO dto, Map<String, String> fileFirstAuthorMap) {
+	private AuthorFileExpertise getAuthorFileByKnowledgeMetric(CreateAuthorFileExpertiseDTO dto, Map<String, String> fileFirstAuthorMap, Date versionDate) {
 		if (!dto.getKnowledgeMetric().equals(KnowledgeModel.DOA)) {
-			DOE doe = getDoeContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), dto.isGenAi(), fileFirstAuthorMap);
+			DOE doe = getDoeContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), dto.isGenAi(), fileFirstAuthorMap, versionDate);
 			return new AuthorFileExpertise(dto.getContributorVersion(), dto.getFileVersion(), doe, dto.isGenAi());
 		}else {
 			DOA doa = getDoaContributorFile(dto.getContributorVersion().getContributor(), dto.getFileVersion().getFile(), dto.getCommits(), fileFirstAuthorMap);
@@ -357,25 +357,25 @@ public class GitRepositoryVersionKnowledgeModelService {
 		return 0;
 	}
 
-	private DOE getDoeContributorFile(Contributor contributor, File file, List<Commit> commits, boolean genAi, Map<String, String> fileFirstAuthorMap) {
+	private DOE getDoeContributorFile(Contributor contributor, File file, List<Commit> commits, boolean genAi, 
+			Map<String, String> fileFirstAuthorMap, Date versionDate) {
 		List<Contributor> contributors = contributor.contributorAlias();
-		Date currentDate = new Date();
 		int adds = 0;
 		int fa = isContributorFa(contributors, file, commits, fileFirstAuthorMap);
 		Date dateLastCommit = commits.get(0).getAuthorDate();
 		Set<String> filePaths = file.getFilePaths();
 		for (Commit commit : commits) {
 			if (!contributors.contains(commit.getAuthor())) continue;
+			if (commit.getAuthorDate().after(dateLastCommit)) {
+				dateLastCommit = commit.getAuthorDate();
+			}
 			for (CommitFile commitFile : commit.getCommitFiles()) {
 				if (!filePaths.contains(commitFile.getFile().getPath())) continue;
 				adds += commitFile.getAdditions();
-				if (commit.getAuthorDate().after(dateLastCommit)) {
-					dateLastCommit = commit.getAuthorDate();
-				}
 				break;
 			}
 		}
-		int numDays = (int) TimeUnit.DAYS.convert(currentDate.getTime() - dateLastCommit.getTime(), TimeUnit.MILLISECONDS);
+		int numDays = (int) TimeUnit.DAYS.convert(versionDate.getTime() - dateLastCommit.getTime(), TimeUnit.MILLISECONDS);
 		if (genAi && contributor.getContributorGenAiUse() != null) {
 			int toRemoveAdds = KnowledgeIslandsUtils.getIntFromPercentage(adds, contributor.getContributorGenAiUse().getAvgCopiedLinesCommits());
 			adds = adds - toRemoveAdds;

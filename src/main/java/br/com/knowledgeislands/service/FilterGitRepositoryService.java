@@ -117,7 +117,7 @@ public class FilterGitRepositoryService {
 		c.add(calendarType, -KnowledgeIslandsUtils.intervalYearsProjectConsideredInactivate);
 		for (GitRepository project : projects) {
 			if(project.getDownloadDate() != null && 
-					project.getDownloadDate().before(c.getTime()) && project.isFiltered() == false) {
+					project.getDownloadDate().before(c.getTime()) && !project.isFiltered()) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
 				projectRepository.save(project);
@@ -132,7 +132,7 @@ public class FilterGitRepositoryService {
 		c.add(calendarType, -KnowledgeIslandsUtils.intervalYearsProjectAgeFilter);
 		for (GitRepository project : projects) {
 			if(project.getFirstCommitDate() != null && 
-					project.getFirstCommitDate().after(c.getTime()) && project.isFiltered() == false) {
+					project.getFirstCommitDate().after(c.getTime()) && !project.isFiltered()) {
 				project.setFiltered(true);
 				project.setFilteredReason(FilteredEnum.PROJECT_AGE);
 				projectRepository.save(project);
@@ -262,6 +262,28 @@ public class FilterGitRepositoryService {
 			}
 		}
 		filterProjectBySize(versions);
+	}
+
+	@Transactional
+	public void filteringInactive() {
+		List<GitRepository> repositories = projectRepository.findByFilteredFalse();
+		List<GitRepositoryVersion> versions = new ArrayList<>();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> vs = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			if(vs != null && !vs.isEmpty()) {
+				versions.add(vs.get(0));
+			}
+		}
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		int calendarType = Calendar.YEAR;
+		c.add(calendarType, -KnowledgeIslandsUtils.intervalYearsProjectConsideredInactivate);
+		List<GitRepositoryVersion> versionsFiltered = versions.stream().filter(v -> v.getDateVersion().before(c.getTime())).toList();
+		for(GitRepositoryVersion version: versionsFiltered) {
+			version.getGitRepository().setFiltered(true);
+			version.getGitRepository().setFilteredReason(FilteredEnum.INACTIVE_PROJECT);
+			projectRepository.save(version.getGitRepository());
+		}
 	}
 
 	@Transactional

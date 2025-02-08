@@ -50,25 +50,31 @@ public class GitRepositoryController {
 	public ResponseEntity<?> createFolderProjectLog(@RequestBody GenerateFolderProjectLogDTO form) throws IOException{
 		return ResponseEntity.ok(gitRepositoryService.createFolderProjectLogs(form));
 	}
-	
+
 	@PostMapping("/filter-repositories-not-software")
 	public ResponseEntity<?> filteringProjectsNotSoftware(@RequestBody List<String> fullNames) throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filteringProjectsNotSoftware(fullNames);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
-	
+
+	@PostMapping("/filter-inactive")
+	public ResponseEntity<?> filteringProjectsInactive() {
+		filterProjectService.filteringInactive();
+		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
+	}
+
 	@PostMapping("/filter-repositories-size")
 	public ResponseEntity<?> filteringProjectsSize(@RequestBody List<String> fullNames) throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filteringProjectsSize(fullNames);
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
-	
+
 	@PostMapping("/filter-size")
 	public ResponseEntity<?> filteringSize() throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filteringSize();
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
-	
+
 	@PostMapping("/filter-commit")
 	public ResponseEntity<?> filteringCommit() throws URISyntaxException, IOException, InterruptedException{
 		filterProjectService.filteringCommit();
@@ -81,12 +87,12 @@ public class GitRepositoryController {
 		return ResponseEntity.status(HttpStatus.OK).body("Filtering finished");
 	}
 
-//	@PostMapping("/filter-projects-shared-links")
-//	public ResponseEntity<?> filteringSharedLinkProjects() {
-//		filterProjectService.filteringSharedLinkProjects();
-//		return ResponseEntity.status(HttpStatus.OK).body("Finished");
-//	}
-	
+	//	@PostMapping("/filter-projects-shared-links")
+	//	public ResponseEntity<?> filteringSharedLinkProjects() {
+	//		filterProjectService.filteringSharedLinkProjects();
+	//		return ResponseEntity.status(HttpStatus.OK).body("Finished");
+	//	}
+
 	@PostMapping("/filter-projects-shared-links")
 	public ResponseEntity<?> filteringSharedLinkProjects() throws IOException {
 		filterProjectService.filteringSharedLinkProjects();
