@@ -434,11 +434,17 @@ public class GitRepositoryVersionKnowledgeModelService {
 		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
 	}
 
-	public void saveRepositoryVersionKnowledgeGenAi() {
+	public void saveRepositoryVersionKnowledgeGenAi() throws MachineLearningUseException {
 		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
 		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
 		for (KnowledgeModel knowledgeMetric : Arrays.asList(KnowledgeModel.DOE, KnowledgeModel.MACHINE_LEARNING)) {
 			saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
+			for (GitRepository gitRepository : repositories) {
+				log.info("----- RAW ANALYSIS -"+ knowledgeMetric.name());
+				List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+				saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+						.idGitRepositoryVersion(versions.get(0).getId()).knowledgeMetric(knowledgeMetric).build());
+			}
 		}
 	}
 
