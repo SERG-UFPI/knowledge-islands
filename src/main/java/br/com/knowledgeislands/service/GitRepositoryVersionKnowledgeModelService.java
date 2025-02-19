@@ -435,6 +435,18 @@ public class GitRepositoryVersionKnowledgeModelService {
 		saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, repositories, knowledgeMetric);
 	}
 
+	public void saveRepositoryVersionKnowledgeGenAiByRepositoryId(Long idGitRepository) throws MachineLearningUseException {
+		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
+		GitRepository repository = gitRepositoryRepository.findById(idGitRepository).get();
+		for (KnowledgeModel knowledgeMetric : Arrays.asList(KnowledgeModel.DOE, KnowledgeModel.MACHINE_LEARNING)) {
+			saveGitRepositoryVersionKnowledgeModelPercentages(modelsGenAi, Arrays.asList(repository), knowledgeMetric);
+			log.info("----- RAW ANALYSIS -"+ knowledgeMetric.name());
+			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(repository.getId());
+			saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+					.idGitRepositoryVersion(versions.get(0).getId()).knowledgeMetric(knowledgeMetric).build());
+		}
+	}
+
 	public void saveRepositoryVersionKnowledgeGenAi() throws MachineLearningUseException {
 		List<GitRepositoryVersionKnowledgeModelGenAi> modelsGenAi = gitRepositoryVersionKnowledgeModelGenAiService.createGitRepositoryVersionKnowledgeModelGenAi();
 		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
@@ -480,12 +492,5 @@ public class GitRepositoryVersionKnowledgeModelService {
 	public void removeGitRepositoryVersionKnowledgeModel(Long id) {
 		gitRepositoryVersionKnowledgeModelRepository.deleteById(id);
 	}
-
-	//	public void saveRepositoryVersionKnowledgeSharedLinksGenAiFull() {
-	//		log.info("------ CREATING VERSION MODELS WITHOUT GEN-AI IMPACT");
-	//		saveRepositoryVersionKnowledgeSharedLinks();
-	//		log.info("------ CREATING VERSION MODELS WITH GEN-AI IMPACT");
-	//		saveRepositoryVersionKnowledgeSharedLinksGenAi();
-	//	}
 
 }

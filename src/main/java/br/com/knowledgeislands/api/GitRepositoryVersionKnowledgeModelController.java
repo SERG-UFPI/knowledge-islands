@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.knowledgeislands.dto.form.GitRepositoryVersionKnowledgeModelForm1;
 import br.com.knowledgeislands.dto.form.GitRepositoryVersionKnowledgeModelForm2;
+import br.com.knowledgeislands.exceptions.MachineLearningUseException;
 import br.com.knowledgeislands.model.enums.KnowledgeModel;
 import br.com.knowledgeislands.service.GitRepositoryVersionKnowledgeModelService;
 
@@ -57,12 +58,18 @@ public class GitRepositoryVersionKnowledgeModelController {
 		return ResponseEntity.ok("Finished");
 	}
 
+	@PostMapping("/save-repository-version-knowledge-genai-by-repository")
+	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAiByRepositoryId(@RequestBody Long idGitRepository) throws MachineLearningUseException {
+		service.saveRepositoryVersionKnowledgeGenAiByRepositoryId(idGitRepository);
+		return ResponseEntity.ok("Finished");
+	}
+
 	@PostMapping("/save-repository-version-knowledge-genai")
 	public ResponseEntity<String> saveRepositoryVersionKnowledgeGenAi() throws Exception{
 		service.saveRepositoryVersionKnowledgeGenAi();
 		return ResponseEntity.ok("Finished");
 	}
-	
+
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> removeGitRepositoryVersionKnowledgeModel(@PathVariable Long id){
 		service.removeGitRepositoryVersionKnowledgeModel(id);
