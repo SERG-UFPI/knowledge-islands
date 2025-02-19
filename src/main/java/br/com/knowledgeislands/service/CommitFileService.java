@@ -31,6 +31,5 @@ public class CommitFileService {
 
 	public void setCommitFileGenai() {
 		
-		
 	}
 }

@@ -117,7 +117,7 @@ public class GitRepositoryVersionService {
 			float sec = (System.currentTimeMillis() - start) / 1000F;
 			return new GitRepositoryVersion(repository, contributors.size(), 
 					files.size(), commits.size(), 
-					dateVersion, versionId, contributorService.setActiveContributors(contributors, commits),
+					dateVersion, versionId, contributorService.setActiveContributors(contributors, commits, dateVersion),
 					commits, files, (double) sec, gitRepositoryFolder);
 		}else {
 			throw new NoCommitForRepositoryException(repository.getFullName());

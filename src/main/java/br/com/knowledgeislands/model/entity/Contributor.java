@@ -30,7 +30,7 @@ public class Contributor {
 	private Long id;
 	private String name;
 	private String email;
-	//private boolean active;
+	private boolean active;
 	@JsonIgnore
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;

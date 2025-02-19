@@ -7,5 +7,5 @@ import br.com.knowledgeislands.model.entity.CodeLine;
 
 @Repository
 public interface CodeLineRepository extends JpaRepository<CodeLine, Long> {
-
+    
 }

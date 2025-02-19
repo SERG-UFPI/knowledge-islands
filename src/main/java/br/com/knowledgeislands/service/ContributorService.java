@@ -9,10 +9,15 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.knowledgeislands.model.entity.Commit;
 import br.com.knowledgeislands.model.entity.Contributor;
+import br.com.knowledgeislands.model.entity.GitRepository;
+import br.com.knowledgeislands.model.entity.GitRepositoryVersion;
 import br.com.knowledgeislands.repository.ContributorRepository;
+import br.com.knowledgeislands.repository.GitRepositoryRepository;
+import br.com.knowledgeislands.repository.GitRepositoryVersionRepository;
 import br.com.knowledgeislands.utils.KnowledgeIslandsUtils;
 
 @Service
@@ -22,20 +27,24 @@ public class ContributorService {
 	private EmailService emailService;
 	@Autowired
 	private ContributorRepository contributorRepository;
+	@Autowired
+	private GitRepositoryRepository gitRepositoryRepository;
+	@Autowired
+	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 
-	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits){
+	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits, Date dateVersion){
 		if(contributors != null && !contributors.isEmpty()) {
-			Date currentDate = commits.get(0).getAuthorDate();
 			Calendar calendar = Calendar.getInstance();
-			calendar.setTime(currentDate);
+			calendar.setTime(dateVersion);
 			calendar.add(Calendar.YEAR, -1);
 			Date date = calendar.getTime();
 			commits = commits.stream().filter(c -> c.getAuthorDate().after(date)).toList();
-			contributorFor: for (Contributor contributor : contributors) {
+			for (Contributor contributor : contributors) {
 				for (Commit commit : commits) {
 					if (commit.getAuthor().equals(contributor)) {
-						//contributor.setActive(true);
-						continue contributorFor;
+						contributor.setActive(true);
+						contributorRepository.save(contributor);
+						break;
 					}
 				}
 			}
@@ -157,6 +166,16 @@ public class ContributorService {
 			//				contributor.setEmailSharedLinkSent(true);
 			//				contributorRepository.save(contributor);
 			//			}
+		}
+	}
+
+	@Transactional
+	public void setContributorActiveGitRepositoryVersionNotFiltered() {
+		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			GitRepositoryVersion version = versions.get(0);
+			setActiveContributors(version.getContributors(), version.getCommits(), version.getDateVersion());
 		}
 	}
 }

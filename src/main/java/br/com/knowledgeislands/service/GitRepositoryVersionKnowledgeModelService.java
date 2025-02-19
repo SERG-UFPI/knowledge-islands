@@ -286,6 +286,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 						}
 					}
 				}
+				reader.close();
 			} catch (IOException | InterruptedException | CsvValidationException | URISyntaxException e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
