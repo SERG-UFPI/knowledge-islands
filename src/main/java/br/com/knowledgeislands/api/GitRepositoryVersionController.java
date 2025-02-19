@@ -44,7 +44,7 @@ public class GitRepositoryVersionController {
 		service.removeAll();
 		return ResponseEntity.ok("Ok");
 	}
-	
+
 	@PostMapping("/save-git-repository-version-not-filtered")
 	public ResponseEntity<?> saveGitRepositoryVersionNotFiltered() throws Exception{
 		service.saveGitRepositoryVersionNotFiltered();
@@ -54,6 +54,12 @@ public class GitRepositoryVersionController {
 	@PostMapping("/save-git-repository-version")
 	public ResponseEntity<?> saveGitRepositoryTruckFactor(@RequestBody String repositoryPath) throws Exception{
 		return ResponseEntity.ok(service.saveGitRepositoryAndGitRepositoryVersion(repositoryPath));
+	}
+
+	@PostMapping("/save-by-git-repository-id")
+	public ResponseEntity<?> saveByGitRepositoryId(@RequestBody Long idGitRepository) throws Exception{
+		service.saveByGitRepositoryId(idGitRepository);
+		return ResponseEntity.ok("Finished");
 	}
 
 	@PostMapping("/save-git-repository-version-genai")
@@ -73,7 +79,7 @@ public class GitRepositoryVersionController {
 		service.saveGitRepositoriesVersionSharedLinkGenAi();
 		return ResponseEntity.ok("Finished");
 	}
-	
+
 	@PostMapping("/save-shared-link-commits-versions")
 	public ResponseEntity<?> saveSharedLinkCommitsVersions() throws Exception{
 		service.saveSharedLinkCommitsVersions();

@@ -129,7 +129,6 @@ public class GitRepositoryVersionService {
 		return saveGitRepositoryVersion(gitRepositoryService.saveGitRepository(repositoryPath));
 	}
 
-	//@Async("taskExecutor")
 	public GitRepositoryVersion saveGitRepositoryVersion(GitRepository gitRepository) throws Exception {
 		log.info("====== BEGIN SAVING GIT REPOSITORY VERSION: "+gitRepository.getFullName());
 		GitRepositoryVersion gitRepositoryVersion = getProjectVersion(gitRepository);
@@ -261,6 +260,11 @@ public class GitRepositoryVersionService {
 		for (GitRepository repository : repositories) {
 			saveGitRepositoryVersion(repository);
 		}
+	}
+
+	public void saveByGitRepositoryId(Long idGitRepository) throws Exception {
+		GitRepository repository = gitRepositoryRepository.findById(idGitRepository).get();
+		saveGitRepositoryVersion(repository);
 	}
 
 }
