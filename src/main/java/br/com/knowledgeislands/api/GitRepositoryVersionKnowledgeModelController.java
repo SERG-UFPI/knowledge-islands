@@ -35,6 +35,12 @@ public class GitRepositoryVersionKnowledgeModelController {
 		service.saveGitRepositoryVersionKnowledgeModelNotFiltered();
 		return ResponseEntity.ok("Finished");
 	}
+	
+	@PostMapping("/save-git-repository-version-knowledge-model-not-filtered-doe")
+	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelNotFilteredDOE() throws Exception{
+		service.saveGitRepositoryVersionKnowledgeModelNotFilteredDOE();
+		return ResponseEntity.ok("Finished");
+	}
 
 	@PostMapping("/save-git-repository-version-knowledge-model-percentage")
 	public ResponseEntity<?> saveGitRepositoryVersionKnowledgeModelPercentage(@RequestBody GitRepositoryVersionKnowledgeModelForm1 form) throws Exception{

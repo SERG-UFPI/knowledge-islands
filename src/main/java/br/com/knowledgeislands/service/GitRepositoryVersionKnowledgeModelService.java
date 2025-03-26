@@ -493,4 +493,13 @@ public class GitRepositoryVersionKnowledgeModelService {
 		gitRepositoryVersionKnowledgeModelRepository.deleteById(id);
 	}
 
+	public void saveGitRepositoryVersionKnowledgeModelNotFilteredDOE() throws MachineLearningUseException {
+		List<GitRepository> repositories = gitRepositoryRepository.findByFilteredFalse();
+		for (GitRepository gitRepository : repositories) {
+			List<GitRepositoryVersion> versions = gitRepositoryVersionRepository.findByGitRepositoryId(gitRepository.getId());
+			saveGitRepositoryVersionKnowledgeModel(GitRepositoryVersionKnowledgeModelForm1.builder()
+					.idGitRepositoryVersion(versions.get(0).getId()).knowledgeMetric(KnowledgeModel.DOE).build());
+		}
+	}
+
 }

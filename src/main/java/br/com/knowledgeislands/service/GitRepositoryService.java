@@ -273,13 +273,11 @@ public class GitRepositoryService {
 		for (String repositoryPath: paths) {
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() ->{
 				try {
+					generateLogFiles(repositoryPath);
 					GitRepository gitRepository = repository.findByCurrentFolderPath(repositoryPath);
-					if(!gitRepository.isFiltered()) {
-						generateLogFiles(repositoryPath);
-						if(gitRepository != null) {
-							gitRepository.setGeneratedLogs(true);
-							repository.save(gitRepository);
-						}
+					if(gitRepository != null && !gitRepository.isFiltered()) {
+						gitRepository.setGeneratedLogs(true);
+						repository.save(gitRepository);
 					}
 				} catch (URISyntaxException | IOException | InterruptedException e) {
 					e.printStackTrace();

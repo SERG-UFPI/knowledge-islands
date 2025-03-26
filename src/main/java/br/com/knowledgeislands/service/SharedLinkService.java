@@ -205,16 +205,16 @@ public class SharedLinkService {
 			Pattern pattern2 = Pattern.compile(KnowledgeIslandsUtils.regexOpenAiRegexChatGPT);
 			String repositoryLabel = "repository";
 			JsonNode repositoryNode = item.get(repositoryLabel);
-			String repoFullName = repositoryNode.get("full_name").asText();
-			List<String> problematicProjects = KnowledgeIslandsUtils.problematicGenAiProject();
-			if(!problematicProjects.contains(repoFullName)) {
-				GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
-				if(gitRepository == null) {
-					gitRepository = new GitRepository(repositoryNode.get("name").asText(), 
-							repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
-					gitRepositoryRepository.save(gitRepository);
-				}
-				if(gitRepository != null) {
+			if(repositoryNode.has("full_name")) {
+				String repoFullName = repositoryNode.get("full_name").asText();
+				List<String> problematicProjects = KnowledgeIslandsUtils.problematicGenAiProject();
+				if(!problematicProjects.contains(repoFullName)) {
+					GitRepository gitRepository = gitRepositoryRepository.findByFullName(repoFullName);
+					if(gitRepository == null) {
+						gitRepository = new GitRepository(repositoryNode.get("name").asText(), 
+								repositoryNode.get("full_name").asText(), repositoryNode.get("private").asBoolean());
+						gitRepositoryRepository.save(gitRepository);
+					}
 					String fileUrl = item.get("url").asText();
 					File file = fileRepository.findByUrl(fileUrl);
 					if(file == null) {
@@ -231,7 +231,8 @@ public class SharedLinkService {
 						file.setLanguage(language);
 						fileRepository.save(file);
 					}
-					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = fileGitRepositorySharedLinkCommitRepository.findByFileIdAndGitRepositoryId(file.getId(), gitRepository.getId());
+					FileRepositorySharedLinkCommit fileGitRepositorySharedLinkCommit = fileGitRepositorySharedLinkCommitRepository
+							.findByFileIdAndGitRepositoryId(file.getId(), gitRepository.getId());
 					if(fileGitRepositorySharedLinkCommit == null) {
 						fileGitRepositorySharedLinkCommit = new FileRepositorySharedLinkCommit(file, gitRepository);
 					}
@@ -249,12 +250,15 @@ public class SharedLinkService {
 							}
 						}
 					}
-					fileGitRepositorySharedLinkCommitRepository.save(fileGitRepositorySharedLinkCommit);
+					if(fileGitRepositorySharedLinkCommit.getSharedLinksCommits() != null && !fileGitRepositorySharedLinkCommit.getSharedLinksCommits().isEmpty()) {
+						fileGitRepositorySharedLinkCommitRepository.save(fileGitRepositorySharedLinkCommit);
+					}
 				}
+			}else {
+				log.error("Missing repository information in item: " + item.toString());
 			}
 		}catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
+			log.error(e);
 		}
 	}
 
@@ -282,24 +286,23 @@ public class SharedLinkService {
 	}
 
 	@Transactional
-	public List<SharedLink> saveFileSharedLinks(String shearchTerm) {
+	public void saveFileSharedLinks(String searchTerm) {
 		String itemsLabel = "items";
 		int perPage = 100;
 		ObjectMapper objectMapper = new ObjectMapper();
 		List<String> aliases = KnowledgeIslandsUtils.getProgrammingLanguagesAliasGithub();
-		List<SharedLink> sharedLinks = new ArrayList<>();
 		for (String language: aliases) {
 			int page = 1;
 			int indexPage = 1;
 			SharedLinkSearch search = new SharedLinkSearch();
 			while(indexPage <= page) {
 				String[] command = {"curl", "-H", "Accept: application/vnd.github.text-match+json", "-H", "Authorization: Bearer "+token, 
-						KnowledgeIslandsUtils.githubApiBaseUrl+"/search/code?q="+shearchTerm+"+language:"+language+"&page="+indexPage+"&per_page="+perPage};
+						KnowledgeIslandsUtils.githubApiBaseUrl+"/search/code?q="+searchTerm+"+language:"+language+"&page="+indexPage+"&per_page="+perPage};
 				String commandJoined = String.join(" ", command);
 				try {
 					String content = GitHubCall.searchCall(command);
 					JsonNode rootNode = objectMapper.readTree(content);
-					if(rootNode.get("total_count") != null) {
+					if(rootNode.has("total_count") && rootNode.get("total_count") != null) {
 						int totalCount = rootNode.get("total_count").asInt();
 						search.setTotalNumberOfItems(totalCount);
 						search.setSearchType(SharedLinkSourceType.FILE);
@@ -327,7 +330,6 @@ public class SharedLinkService {
 				}
 			}
 		}
-		return sharedLinks;
 	}
 
 	@Transactional
@@ -388,18 +390,6 @@ public class SharedLinkService {
 		//		log.info("=== Distribution stats of shared links per repo===");
 		//		getStatistcsOfList(distributionOfSharedLinks);
 		return null;
-	}
-
-	private void getStatistcsOfList(List<Integer> distribution) {
-		distribution = distribution.stream().sorted().toList();
-		DescriptiveStatistics stats = new DescriptiveStatistics();
-		distribution.forEach(d -> stats.addValue(d));
-		double median = stats.getPercentile(50);
-		double q1 = stats.getPercentile(25);
-		double q3 = stats.getPercentile(75);
-		log.info("Median: " + median);
-		log.info("First Quartile (Q1): " + q1);
-		log.info("Third Quartile (Q3): " + q3);
 	}
 
 	public void createSharedLinkConversationRepo() throws InterruptedException, IOException {
