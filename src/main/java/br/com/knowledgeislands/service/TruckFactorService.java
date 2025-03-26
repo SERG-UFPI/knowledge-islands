@@ -42,7 +42,9 @@ import br.com.knowledgeislands.repository.GitRepositoryVersionProcessRepository;
 import br.com.knowledgeislands.repository.GitRepositoryVersionRepository;
 import br.com.knowledgeislands.repository.TruckFactorRepository;
 import br.com.knowledgeislands.utils.KnowledgeIslandsUtils;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Service
 public class TruckFactorService {
 
@@ -99,6 +101,7 @@ public class TruckFactorService {
 		long start = System.currentTimeMillis();
 		GitRepositoryVersionKnowledgeModel gitRepositoryVersionKnowledgeModel = gitRepositoryVersionKnowledgeModelRepository.findById(idGitRepositoryVersionKnowledgeModel)
 				.orElseThrow(()->new EntityNotFoundException("GitRepositoryVersionKnowledgeModel not found with id: " + idGitRepositoryVersionKnowledgeModel));
+		log.info("====== BEGIN SAVING TRUCK FACTOR FOR "+gitRepositoryVersionKnowledgeModel.getRepositoryVersion().getGitRepository().getFullName()+" MODEL "+gitRepositoryVersionKnowledgeModel.getKnowledgeModel());
 		gitRepositoryVersionKnowledgeModel.getContributors().removeIf(ckm -> ckm.getNumberFilesAuthor() == 0);
 		Collections.sort(gitRepositoryVersionKnowledgeModel.getContributors(), Collections.reverseOrder());
 		List<ContributorVersion> topContributors = new ArrayList<>();
@@ -119,6 +122,7 @@ public class TruckFactorService {
 		truckFactorRepository.save(truckFactor);
 		gitRepositoryVersionKnowledgeModel.setTruckFactor(truckFactor);
 		gitRepositoryVersionKnowledgeModelRepository.save(gitRepositoryVersionKnowledgeModel);
+		log.info("====== ENDING SAVING TRUCK FACTOR FOR "+gitRepositoryVersionKnowledgeModel.getRepositoryVersion().getGitRepository().getFullName()+" MODEL "+gitRepositoryVersionKnowledgeModel.getKnowledgeModel());
 		return truckFactor;
 	}
 
@@ -168,7 +172,7 @@ public class TruckFactorService {
 		return files;
 	}
 
-	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) throws URISyntaxException, IOException, InterruptedException, NoHeadException, GitAPIException {
+	public void historyReposTruckFactor(HistoryReposTruckFactorForm form) {
 		ExecutorService executorService = KnowledgeIslandsUtils.getExecutorServiceForTf();
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		java.io.File dir = new java.io.File(form.getPath());
