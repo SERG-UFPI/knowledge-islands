@@ -227,7 +227,8 @@ public class GitRepositoryVersionKnowledgeModelService {
 						double normalized;
 						if (knowledgeMetric.equals(KnowledgeModel.DOE)) {
 							normalized = authorFile.getDoe().getDoeValue()/maxValue;
-							if (normalized >= KnowledgeIslandsUtils.normalizedThresholdMantainerDOE) {
+							if (normalized >= KnowledgeIslandsUtils.normalizedThresholdMantainerDOE 
+									&& authorFile.getDoe().getAdds() > 0) {
 								addFileToFilesAuthor(contributorsVersion, authorFile, file);
 							}
 						}else if(knowledgeMetric.equals(KnowledgeModel.DOA)){
@@ -360,6 +361,7 @@ public class GitRepositoryVersionKnowledgeModelService {
 
 	private DOE getDoeContributorFile(Contributor contributor, File file, List<Commit> commits, boolean genAi, 
 			Map<String, String> fileFirstAuthorMap, Date versionDate) {
+		Collections.sort(commits);
 		List<Contributor> contributors = contributor.contributorAlias();
 		int adds = 0;
 		int fa = isContributorFa(contributors, file, commits, fileFirstAuthorMap);

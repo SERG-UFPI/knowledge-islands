@@ -97,6 +97,14 @@ public class GitRepositoryVersionService {
 		log.info("Reading files...");
 		List<File> files = fileService.getFilesFromClocFile(repository);
 		fileService.getRenamesFiles(repository.getCurrentFolderPath(), files);
+//		int max = 0;
+//		File fileA = null;
+//		for (File file : files) {
+//			if(file.getRenamePaths() != null && file.getRenamePaths().size() > max) {
+//				max = file.getRenamePaths().size();
+//				fileA = file;
+//			}
+//		}
 		log.info("Reading commits...");
 		List<Commit> commits = commitService.getCommitsFromLogFiles(repository);
 		if(commits != null && !commits.isEmpty()) {
@@ -112,6 +120,14 @@ public class GitRepositoryVersionService {
 			log.info("Setting aliases...");
 			contributors = contributors.stream().filter(c -> c.getEmail() != null && c.getName() != null).toList();
 			contributors = contributorService.setAlias(contributors);
+//			int max = 0;
+//			Contributor contributorA = null;
+//			for (Contributor contributor : contributors) {
+//				if(contributor.getAlias() != null && contributor.getAlias().size() > max) {
+//					max = contributor.getAlias().size();
+//					contributorA = contributor;
+//				}
+//			}
 			List<String> filesPaths = files.stream().map(f -> repository.getCurrentFolderPath()+f.getPath()).toList();
 			GitRepositoryFolder gitRepositoryFolder = gitRepositoryFolderExtractor.getGitRepositoryFolder(repository.getCurrentFolderPath(), repository.getCurrentFolderPath(), filesPaths);
 			float sec = (System.currentTimeMillis() - start) / 1000F;

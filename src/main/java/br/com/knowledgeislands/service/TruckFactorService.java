@@ -161,7 +161,9 @@ public class TruckFactorService {
 		List<FileVersion> files = new ArrayList<>();
 		Set<String> contributorFiles = new HashSet<>();
 		for (ContributorVersion contributor : contributorsVersion) {
-			contributorFiles.addAll(contributor.getFilesAuthor().stream().map(File::getPath).toList());
+			for (File fileContributor : contributor.getFilesAuthor()) {
+				contributorFiles.addAll(fileContributor.getFilePaths());
+			}
 		}
 		for(FileVersion file: filesVersion) {
 			Set<String> filePaths = file.getFile().getFilePaths();

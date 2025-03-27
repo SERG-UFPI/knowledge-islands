@@ -116,26 +116,12 @@ public class CommitService {
 		return email;
 	}
 
-	private int setMaxLinesToRead(GitRepository gitRepository) throws FileNotFoundException, IOException {
-		boolean isLinuxRepo = "torvalds/linux".equals(gitRepository.getFullName());
-		int maxLines = Integer.MAX_VALUE; // Lê todas as linhas por padrão
-		if (isLinuxRepo) {
-			try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
-				maxLines = (int) br.lines().count() / 2; // Determina metade das linhas
-			}
-		}
-		return maxLines;
-	}
-
 	public List<Commit> getCommitsFromLogFiles(GitRepository gitRepository) throws IOException {
-		int maxLines = Integer.MAX_VALUE;
 		List<Commit> commits = new ArrayList<>();
 		List<Contributor> contributors = addContributorsRepositoryVersions(gitRepository.getId());
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.commitFileName)));) {
 			String strLine;
-			int lineCount = 0;
-			while ((strLine = br.readLine()) != null && lineCount < maxLines) {
-				lineCount++;
+			while ((strLine = br.readLine()) != null) {
 				String[] commitSplited = strLine.split(";");
 				if(commitSplited.length >= 4) {
 					String idCommit = commitSplited[0].trim();

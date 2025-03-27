@@ -98,14 +98,16 @@ public class FileService {
 						filePath = KnowledgeIslandsUtils.encodeNonAsciiOnly(filePath);
 					}
 					File file = null;
-					for (File fileAux : filesRepository) {
-						if(fileAux.isFile(filePath)) {
-							if(fileAux.getSize() != 0) {
-								files.add(fileAux);
-								continue whileFile;
+					if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
+						for (File fileAux : filesRepository) {
+							if(fileAux.isFile(filePath)) {
+								if(fileAux.getSize() != 0) {
+									files.add(fileAux);
+									continue whileFile;
+								}
+								file = fileAux;
+								break;
 							}
-							file = fileAux;
-							break;
 						}
 					}
 					boolean addFilesWithoutSize = true;
@@ -130,15 +132,17 @@ public class FileService {
 				e.printStackTrace();
 				log.error(e.getMessage());
 			}
-			for (FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit : filesSharedLinks) {
-				String fileLinkPath = fileRepositorySharedLinkCommit.getFile().getPath();
-				if(filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath)) || files.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
-					continue;
-				}
-				if(fileRepositorySharedLinkCommit.getFile().getSize() == 0) {
-					filesWithoutSize.add(fileRepositorySharedLinkCommit.getFile());
-				}else {
-					files.add(fileRepositorySharedLinkCommit.getFile());
+			if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
+				for (FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit : filesSharedLinks) {
+					String fileLinkPath = fileRepositorySharedLinkCommit.getFile().getPath();
+					if(filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath)) || files.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
+						continue;
+					}
+					if(fileRepositorySharedLinkCommit.getFile().getSize() == 0) {
+						filesWithoutSize.add(fileRepositorySharedLinkCommit.getFile());
+					}else {
+						files.add(fileRepositorySharedLinkCommit.getFile());
+					}
 				}
 			}
 		}else {
@@ -166,7 +170,7 @@ public class FileService {
 				log.error(e.getMessage());
 			}
 		}
-		if(!filesWithoutSize.isEmpty()) {
+		if(!filesWithoutSize.isEmpty() && filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
 			for (File file : filesWithoutSize) {
 				if(KnowledgeIslandsUtils.containsOctalEncoding(file.getPath())) {
 					file.setPath(KnowledgeIslandsUtils.decodeOctalString(file.getPath()));
@@ -238,4 +242,5 @@ public class FileService {
 			}
 		}
 	}
+
 }

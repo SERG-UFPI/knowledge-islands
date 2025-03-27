@@ -89,11 +89,7 @@ public class TruckFactorController {
 
 	@PostMapping("history-truck-factor-folder")
 	public ResponseEntity<?> historyReposTruckFactor(@RequestBody HistoryReposTruckFactorForm form) throws URISyntaxException, InterruptedException{
-		try {
-			service.historyReposTruckFactor(form);
-		} catch (IOException | GitAPIException e) {
-			e.printStackTrace();
-		}
+		service.historyReposTruckFactor(form);
 		return ResponseEntity.status(HttpStatus.OK).body("Analysis finished");
 	}
 
