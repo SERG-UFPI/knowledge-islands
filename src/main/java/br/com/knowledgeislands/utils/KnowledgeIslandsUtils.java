@@ -39,6 +39,8 @@ public class KnowledgeIslandsUtils {
 	public static final double faCoefDoa = 1.098;
 	public static final double dlCoefDoa = 0.164;
 	public static final double acCoefDoa = -0.321;
+	
+	public static String SUBJECT_EMAIL_SURVEY_GENAI = "Survey Invitation: Understanding the Impact of Generative AI on Source Code Knowledge";
 
 	public static final String ADD = new String("ADD");
 	public static final String MODIFY = new String("MODIFY");

@@ -8,13 +8,16 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.knowledgeislands.model.entity.AttemptSendEmail;
 import br.com.knowledgeislands.model.entity.Commit;
 import br.com.knowledgeislands.model.entity.Contributor;
 import br.com.knowledgeislands.model.entity.GitRepository;
 import br.com.knowledgeislands.model.entity.GitRepositoryVersion;
+import br.com.knowledgeislands.repository.AttemptSendEmailRepository;
 import br.com.knowledgeislands.repository.ContributorRepository;
 import br.com.knowledgeislands.repository.GitRepositoryRepository;
 import br.com.knowledgeislands.repository.GitRepositoryVersionRepository;
@@ -31,6 +34,8 @@ public class ContributorService {
 	private GitRepositoryRepository gitRepositoryRepository;
 	@Autowired
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
+	@Autowired
+	private AttemptSendEmailRepository attemptSendEmailRepository;
 
 	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits, Date dateVersion){
 		if(contributors != null && !contributors.isEmpty()) {
@@ -156,16 +161,23 @@ public class ContributorService {
 		return false;
 	}
 
+	@Scheduled(fixedRate = 90000000)
 	public void sendEmailsContributorsSharedLinks() {
-		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithCopiedLines();
+		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithCopiedLinesNotSendEmail();
 		contributors = contributors.stream().filter(c -> !KnowledgeIslandsUtils.checkIfEmailNoreply(c.getEmail())).toList();
 		for (Contributor contributor : contributors) {
+			AttemptSendEmail attemptSendEmail = new AttemptSendEmail(new Date(), contributor);
 			String subject = emailService.getSubjectEmailSurveyGenAI(); //emailService.getSubjectEmailSurveyGoogleForm();
 			String text = emailService.getTextEmailSurveyGenAIRawText(contributor.getName());
-			//			if(emailService.sendEmail(contributor.getEmail(), subject, text)) {
-			//				contributor.setEmailSharedLinkSent(true);
-			//				contributorRepository.save(contributor);
-			//			}
+			try {
+				emailService.sendEmail(contributor.getEmail(), subject, text);
+				attemptSendEmail.setSuccess(true);
+				attemptSendEmailRepository.save(attemptSendEmail);
+			}catch(Exception e) {
+				attemptSendEmail.setError(e.getMessage());;
+				attemptSendEmail.setSuccess(false);
+				attemptSendEmailRepository.save(attemptSendEmail);
+			}
 		}
 	}
 

@@ -1,37 +1,33 @@
 package br.com.knowledgeislands.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.log4j.Log4j2;
+import br.com.knowledgeislands.utils.KnowledgeIslandsUtils;
 
 @Service
-@Log4j2
 public class EmailService {
 
-	private static String SUBJECT_EMAIL_SURVEY_GENAI = "Survey Invitation: Understanding the Impact of Generative AI on Source Code Knowledge";
 	@Autowired
 	private JavaMailSender mailSender;
+	@Value("${configuration.app.send.email.devs}")
+	private boolean sendEmail;
 
-	public boolean sendEmail(String to, String subject, String body) {
-		try {
-			SimpleMailMessage message = new SimpleMailMessage();
-			message.setTo(to);
-			message.setSubject(subject);
-			message.setText(body);
+	public void sendEmail(String to, String subject, String body) {
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setTo(to);
+		message.setSubject(subject);
+		message.setText(body);
+		if(sendEmail) {
 			mailSender.send(message);
-			return true;
-		}catch(Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			return false;
 		}
 	}
 
 	public String getSubjectEmailSurveyGenAI() {
-		return SUBJECT_EMAIL_SURVEY_GENAI;
+		return KnowledgeIslandsUtils.SUBJECT_EMAIL_SURVEY_GENAI;
 	}
 
 	public String getTextEmailSurveyGenAIRawText(String devName) {

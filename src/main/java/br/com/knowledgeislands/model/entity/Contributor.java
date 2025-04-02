@@ -34,7 +34,8 @@ public class Contributor {
 	@JsonIgnore
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private Set<Contributor> alias;
-	private boolean emailSharedLinkSent;
+	@OneToMany(mappedBy="contributor", cascade = CascadeType.REMOVE)
+	private List<AttemptSendEmail> attemptsSendEmail;
 	@JsonIgnore
 	@OneToOne(cascade=CascadeType.REMOVE)
 	private ContributorGenAiUse contributorGenAiUse;
