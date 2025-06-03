@@ -51,5 +51,11 @@ public class SharedLinkController {
 	public ResponseEntity<?> numberSharedLinksPerLanguage() throws GitAPIException{
 		return ResponseEntity.ok(service.numberSharedLinksPerLanguage());
 	}
+	
+	@PostMapping("/create-json-shared-link")
+	public ResponseEntity<String> createJsonSharedLink() {
+		service.createJsonSharedLink();
+		return ResponseEntity.ok("Finished");
+	}
 
 }

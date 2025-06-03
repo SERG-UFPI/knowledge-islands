@@ -8,4 +8,6 @@ import br.com.knowledgeislands.model.entity.AttemptSendEmail;
 @Repository
 public interface AttemptSendEmailRepository extends JpaRepository<AttemptSendEmail, Long>{
 
+	boolean existsByContributorId(Long id);
+
 }

@@ -44,4 +44,8 @@ public class SharedLinkCommit {
 		this.fileRepositorySharedLinkCommit = fileRepositorySharedLinkCommit;
 		this.copiedLines = new ArrayList<>();
 	}
+	
+	public Contributor getAuthor() {
+		return commitFileAddedLink.getCommit().getAuthor();
+	}
 }

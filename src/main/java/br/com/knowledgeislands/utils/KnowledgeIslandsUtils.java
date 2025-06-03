@@ -39,8 +39,8 @@ public class KnowledgeIslandsUtils {
 	public static final double faCoefDoa = 1.098;
 	public static final double dlCoefDoa = 0.164;
 	public static final double acCoefDoa = -0.321;
-	
-	public static String SUBJECT_EMAIL_SURVEY_GENAI = "Survey Invitation: Understanding the Impact of Generative AI on Source Code Knowledge";
+
+	public static String SUBJECT_EMAIL_SURVEY_GENAI = "How Do Generative AI Tools Affect Your Code Understanding? (Short Survey Invitation)";
 
 	public static final String ADD = new String("ADD");
 	public static final String MODIFY = new String("MODIFY");
@@ -169,7 +169,7 @@ public class KnowledgeIslandsUtils {
 		//		alias.add("kotlin");
 		return alias;
 	}
-	
+
 	public static List<String> getProgrammingLanguages(){
 		List<String> alias = new ArrayList<>();
 		alias.add("python");
@@ -308,6 +308,14 @@ public class KnowledgeIslandsUtils {
 		BigDecimal bd = BigDecimal.valueOf(value);
 		BigDecimal rounded = bd.setScale(3, RoundingMode.HALF_UP);
 		return rounded.doubleValue();
+	}
+
+	public static boolean isValidEmail(String email) {
+		if (email == null) {
+			return false;
+		}
+		Matcher matcher = Pattern.compile(emailRegex).matcher(email);
+		return matcher.matches();
 	}
 
 }

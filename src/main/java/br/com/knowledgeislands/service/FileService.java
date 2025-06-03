@@ -68,7 +68,7 @@ public class FileService {
 	public List<File> getFilesFromClocFile(GitRepository gitRepository) throws IOException {
 		String[] patterns = addProjectPatterns(gitRepository);
 		List<File> files = new ArrayList<>();
-		List<File> filesWithoutSize = new ArrayList<>();
+//		List<File> filesWithoutSize = new ArrayList<>();
 		List<File> filesRepository = addFilesRepositoryVersions(gitRepository);
 		List<FileRepositorySharedLinkCommit> filesSharedLinks = fileGitRepositorySharedLinkCommitRepository.findByGitRepositoryId(gitRepository.getId());
 		if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
@@ -81,7 +81,7 @@ public class FileService {
 		}
 		String clocListPath = gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.clocFileName;
 		java.io.File clocFile = new java.io.File(clocListPath);
-		if(clocFile.exists() && clocFile.length() > 0) {
+//		if(clocFile.exists() && clocFile.length() > 0) {
 			try(BufferedReader brCloc = new BufferedReader(new InputStreamReader(new FileInputStream(clocListPath)));) {
 				String strLineCloc;
 				whileFile: while ((strLineCloc = brCloc.readLine()) != null) {
@@ -110,11 +110,11 @@ public class FileService {
 							}
 						}
 					}
-					boolean addFilesWithoutSize = true;
+					//boolean addFilesWithoutSize = true;
 					if (splitedLine.length == 3) {
 						String fileSizeString = splitedLine[2];
 						if (fileSizeString != null && !fileSizeString.equals("") && !fileSizeString.equals("0")) {
-							addFilesWithoutSize = false;
+							//addFilesWithoutSize = false;
 							int size = Integer.parseInt(fileSizeString);
 							if(file == null) {
 								file = new File(filePath, size);
@@ -124,71 +124,71 @@ public class FileService {
 							files.add(file);
 						}
 					}
-					if(addFilesWithoutSize) {
-						filesWithoutSize.add(file == null ? new File(filePath):file);
-					}
+//					if(addFilesWithoutSize) {
+//						filesWithoutSize.add(file == null ? new File(filePath):file);
+//					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 				log.error(e.getMessage());
 			}
-			if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
-				for (FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit : filesSharedLinks) {
-					String fileLinkPath = fileRepositorySharedLinkCommit.getFile().getPath();
-					if(filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath)) || files.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
-						continue;
-					}
-					if(fileRepositorySharedLinkCommit.getFile().getSize() == 0) {
-						filesWithoutSize.add(fileRepositorySharedLinkCommit.getFile());
-					}else {
-						files.add(fileRepositorySharedLinkCommit.getFile());
-					}
-				}
-			}
-		}else {
-			List<String> extensions = FileUtils.getProgrammingExtensions();
-			try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.allFilesFileName)));) {
-				String filePath;
-				whileFile:while ((filePath = br.readLine()) != null) {
-					filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(filePath.trim());
-					if(!filePath.isBlank() && !filePath.isEmpty() && extensions.contains(FileUtils.getFileExtension(filePath).trim())){
-						for (File fileAux : filesRepository) {
-							if(fileAux.isFile(filePath)) {
-								if(fileAux.getSize() == 0) {
-									filesWithoutSize.add(new File(filePath));
-								}else {
-									files.add(fileAux);
-								}
-								continue whileFile;
-							}
-						}
-						filesWithoutSize.add(new File(filePath));
-					}
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				log.error(e.getMessage());
-			}
-		}
-		if(!filesWithoutSize.isEmpty() && filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
-			for (File file : filesWithoutSize) {
-				if(KnowledgeIslandsUtils.containsOctalEncoding(file.getPath())) {
-					file.setPath(KnowledgeIslandsUtils.decodeOctalString(file.getPath()));
-				}
-				try(BufferedReader reader = new BufferedReader(new FileReader(gitRepository.getCurrentFolderPath()+file.getPath()));){
-					int lines = 0;
-					while (reader.readLine() != null) lines++;
-					if(lines > 0) {
-						file.setSize(lines);
-						files.add(file);
-					}
-				}catch(Exception e) {
-					e.printStackTrace();
-					log.error(e.getMessage());
-				}
-			}
-		}
-		fixNonAsciiFilePaths(files);
+//			if(filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
+//				for (FileRepositorySharedLinkCommit fileRepositorySharedLinkCommit : filesSharedLinks) {
+//					String fileLinkPath = fileRepositorySharedLinkCommit.getFile().getPath();
+//					if(filesWithoutSize.stream().anyMatch(f -> f.isFile(fileLinkPath)) || files.stream().anyMatch(f -> f.isFile(fileLinkPath))) {
+//						continue;
+//					}
+//					if(fileRepositorySharedLinkCommit.getFile().getSize() == 0) {
+//						filesWithoutSize.add(fileRepositorySharedLinkCommit.getFile());
+//					}else {
+//						files.add(fileRepositorySharedLinkCommit.getFile());
+//					}
+//				}
+//			}
+//		}else {
+//			List<String> extensions = FileUtils.getProgrammingExtensions();
+//			try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(gitRepository.getCurrentFolderPath()+KnowledgeIslandsUtils.allFilesFileName)));) {
+//				String filePath;
+//				whileFile:while ((filePath = br.readLine()) != null) {
+//					filePath = KnowledgeIslandsUtils.removeEnclosingQuotes(filePath.trim());
+//					if(!filePath.isBlank() && !filePath.isEmpty() && extensions.contains(FileUtils.getFileExtension(filePath).trim())){
+//						for (File fileAux : filesRepository) {
+//							if(fileAux.isFile(filePath)) {
+//								if(fileAux.getSize() == 0) {
+//									filesWithoutSize.add(new File(filePath));
+//								}else {
+//									files.add(fileAux);
+//								}
+//								continue whileFile;
+//							}
+//						}
+//						filesWithoutSize.add(new File(filePath));
+//					}
+//				}
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				log.error(e.getMessage());
+//			}
+//		}
+//		if(!filesWithoutSize.isEmpty() && filesSharedLinks != null && !filesSharedLinks.isEmpty()) {
+//			for (File file : filesWithoutSize) {
+//				if(KnowledgeIslandsUtils.containsOctalEncoding(file.getPath())) {
+//					file.setPath(KnowledgeIslandsUtils.decodeOctalString(file.getPath()));
+//				}
+//				try(BufferedReader reader = new BufferedReader(new FileReader(gitRepository.getCurrentFolderPath()+file.getPath()));){
+//					int lines = 0;
+//					while (reader.readLine() != null) lines++;
+//					if(lines > 0) {
+//						file.setSize(lines);
+//						files.add(file);
+//					}
+//				}catch(Exception e) {
+//					e.printStackTrace();
+//					log.error(e.getMessage());
+//				}
+//			}
+//		}
+//		fixNonAsciiFilePaths(files);
 		return files;
 	}
 

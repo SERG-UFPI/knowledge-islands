@@ -1,6 +1,7 @@
 package br.com.knowledgeislands.service;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -11,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import br.com.knowledgeislands.analysis.dev_gpt.GitHubCall;
+import br.com.knowledgeislands.dto.json.ConversationDTO;
+import br.com.knowledgeislands.dto.json.FileDTO;
+import br.com.knowledgeislands.dto.json.SharedLinkDTO;
 import br.com.knowledgeislands.exceptions.CommandExecutionException;
 import br.com.knowledgeislands.exceptions.FetchPageException;
 import br.com.knowledgeislands.exceptions.PageJsonProcessingException;
@@ -29,11 +34,13 @@ import br.com.knowledgeislands.exceptions.SharedLinkNoCode;
 import br.com.knowledgeislands.exceptions.SharedLinkNoConversation;
 import br.com.knowledgeislands.exceptions.SharedLinkNotFoundException;
 import br.com.knowledgeislands.model.entity.ChatGptConversation;
+import br.com.knowledgeislands.model.entity.CodeLine;
 import br.com.knowledgeislands.model.entity.ConversationTurn;
 import br.com.knowledgeislands.model.entity.ErrorLog;
 import br.com.knowledgeislands.model.entity.File;
 import br.com.knowledgeislands.model.entity.FileRepositorySharedLinkCommit;
 import br.com.knowledgeislands.model.entity.GitRepository;
+import br.com.knowledgeislands.model.entity.PromptCode;
 import br.com.knowledgeislands.model.entity.SharedLink;
 import br.com.knowledgeislands.model.entity.SharedLinkCommit;
 import br.com.knowledgeislands.model.entity.SharedLinkErrorLog;
@@ -43,6 +50,7 @@ import br.com.knowledgeislands.model.enums.SharedLinkSourceType;
 import br.com.knowledgeislands.repository.FileRepository;
 import br.com.knowledgeislands.repository.FileRepositorySharedLinkCommitRepository;
 import br.com.knowledgeislands.repository.GitRepositoryRepository;
+import br.com.knowledgeislands.repository.SharedLinkCommitRepository;
 import br.com.knowledgeislands.repository.SharedLinkRepository;
 import br.com.knowledgeislands.repository.SharedLinkSearchRepository;
 import br.com.knowledgeislands.utils.KnowledgeIslandsUtils;
@@ -52,6 +60,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class SharedLinkService {
 
+	@Autowired
+	private SharedLinkCommitRepository sharedLinkCommitRepository;
 	@Autowired
 	private SharedLinkRepository repository;
 	@Autowired
@@ -398,6 +408,56 @@ public class SharedLinkService {
 		}
 		setConversationSharedLinks();
 		saveGitRepositoriesApi();
+	}
+
+	@Transactional
+	public void createJsonSharedLink() {
+		List<SharedLinkDTO> linksJson = new ArrayList<>();
+		List<SharedLink> links = sharedLinkRepository.findByConversationIsNotNullAndErrorIsNull();
+		for (SharedLink link : links) {
+			link.setSharedLinkCommits(sharedLinkCommitRepository.findBySharedLinkWithCopiedLinesMoreThanOne(link.getId()));
+		}
+		links.removeIf(l -> l.getSharedLinkCommits() == null || l.getSharedLinkCommits().isEmpty());
+		for (SharedLink sharedLink : links) {
+			SharedLinkDTO sharedLinkJson = new SharedLinkDTO();
+			sharedLinkJson.setSharedLink(sharedLink.getLink());
+			sharedLinkJson.setTitle(sharedLink.getConversation().getTitle());
+			ConversationDTO conversationJson = new ConversationDTO();
+			for (ConversationTurn turn : sharedLink.getConversation().getConversationTurns()) {
+				if(turn.getCodes() == null || turn.getCodes().isEmpty()) {
+					conversationJson.getTurns().add(turn.getFullText());
+				}else {
+					String codeText = "";
+					for (PromptCode code : turn.getCodes()) {
+						codeText += code.getCode()+"\n";
+					}
+					conversationJson.getTurns().add(codeText);
+				}
+			}
+			List<FileDTO> filesJson = new ArrayList<>();
+			for (SharedLinkCommit sharedLinkCommit : sharedLink.getSharedLinkCommits()) {
+				FileDTO filejson = new FileDTO();
+				filejson.setFilePath(sharedLinkCommit.getFileRepositorySharedLinkCommit().getFile().getPath());
+				filejson.setRepository(sharedLinkCommit.getFileRepositorySharedLinkCommit().getGitRepository().getFullName());
+				filejson.setCommitAddedLink(sharedLinkCommit.getCommitFileAddedLink().getCommit().getSha());
+				String copiedCode = "";
+				for (CodeLine codeLine : sharedLinkCommit.getCopiedLines()) {
+					copiedCode += codeLine.getLine();
+				}
+				filejson.setCopiedCode(copiedCode);
+				filesJson.add(filejson);
+			}
+			sharedLinkJson.setConversation(conversationJson);
+			sharedLinkJson.setFiles(filesJson);
+			linksJson.add(sharedLinkJson);
+		}
+		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		try (FileWriter writer = new FileWriter("/home/otavio/dados.json")) {
+            gson.toJson(linksJson, writer);
+            log.info("JSON salvo com sucesso!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 
 }

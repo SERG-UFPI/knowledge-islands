@@ -1,5 +1,7 @@
 package br.com.knowledgeislands.model.entity;
 
+import java.util.List;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -40,6 +43,8 @@ public class SharedLink {
 	@JsonIgnore
 	@OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private SharedLinkErrorLog error;
+	@Transient
+	private List<SharedLinkCommit> sharedLinkCommits;
 
 	public SharedLink(String link, String textMatchFragment) {
 		super();

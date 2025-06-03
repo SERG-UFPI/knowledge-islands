@@ -5,25 +5,30 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.knowledgeislands.model.entity.AttemptSendEmail;
 import br.com.knowledgeislands.model.entity.Commit;
 import br.com.knowledgeislands.model.entity.Contributor;
 import br.com.knowledgeislands.model.entity.GitRepository;
 import br.com.knowledgeislands.model.entity.GitRepositoryVersion;
+import br.com.knowledgeislands.model.entity.SharedLinkCommit;
 import br.com.knowledgeislands.repository.AttemptSendEmailRepository;
 import br.com.knowledgeislands.repository.ContributorRepository;
 import br.com.knowledgeislands.repository.GitRepositoryRepository;
 import br.com.knowledgeislands.repository.GitRepositoryVersionRepository;
+import br.com.knowledgeislands.repository.SharedLinkCommitRepository;
 import br.com.knowledgeislands.utils.KnowledgeIslandsUtils;
+import lombok.extern.log4j.Log4j2;
 
 @Service
+@Log4j2
 public class ContributorService {
 
 	@Autowired
@@ -35,7 +40,11 @@ public class ContributorService {
 	@Autowired
 	private GitRepositoryVersionRepository gitRepositoryVersionRepository;
 	@Autowired
+	private SharedLinkCommitRepository sharedLinkCommitRepository; 
+	@Autowired
 	private AttemptSendEmailRepository attemptSendEmailRepository;
+	@Value("${spring.mail.username}")
+	private String email;
 
 	public List<Contributor> setActiveContributors(List<Contributor> contributors, List<Commit> commits, Date dateVersion){
 		if(contributors != null && !contributors.isEmpty()) {
@@ -161,24 +170,44 @@ public class ContributorService {
 		return false;
 	}
 
-	@Scheduled(fixedRate = 90000000)
+	//@Scheduled(fixedRate = 90000000)
+	@Transactional
 	public void sendEmailsContributorsSharedLinks() {
-		List<Contributor> contributors = contributorRepository.findContributorFromCommitFilesWithCopiedLinesNotSendEmail();
-		contributors = contributors.stream().filter(c -> !KnowledgeIslandsUtils.checkIfEmailNoreply(c.getEmail())).toList();
-		for (Contributor contributor : contributors) {
-			AttemptSendEmail attemptSendEmail = new AttemptSendEmail(new Date(), contributor);
-			String subject = emailService.getSubjectEmailSurveyGenAI(); //emailService.getSubjectEmailSurveyGoogleForm();
-			String text = emailService.getTextEmailSurveyGenAIRawText(contributor.getName());
-			try {
-				emailService.sendEmail(contributor.getEmail(), subject, text);
-				attemptSendEmail.setSuccess(true);
-				attemptSendEmailRepository.save(attemptSendEmail);
-			}catch(Exception e) {
-				attemptSendEmail.setError(e.getMessage());;
-				attemptSendEmail.setSuccess(false);
-				attemptSendEmailRepository.save(attemptSendEmail);
+		List<SharedLinkCommit> sharedLinksCommits = sharedLinkCommitRepository.findSharedLinkWithCopiedLinesMoreThanOne();
+		Map<Contributor, List<SharedLinkCommit>> map = sharedLinksCommits.stream().collect(Collectors.groupingBy(slc -> slc.getAuthor()));
+		List<SharedLinkCommit> toSend = new ArrayList<>();
+		for (Map.Entry<Contributor, List<SharedLinkCommit>> entry : map.entrySet()) {
+			Contributor contributor = entry.getKey();
+			if(KnowledgeIslandsUtils.checkIfEmailNoreply(contributor.getEmail())) continue;
+			SharedLinkCommit slcToSend = entry.getValue().get(0);
+			for (SharedLinkCommit slc : entry.getValue()) {
+				if(slc.getNumberCopiedLines() > slcToSend.getNumberCopiedLines()) {
+					slcToSend = slc;
+				}
 			}
+			toSend.add(slcToSend);
 		}
+		log.info("");
+//		int max = 200;
+//		int i = 0;
+//		for (SharedLinkCommit sharedLinkCommit : toSend) {
+//			if(i >= max) break;
+//			Contributor contributor = sharedLinkCommit.getAuthor();
+//			if(!attemptSendEmailRepository.existsByContributorId(contributor.getId())) {
+//				emailService.sendSingleEmail(sharedLinkCommit);
+//				i++;
+//				try {
+//					Thread.sleep(2000);
+//					if(i % 10 == 0) {
+//						log.info("Waiting 1 minute after sending " + i + " e-mails...");
+//		                Thread.sleep(60_000);
+//					}
+//				} catch (InterruptedException e) {
+//					Thread.currentThread().interrupt();
+//		            log.error("Thread interrompida durante sleep", e);
+//				}
+//			}
+//		}
 	}
 
 	@Transactional

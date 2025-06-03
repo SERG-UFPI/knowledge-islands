@@ -27,5 +27,9 @@ public interface SharedLinkCommitRepository extends JpaRepository<SharedLinkComm
 	
 	@Query("SELECT slc from SharedLinkCommit slc where slc.commitFileAddedLink IS NOT NULL and slc.numberCopiedLines > 0 and slc.maxLengthCopiedLines > 1")
 	List<SharedLinkCommit> findSharedLinkWithCopiedLinesMoreThanOne();
+	
+	@Query("SELECT slc from SharedLinkCommit slc where slc.commitFileAddedLink IS NOT NULL "
+			+ "and slc.numberCopiedLines > 0 and slc.maxLengthCopiedLines > 1 and slc.sharedLink.id = ?1")
+	List<SharedLinkCommit> findBySharedLinkWithCopiedLinesMoreThanOne(Long idSharedLink);
 
 }

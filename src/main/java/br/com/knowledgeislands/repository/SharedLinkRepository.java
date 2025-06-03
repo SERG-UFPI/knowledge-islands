@@ -12,6 +12,6 @@ public interface SharedLinkRepository extends JpaRepository<SharedLink, Long> {
 
 	SharedLink findByLink(String link);
 	List<SharedLink> findByConversationIsNullAndErrorIsNull();
-	List<SharedLink> findByConversationIsNotNull();
+	List<SharedLink> findByConversationIsNotNullAndErrorIsNull();
 
 }
