@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+authors:
+  - family-names: "Cury"
+    given-names: "Otávio"
+    email: otaviocury@ufpi.edu.br
+  - family-names: "Avelino"
+    given-names: "Guilherme"
+    email: gaa@ufpi.edu.br
+title: "Knowledge Islands: Visualizing Developers Knowledge Concentration"
+url: "https://github.com/SERG-UFPI/knowledge-islands"
+keywords: 
+  - software repository mining
+  - truck factor
+  - knowledge concentration
+  
+
+preferred-citation:
+type: conference-paper
+  authors:
+- family-names: "Cury"
+given-names: "Otávio"
+email: otaviocury@ufpi.edu.br	
+affiliation: Federal University of Piaui (UFPI)
+- family-names: "Avelino"
+given-names: "Guilherme"
+email: gaa@ufpi.edu.br
+conference:
+name: "Simpósio Brasileiro de Engenharia de Software (SBES)"
+location: "Curitiba/PR, Brasil"
+year: 2024
+publisher:
+name: "Sociedade Brasileira de Computação"
+location: "Porto Alegre"
+pages: "789-795"
+issn: "2833-0633"
+doi: "10.5753/sbes.2024.3610"
+url: "https://doi.org/10.5753/sbes.2024.3610"
