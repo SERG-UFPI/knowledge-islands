@@ -24,8 +24,3 @@ The main endpoints to achieve these goals are:
 4. '/api/git-repository-version-process/start-git-repository-version-process/': Combines the functionalities of the previous endpoints: cloning the repository, generating log files, and calculating and saving the Truck Factor.
 
 The same controllers also include endpoints for performing these tasks on folders containing multiple repositories.
-   
-## References
-<a id="1" href="https://dl.acm.org/doi/abs/10.1145/3544902.3546243">[1]</a> Cury, Otávio, et al. "Identifying Source Code File Experts." Proceedings of the 16th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement. 2022.<br/>
-<a id="2" href="https://www.sciencedirect.com/science/article/abs/pii/S0950584924000508">[2]</a> Cury, Otávio, et al. "Source code expert identification: Models and application." Information and Software Technology (2024): 107445.<br/>
-<a id="3" href="https://arxiv.org/abs/2408.08733">[3]</a> Cury, Otávio, et al. "Knowledge Islands: Visualizing Developers Knowledge Concentration". Simpósio Brasileiro de Engenharia de Software (2024).
